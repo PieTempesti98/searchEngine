@@ -12,7 +12,7 @@ public class Main {
     /**
      * The path to the .tsv collection
      */
-    private static final String PATH_TO_COLLECTION = "data/collection.tsv";
+    private static final String PATH_TO_COLLECTION = "data/sampled_collection.tsv";
 
     /**
      * The main method, that loads the collection and so on...
@@ -20,8 +20,8 @@ public class Main {
      */
     public static void main(String[] args){
         //TODO define what we want to do with the main method and then update the javadoc
-        loadData().printCollection();
-        //c.writeToFile("data/loadedData.tsv");
+        Collection c = loadData();
+        c.writeToFile("data/loadedData.tsv");
     }
 
     /**
@@ -30,15 +30,14 @@ public class Main {
      */
     private static Collection loadData(){
         Collection collection = new Collection();
-        int i = 0;
         try(BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8)){
             String[] split;
             for(String line; (line = br.readLine()) != null; ){
+
                 // if the line is empty we process the next line
-                System.out.println(i);
-                i++;
                 if(line.isEmpty())
                     continue;
+
                 // split of the line in the format <pid>\t<text>
                 split = line.split("\t");
 
@@ -46,7 +45,6 @@ public class Main {
                 collection.addDocument(new TextDocument(Integer.parseInt(split[0]), split[1]));
             }
         } catch(Exception e){
-            System.out.println(i);
             e.printStackTrace();
         }
         return collection;
