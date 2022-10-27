@@ -2,22 +2,32 @@ package preprocess;
 
 
 import ca.rmen.porterstemmer.PorterStemmer;
+import beans.TextCollection;
+import loader.DataLoader;
+import beans.TextDocument;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 
 import java.io.BufferedReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Locale;
 
+
+
 public class Preprocesser {
 
     private static final String URL_MATCHER = "[(http(s)?):\\/\\/(www\\.)?a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)";
     private static final String HTML_TAGS_MATCHER = "<[^>]+>";
-    private static final String NON_DIGIT_MATCHER = "[^a-zA-Z]";
+    private static final String NON_DIGIT_MATCHER = "[^a-zA-Z\s]";
     private static final String MULTIPLE_SPACE_MATCHER = "\s+";
     private static final String PATH_TO_STOPWORDS = "data/stopwords.txt";
+    private static final String PATH_TO_OUTPUT_FILE = "data/terms.txt";
     private static ArrayList<String> stopwords = new ArrayList<>();
     private static PorterStemmer stemmer = new PorterStemmer();
 
@@ -32,7 +42,6 @@ public class Preprocesser {
                     continue;
 
                 //add word to stopwords list
-                System.out.println(line);
                 stopwords.add(line);
             }
         } catch(Exception e){
@@ -47,6 +56,7 @@ public class Preprocesser {
      *  performs tokenization and returns the tokens
      * */
     public static String[] tokenize(String text){
+
         return text.split("\s");
     }
 
@@ -77,7 +87,7 @@ public class Preprocesser {
         text = text.replaceAll(HTML_TAGS_MATCHER," ");
 
         //remove non-digit characters including punctuation
-        text = text.replaceAll(NON_DIGIT_MATCHER," ");
+        text = text.replaceAll(NON_DIGIT_MATCHER,"");
 
         //remove consecutive multiple whitespaces with a single one
         text = text.replaceAll(MULTIPLE_SPACE_MATCHER," ");
@@ -125,23 +135,54 @@ public class Preprocesser {
 
     public static void main(String[] args) {
 
-        String text = "We are living in a material world and I am a material girl";
-
-        //for(String token: tokenize(text))
-         //   System.out.println(token);
-
-        String url = "http://www.benny.com <benny> my regex is better than yours </benny>";
-       // System.out.println(cleanText(url));
-
-        String punct = "heello... it's me.... ææ„º÷´´∑� U+FFFC ￼ OBJECT REPLACEMENT CHARACTER, placeholder in the text for another unspecified object, for example in ";
-       // System.out.println("\n" + cleanText(punct));
-
-        String distant = "torniamo          vicini!! ";
-       // System.out.println("\n" + cleanText(distant));
-
         readStopwords();
 
+        TextCollection collection = DataLoader.loadData() ;
 
+        //TODO use DTO
+        try(FileWriter file = new FileWriter(PATH_TO_OUTPUT_FILE,true)){
+
+            for(TextDocument doc: collection.getDocuments())
+            {
+                String text = doc.getText();
+
+                //case folding
+                text = lowerText(text);
+
+                //text cleaning
+                text = cleanText(text);
+
+                // tokenize
+                String[] tokens = tokenize(text);
+
+                //remove stopwords
+                tokens = removeStopwords(tokens);
+
+                //perform stemming
+                tokens = getStems(tokens);
+
+                //TODO write tokens into json file with DTO
+
+                JSONObject jsonObject = new JSONObject();
+                //Inserting key-value pairs into the json object
+                jsonObject.put("docpid", doc.getPid());
+
+                JSONArray terms= new JSONArray();
+
+                for(int i = 0; i < tokens.length; i++)
+                    terms.add(tokens[i]);
+
+
+                jsonObject.put("terms",terms);
+
+                //write object into file
+                file.write(jsonObject.toJSONString() + "\n");
+
+            }
+        }  catch (IOException e) {
+
+            e.printStackTrace();
+        }
 
     }
 }

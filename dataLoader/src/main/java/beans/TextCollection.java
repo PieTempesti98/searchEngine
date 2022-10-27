@@ -1,10 +1,12 @@
+package beans;
+
 import java.util.ArrayList;
 
 /**
  * Represents a collection of TextDocuments.
  * The collection can be printed and saved to disk
  */
-public class Collection {
+public class TextCollection {
 
     /**
      * The ArrayList of documents of the  collection.
@@ -14,7 +16,7 @@ public class Collection {
     /**
      * Creates the collection initializing the ArrayList
      */
-    public Collection() {
+    public TextCollection() {
         this.documents = new ArrayList<>();
     }
 
