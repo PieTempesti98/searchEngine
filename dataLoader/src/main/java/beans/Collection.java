@@ -1,3 +1,5 @@
+package beans;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -29,7 +31,7 @@ public class Collection {
 
     /**
      * Add a document to the collection
-     * @param doc the TextDocument to add to the collection
+     * @param doc the beans.TextDocument to add to the collection
      */
     public void addDocument(TextDocument doc) {
         documents.add(doc);

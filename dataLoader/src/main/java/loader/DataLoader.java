@@ -1,13 +1,18 @@
+package loader;
+
+import beans.Collection;
+import beans.TextDocument;
+
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
 /**
- * The Main class for the loader: loads the .tsv collection, parses encoding the characters in UTF-8 and
+ * The loader.Main class for the loader: loads the .tsv collection, parses encoding the characters in UTF-8 and
  * saves the parsed collection on disk.
  */
-public class Main {
+public class DataLoader {
 
     /**
      * The path to the .tsv collection
@@ -26,7 +31,7 @@ public class Main {
 
     /**
      * Loads the data from disk, parses them to UTF-8 and creates the collection of text documents
-     * @return the TextDocument collection of parsed documents
+     * @return the beans.TextDocument collection of parsed documents
      */
     private static Collection loadData(){
         Collection collection = new Collection();
