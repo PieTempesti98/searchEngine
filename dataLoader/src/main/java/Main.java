@@ -12,7 +12,7 @@ public class Main {
     /**
      * The path to the .tsv collection
      */
-    private static final String PATH_TO_COLLECTION = "data/collection.tsv";
+    private static final String PATH_TO_COLLECTION = "data/sampled_collection.tsv";
 
     /**
      * The main method, that loads the collection and so on...
@@ -36,6 +36,8 @@ public class Main {
                     continue;
                 // split of the line in the format <pid>\t<text>
                 String[] split = line.split("\t");
+
+                System.out.println(split[0]);
 
                 // Creation of the text document for the line and insert in the collection
                 TextDocument doc = new TextDocument(Integer.parseInt(split[0]), split[1]);

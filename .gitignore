@@ -39,6 +39,7 @@ build/
 
 
 data/collection.tsv
+data/sampled_collection.tsv
 
 
 /.idea/
