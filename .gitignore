@@ -40,6 +40,8 @@ build/
 
 data/collection.tsv
 data/sampled_collection.tsv
+data/loadedData.tsv
 
 
 /.idea/
+/data/terms.txt

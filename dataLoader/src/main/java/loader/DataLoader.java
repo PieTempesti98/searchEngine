@@ -42,8 +42,6 @@ public class DataLoader {
                 // split of the line in the format <pid>\t<text>
                 String[] split = line.split("\t");
 
-                System.out.println(split[0]);
-
                 // Creation of the text document for the line and insert in the collection
                 TextDocument doc = new TextDocument(Integer.parseInt(split[0]), split[1]);
                 collection.addDocument(doc);

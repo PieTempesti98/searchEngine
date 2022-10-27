@@ -1,14 +1,11 @@
 package preprocess;
 
-
 import ca.rmen.porterstemmer.PorterStemmer;
 import beans.TextCollection;
 import loader.DataLoader;
 import beans.TextDocument;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-
-
 import java.io.BufferedReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,9 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Locale;
-
-
 
 public class Preprocesser {
 
@@ -30,8 +26,6 @@ public class Preprocesser {
     private static final String PATH_TO_OUTPUT_FILE = "data/terms.txt";
     private static ArrayList<String> stopwords = new ArrayList<>();
     private static PorterStemmer stemmer = new PorterStemmer();
-
-
 
     private static void readStopwords(){
 
@@ -87,7 +81,7 @@ public class Preprocesser {
         text = text.replaceAll(HTML_TAGS_MATCHER," ");
 
         //remove non-digit characters including punctuation
-        text = text.replaceAll(NON_DIGIT_MATCHER,"");
+        text = text.replaceAll(NON_DIGIT_MATCHER," ");
 
         //remove consecutive multiple whitespaces with a single one
         text = text.replaceAll(MULTIPLE_SPACE_MATCHER," ");
@@ -99,7 +93,7 @@ public class Preprocesser {
      *
      * @param tokens: tokens to check
      *
-*        Check whether there are stopwords in a set
+     *        Check whether there are stopwords in a set
      *                   of tokens and if that's the case, removes them
      *
      * */
@@ -130,8 +124,6 @@ public class Preprocesser {
 
         return tokens;
     }
-
-
 
     public static void main(String[] args) {
 
@@ -169,9 +161,7 @@ public class Preprocesser {
 
                 JSONArray terms= new JSONArray();
 
-                for(int i = 0; i < tokens.length; i++)
-                    terms.add(tokens[i]);
-
+                Collections.addAll(terms, tokens);
 
                 jsonObject.put("terms",terms);
 
@@ -183,6 +173,5 @@ public class Preprocesser {
 
             e.printStackTrace();
         }
-
     }
 }
