@@ -2,6 +2,8 @@ package preprocess;
 
 
 import ca.rmen.porterstemmer.PorterStemmer;
+
+
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -15,9 +17,10 @@ public class Preprocesser {
     private static final String HTML_TAGS_MATCHER = "<[^>]+>";
     private static final String NON_DIGIT_MATCHER = "[^a-zA-Z]";
     private static final String MULTIPLE_SPACE_MATCHER = "\s+";
-    private static final String PATH_TO_STOPWORDS = "/Users/benedettatessa/IdeaProjects/searchEngine/src/main/java/preprocess/stopwords.txt";
+    private static final String PATH_TO_STOPWORDS = "data/stopwords.txt";
     private static ArrayList<String> stopwords = new ArrayList<>();
-    public static PorterStemmer stemmer = new PorterStemmer();
+    private static PorterStemmer stemmer = new PorterStemmer();
+
 
 
     private static void readStopwords(){
@@ -63,6 +66,9 @@ public class Preprocesser {
      *  performs text cleaning
      * */
     public static String cleanText(String text){
+
+        //remove extra spaces at the beginning and end of the text
+        text = text.trim();
 
         //remove urls, if any
         text = text.replaceAll(URL_MATCHER, " ");
@@ -127,17 +133,15 @@ public class Preprocesser {
         String url = "http://www.benny.com <benny> my regex is better than yours </benny>";
        // System.out.println(cleanText(url));
 
-        String punct = "heello... it's me.... ";
-        //System.out.println("\n" + cleanText(punct));
+        String punct = "heello... it's me.... ææ„º÷´´∑� U+FFFC ￼ OBJECT REPLACEMENT CHARACTER, placeholder in the text for another unspecified object, for example in ";
+       // System.out.println("\n" + cleanText(punct));
 
         String distant = "torniamo          vicini!! ";
        // System.out.println("\n" + cleanText(distant));
 
-        //readStopwords();
+        readStopwords();
 
-        String[] tokens = tokenize("Above the bench the goat lives below the bench the goat dies");
-        tokens = getStems(tokens);
-        for(String token: tokens)
-           System.out.println(token);
+
+
     }
 }
