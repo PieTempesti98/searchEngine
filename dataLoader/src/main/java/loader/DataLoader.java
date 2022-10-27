@@ -25,15 +25,16 @@ public class DataLoader {
      */
     public static void main(String[] args){
         //TODO define what we want to do with the main method and then update the javadoc
-        loadData().printCollection();
+        TextCollection collection = loadData();
+        collection.writeToFile("data/loadedData.tsv");
     }
 
     /**
      * Loads the data from disk, parses them to UTF-8 and creates the collection of text documents
-     * @return the beans.TextDocument collection of parsed documents
+     * @return the TextDocument collection of parsed documents
      */
-    private static Collection loadData(){
-        Collection collection = new Collection();
+    public static TextCollection loadData(){
+        TextCollection collection = new TextCollection();
         try(BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8)){
             String[] split;
             for(String line; (line = br.readLine()) != null; ){
