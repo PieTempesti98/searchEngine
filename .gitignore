@@ -39,9 +39,8 @@ build/
 
 
 data/collection.tsv
-data/sampled_collection.tsv
 data/loadedData.tsv
-
+data/sampled_collection.tsv
+data/terms.txt
 
 /.idea/
-/data/terms.txt
