@@ -9,6 +9,7 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>dataLoader</module>
+        <module>preprocesser</module>
     </modules>
 
     <properties>

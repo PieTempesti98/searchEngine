@@ -1,6 +1,6 @@
 package loader;
 
-import beans.Collection;
+import beans.TextCollection;
 import beans.TextDocument;
 
 import java.io.BufferedReader;
@@ -9,7 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 /**
- * The loader.Main class for the loader: loads the .tsv collection, parses encoding the characters in UTF-8 and
+ * The Main class for the loader: loads the .tsv collection, parses encoding the characters in UTF-8 and
  * saves the parsed collection on disk.
  */
 public class DataLoader {
@@ -17,7 +17,7 @@ public class DataLoader {
     /**
      * The path to the .tsv collection
      */
-    private static final String PATH_TO_COLLECTION = "data/collection.tsv";
+    private static final String PATH_TO_COLLECTION = "data/sampled_collection.tsv";
 
     /**
      * The main method, that loads the collection and so on...
@@ -25,8 +25,7 @@ public class DataLoader {
      */
     public static void main(String[] args){
         //TODO define what we want to do with the main method and then update the javadoc
-        Collection c = loadData();
-        c.writeToFile("data/loadedData.tsv");
+        loadData().printCollection();
     }
 
     /**

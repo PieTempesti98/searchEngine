@@ -1,7 +1,7 @@
 package beans;
 
 /**
- * The basic beans.TextDocument, formed by an identifier (pid) and the text payload.
+ * The basic TextDocument, formed by an identifier (pid) and the text payload.
  */
 public class TextDocument {
 
@@ -16,7 +16,7 @@ public class TextDocument {
     private String text;
 
     /**
-     * Creates a new beans.TextDocument with the given identifier and payload
+     * Creates a new TextDocument with the given identifier and payload
      * @param pid the document's identifier
      * @param text the document's payload
      */
