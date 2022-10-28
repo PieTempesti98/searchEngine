@@ -38,9 +38,7 @@ build/
 .DS_Store
 
 
-data/collection.tsv
-data/loadedData.tsv
-data/sampled_collection.tsv
-data/terms.txt
+data/
 
 /.idea/
+/data/collection.json

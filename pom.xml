@@ -8,8 +8,8 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>dataLoader</module>
-        <module>preprocesser</module>
+        <module>common</module>
+        <module>collectionLoader</module>
     </modules>
 
     <properties>

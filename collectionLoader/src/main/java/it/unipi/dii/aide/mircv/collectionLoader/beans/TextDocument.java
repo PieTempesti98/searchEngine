@@ -1,4 +1,4 @@
-package beans;
+package it.unipi.dii.aide.mircv.collectionLoader.beans;
 
 /**
  * The basic TextDocument, formed by an identifier (pid) and the text payload.

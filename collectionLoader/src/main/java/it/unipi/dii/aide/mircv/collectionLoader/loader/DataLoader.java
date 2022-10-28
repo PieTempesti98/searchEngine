@@ -1,7 +1,8 @@
-package loader;
+package it.unipi.dii.aide.mircv.collectionLoader.loader;
 
-import beans.TextCollection;
-import beans.TextDocument;
+import it.unipi.dii.aide.mircv.collectionLoader.beans.TextCollection;
+import it.unipi.dii.aide.mircv.collectionLoader.beans.TextDocument;
+import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -17,7 +18,8 @@ public class DataLoader {
     /**
      * The path to the .tsv collection
      */
-    private static final String PATH_TO_COLLECTION = "data/sampled_collection.tsv";
+    private static final String PATH_TO_COLLECTION = ConfigurationParameters.getRawCollectionPath();
+    private static final String OUTPUT_PATH = ConfigurationParameters.getLoadedCollectionPath();
 
     /**
      * The main method, that loads the collection and so on...
@@ -26,7 +28,7 @@ public class DataLoader {
     public static void main(String[] args){
         //TODO define what we want to do with the main method and then update the javadoc
         TextCollection collection = loadData();
-        collection.writeToFile("data/loadedData.tsv");
+        collection.writeToFile(OUTPUT_PATH);
     }
 
     /**

@@ -1,4 +1,4 @@
-package beans;
+package it.unipi.dii.aide.mircv.collectionLoader.beans;
 
 import java.io.File;
 import java.io.IOException;
