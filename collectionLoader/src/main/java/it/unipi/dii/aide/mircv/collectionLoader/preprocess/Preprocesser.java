@@ -1,18 +1,11 @@
 package it.unipi.dii.aide.mircv.collectionLoader.preprocess;
 
 import ca.rmen.porterstemmer.PorterStemmer;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import it.unipi.dii.aide.mircv.collectionLoader.beans.TextCollection;
 import it.unipi.dii.aide.mircv.collectionLoader.beans.TextDocument;
-import it.unipi.dii.aide.mircv.collectionLoader.loader.DataLoader;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import it.unipi.dii.aide.mircv.common.dto.ProcessedCollectionDTO;
 import it.unipi.dii.aide.mircv.common.dto.ProcessedDocumentDTO;
-import it.unipi.dii.aide.mircv.common.jsonMapper.JsonMapper;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -30,7 +23,7 @@ public class Preprocesser {
     private static final ArrayList<String> stopwords = new ArrayList<>();
     private static final PorterStemmer stemmer = new PorterStemmer();
 
-    private static void readStopwords() {
+    public static void readStopwords() {
 
         try (BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_STOPWORDS), StandardCharsets.UTF_8)) {
             for (String line; (line = br.readLine()) != null; ) {
@@ -69,7 +62,6 @@ public class Preprocesser {
      *              performs text cleaning
      */
     public static String cleanText(String text) {
-
 
 
         //remove urls, if any
@@ -122,41 +114,35 @@ public class Preprocesser {
 
     }
 
-    public static void main(String[] args) {
+    /**
+     * Perform the preprocessing of a TextDocument, transforming it in a document formed by
+     * its PID and the list of its tokens
+     * @param doc the TextDocument to preprocess
+     * @return the processed document
+     */
+    public static ProcessedDocumentDTO processDocument(TextDocument doc) {
 
-        readStopwords();
-        TextCollection collection = DataLoader.loadData();
+        String text = doc.getText();
 
-        // list of the DTO documents to write on disk
-        ArrayList<ProcessedDocumentDTO> list = new ArrayList<>();
-        for (TextDocument doc : collection.getDocuments()) {
-            String text = doc.getText();
+        // case folding
+        text = lowerText(text);
 
-            // case folding
-            text = lowerText(text);
+        // text cleaning
+        text = cleanText(text);
 
-            // text cleaning
-            text = cleanText(text);
+        // tokenize
+        String[] tokens = tokenize(text);
 
-            // tokenize
-            String[] tokens = tokenize(text);
+        // remove stopwords
+        tokens = removeStopwords(tokens);
 
-            //TODO check if there are some empty strings and delete them
+        // perform stemming
+        getStems(tokens);
 
-            // remove stopwords
-            tokens = removeStopwords(tokens);
+        // Return the processed document
+        return new ProcessedDocumentDTO(doc.getPid(), tokens);
 
-            // perform stemming
-            tokens = getStems(tokens);
-
-            // Create the DTO object and add it to the list
-            ProcessedDocumentDTO dto = new ProcessedDocumentDTO(doc.getPid(), tokens);
-            list.add(dto);
-        }
-
-        // Save on disk the file as a json file
-        JsonMapper.toJson(list, PATH_TO_OUTPUT_FILE);
     }
 
-
 }
+
