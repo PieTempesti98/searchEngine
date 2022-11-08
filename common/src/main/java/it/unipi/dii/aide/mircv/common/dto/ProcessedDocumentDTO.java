@@ -62,4 +62,28 @@ public class ProcessedDocumentDTO {
     public void setTokens(String[] tokens) {
         this.tokens = tokens;
     }
+
+    /**
+     * Returns the processed document as a string formatted in the following way:
+     * [pid] \t [token1,token2,token3,...,tokenN]
+     * @return the formatted string
+     */
+    public String toString(){
+        StringBuilder str = new StringBuilder(pid + "\t");
+
+        if(tokens.length == 0) {
+            str.append('\n');
+            return str.toString();
+        }
+
+        //Append to the StringBuilder all the tokens than the last, separated by comma
+        for(int i = 0; i < tokens.length - 1; i++){
+            str.append(tokens[i]);
+            str.append(',');
+        }
+        // Append the last element without the comma, then append the newline character
+        str.append(tokens[tokens.length - 1]);
+        str.append('\n');
+        return str.toString();
+    }
 }
