@@ -4,9 +4,7 @@ import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 
 import java.util.Map;
 
-/**
- * Entry of the vocabulary for a term
- */
+
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 
 import java.io.IOException;
@@ -17,6 +15,9 @@ import java.nio.file.StandardOpenOption;
 
 import static it.unipi.dii.aide.mircv.common.utils.FileUtils.createIfNotExists;
 
+/**
+ * Entry of the vocabulary for a term
+ */
 public class VocabularyEntry {
 
     /**
