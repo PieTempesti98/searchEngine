@@ -4,6 +4,7 @@ import it.unipi.dii.aide.mircv.collectionLoader.beans.TextDocument;
 import it.unipi.dii.aide.mircv.collectionLoader.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.dto.ProcessedDocumentDTO;
+import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -63,8 +64,11 @@ public class Main {
                 // Perform the text preprocessing on the document
                 ProcessedDocumentDTO processedDocument = Preprocesser.processDocument(document);
 
-                //Save it to the file
+                // Save it to the file
                 Files.writeString(Paths.get(OUTPUT_PATH), processedDocument.toString(), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+
+                // Update the number of documents
+                CollectionStatistics.addDocument();
             }
         } catch(Exception e){
             e.printStackTrace();
