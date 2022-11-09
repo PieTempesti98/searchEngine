@@ -102,19 +102,6 @@ public class VocabularyEntry {
         this.idf = Math.log10(CollectionStatistics.getNumDocuments()/(double)this.df);
     }
 
-    public void computeMemoryOffsets() {
-        //TODO: implement the method [Francesca]
-
-    }
-
-    /**
-     * updates the vocabulary entry setting memorySize to the number of bytes occupied by the entry
-     */
-    public void computeMemorySize() {
-        //TODO: implement the method [Francesca]
-        memorySize = this.toString().getBytes(StandardCharsets.UTF_8).length;
-    }
-
     /**
      * Appends the vocabulary entry in vocabulary's file
      */
