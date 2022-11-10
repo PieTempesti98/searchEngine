@@ -4,6 +4,16 @@ import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 
 import java.util.Map;
 
+import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+
+import static it.unipi.dii.aide.mircv.common.utils.FileUtils.createIfNotExists;
+
 /**
  * Entry of the vocabulary for a term
  */
@@ -48,6 +58,8 @@ public class VocabularyEntry {
      * size of the term's posting list in the inverted index in bytes
      */
     private long memorySize = 0;
+    
+    private static final String PATH_TO_VOCABULARY = ConfigurationParameters.geVocabularyPath();
 
     /**
      * Constructor for the vocabulary entry for the term passed as parameter
@@ -89,11 +101,43 @@ public class VocabularyEntry {
         this.idf = Math.log10(CollectionStatistics.getNumDocuments()/(double)this.df);
     }
 
-    public void computeMemoryOffsets() {
-        //TODO: implement the method [Francesca]
-    }
-
+    /**
+     * Appends the vocabulary entry in vocabulary's file
+     */
     public void saveToDisk() {
         //TODO: implement the method [Francesca]
+
+        //create vocabulary file if not exists
+        createIfNotExists(PATH_TO_VOCABULARY);
+
+        //Save vocabulary entry to file using append mode
+        try {
+            Files.writeString(Paths.get(PATH_TO_VOCABULARY), this.toString(), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+           e.printStackTrace();
+        }
+    }
+
+    /**
+     * Returns the vocabulary entry as a string formatted in the following way:
+     * [termid]-[term]-[idf] [tf] [memoryOffset] [memorySize]\n
+     * @return the formatted string
+     */
+    public String toString(){
+        //format the string for the vocabulary entry
+        String str =    termid + "-" + term + "-" +
+                        idf + " " +
+                        tf + " " +
+                        memoryOffset + " " +
+                        memorySize +
+                        '\n';
+        return str;
+    }
+
+    public void setMemorySize(int memorySize) {
+        this.memorySize = memorySize;
+    }
+
+    public void setMemoryOffset(int memoryOffset) {this.memoryOffset = memoryOffset;
     }
 }
