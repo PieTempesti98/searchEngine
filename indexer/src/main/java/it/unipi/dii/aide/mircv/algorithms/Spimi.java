@@ -2,6 +2,7 @@ package it.unipi.dii.aide.mircv.algorithms;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
+import it.unipi.dii.aide.mircv.utils.Utility;
 import org.apache.commons.lang3.tuple.MutablePair;
 
 import java.io.BufferedReader;
@@ -16,6 +17,8 @@ import java.util.stream.Collectors;
 
 public class Spimi {
 
+    //TODO: javadocs [Benedetta]
+
     //path to the file on the disk storing the processed collection
     private static final String PATH_TO_DOCUMENTS = ConfigurationParameters.getProcessedCollectionPath();
 
@@ -26,9 +29,10 @@ public class Spimi {
     private static final String PATH_TO_DOCUMENT_INDEX = ConfigurationParameters.getDocumentIndexPath();
 
     //chunk of memory to be kept free
-    //private static final long MEMORY_TRESHOLD = 1048576; //1MB
-    private static final long MEMORY_TRESHOLD = 106099200;
+//    private static final long MEMORY_TRESHOLD = 1048576; //1MB
+    private static final long MEMORY_TRESHOLD = 70000000;
 
+    //TODO: replace MutablePair with Map.SimpleEntry
     //structure storing the partial inverted index
     private static HashMap<String, ArrayList<MutablePair<Integer, Integer>>> index = new HashMap<>();
 
@@ -71,11 +75,11 @@ public class Spimi {
 
             //create entry in this format for each term    term \t docid1,freq1 docid2,freq2 ... docidN,freqN \n
             for(int i = 0; i < postingList.size() - 1; i++){
-                entry.append(postingList.get(i).getLeft()).append(",").append(postingList.get(i).getRight()).append(" ");
+                entry.append(postingList.get(i).getLeft()).append(":").append(postingList.get(i).getRight()).append(" ");
             }
 
             //append last posting
-            entry.append(postingList.get(postingList.size() - 1).getLeft()).append(",").append(postingList.get(postingList.size() - 1).getRight()).append("\n");
+            entry.append(postingList.get(postingList.size() - 1).getLeft()).append(":").append(postingList.get(postingList.size() - 1).getRight()).append("\n");
             writeEntry(path, entry.toString()); //write entry on file
             entry.setLength(0); // clear entry to start over with new term
         }
@@ -163,7 +167,7 @@ public class Spimi {
                 while (Runtime.getRuntime().freeMemory() > MEMORY_TRESHOLD ) { //build index until memory is available
                                                                                 //taking into account a threshold
 
-                    System.out.println(Runtime.getRuntime().freeMemory());
+//                    System.out.println(Runtime.getRuntime().freeMemory());
 
                     line = br.readLine();
                     if(line == null){ // all documents were processed
@@ -179,6 +183,7 @@ public class Spimi {
                         //create new document index entry and save it onto disk in format docid \t pid,document length \n
                         String entry = docid++ + "\t" + pid + "," + terms.length + "\n";
                         writeEntry(PATH_TO_DOCUMENT_INDEX, entry);
+                        System.out.println(docid);
 
                         for (String term : terms) {
 
@@ -198,6 +203,7 @@ public class Spimi {
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
                 save_index_to_disk(PATH_BASE_TO_INDEX+num_index+".txt");
             }
+            Utility.setNumIndexes(num_index);
         }catch (Exception e){
             e.printStackTrace();
         }

@@ -27,7 +27,7 @@ public class VocabularyEntry {
     /**
      * termid of the specific term
      */
-    private int termid;
+    private final int termid;
 
     /**
      * Term to which refers the vocabulary entry
@@ -97,7 +97,7 @@ public class VocabularyEntry {
     /**
      * Compute the idf using the values computed during the merging of the indexes
      */
-    private void computeIDF(){
+    public void computeIDF(){
         this.idf = Math.log10(CollectionStatistics.getNumDocuments()/(double)this.df);
     }
 
