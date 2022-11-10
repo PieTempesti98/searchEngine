@@ -4,6 +4,8 @@
     <loadedCollectionPath>data/loadedData.tsv</loadedCollectionPath>
     <stopwordsPath>config/stopwords.txt</stopwordsPath>
     <processedCollectionPath>data/processedCollection.txt</processedCollectionPath>
+    <documentIndexPath>data/document_index.txt</documentIndexPath>
+    <partialIndexPath>data/index/index_</partialIndexPath>
     <vocabularyPath>data/vocabulary.txt</vocabularyPath>
     <invertedIndexPath>data/invertedIndex.txt</invertedIndexPath>
 </it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
