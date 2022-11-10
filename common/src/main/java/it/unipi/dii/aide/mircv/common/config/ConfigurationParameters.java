@@ -11,6 +11,8 @@ public class ConfigurationParameters {
     private static String loadedCollectionPath;
     private static String stopwordsPath;
     private static String processedCollectionPath;
+    private static String documentIndexPath;
+    private static String partialIndexPath;
     private static String vocabularyPath;
     private static String invertedIndexPath;
 
@@ -32,6 +34,8 @@ public class ConfigurationParameters {
             loadedCollectionPath = doc.getElementsByTagName("loadedCollectionPath").item(0).getTextContent();
             stopwordsPath = doc.getElementsByTagName("stopwordsPath").item(0).getTextContent();
             processedCollectionPath = doc.getElementsByTagName("processedCollectionPath").item(0).getTextContent();
+            documentIndexPath = doc.getElementsByTagName("documentIndexPath").item(0).getTextContent();
+            partialIndexPath = doc.getElementsByTagName("partialIndexPath").item(0).getTextContent();
             vocabularyPath = doc.getElementsByTagName("vocabularyPath").item(0).getTextContent();
             invertedIndexPath = doc.getElementsByTagName("invertedIndexPath").item(0).getTextContent();
 
@@ -55,6 +59,11 @@ public class ConfigurationParameters {
     public static String getProcessedCollectionPath() {
         return processedCollectionPath;
     }
+
+    public static String getDocumentIndexPath() {return documentIndexPath;}
+
+    public static String getPartialIndexPath() {return partialIndexPath;}
+
 
     public static String geVocabularyPath() {return vocabularyPath;}
 

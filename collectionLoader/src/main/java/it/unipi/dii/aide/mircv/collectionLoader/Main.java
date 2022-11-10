@@ -61,11 +61,12 @@ public class Main {
                 // Creation of the text document for the line
                 TextDocument document = new TextDocument(Integer.parseInt(split[0]), split[1].replaceAll("[^\\x00-\\x7F]", ""));
 
-                // Perform the text preprocessing on the document
+                // Perform text preprocessing on the document
                 ProcessedDocumentDTO processedDocument = Preprocesser.processDocument(document);
 
-                // Save it to the file
-                Files.writeString(Paths.get(OUTPUT_PATH), processedDocument.toString(), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
+                if(processedDocument.getTokens().length > 0)
+                    //Save it to the file if body is non empty
+                    Files.writeString(Paths.get(OUTPUT_PATH), processedDocument.toString(), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
 
                 // Update the number of documents
                 CollectionStatistics.addDocument();
