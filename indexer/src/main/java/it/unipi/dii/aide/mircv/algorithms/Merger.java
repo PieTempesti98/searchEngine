@@ -118,6 +118,13 @@ public class Merger {
     private static String getMinTerm(){
         String term = nextTerm.get(0);
         for(String elem: nextTerm){
+            if(term == null) {
+                term = elem;
+                continue;
+            }
+            if(elem == null)
+                continue;
+
             if(elem.compareTo(term) < 0){
                 term = elem;
             }

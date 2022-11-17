@@ -3,7 +3,7 @@
     <rawCollectionPath>data/sampled_collection.tsv</rawCollectionPath>
     <loadedCollectionPath>data/loadedData.tsv</loadedCollectionPath>
     <stopwordsPath>config/stopwords.txt</stopwordsPath>
-    <processedCollectionPath>data/processedCollection.txt</processedCollectionPath>
+    <processedCollectionPath>data/processedCollection.db</processedCollectionPath>
     <documentIndexPath>data/document_index.txt</documentIndexPath>
     <partialIndexPath>data/index/index_</partialIndexPath>
     <vocabularyPath>data/vocabulary.txt</vocabularyPath>

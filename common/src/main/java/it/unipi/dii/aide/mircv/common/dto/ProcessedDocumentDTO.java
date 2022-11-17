@@ -1,6 +1,8 @@
 package it.unipi.dii.aide.mircv.common.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * DTO object for the processed class
@@ -10,23 +12,23 @@ public class ProcessedDocumentDTO {
     /**
      * Document PID
      */
-    @JsonProperty("pid")
-    private int pid;
+
+    private String pid;
 
     /**
      * Array with all the processed terms
      */
-    @JsonProperty("tokens")
-    private String[] tokens;
+
+    private ArrayList<String> tokens;
 
     /**
      * Constructor of a document
      * @param pid PID of the document
      * @param tokens array with the processed tokens
      */
-    public ProcessedDocumentDTO(int pid, String[] tokens) {
+    public ProcessedDocumentDTO(String pid, String[] tokens) {
         this.pid = pid;
-        this.tokens = tokens;
+        this.tokens = new ArrayList<>(List.of(tokens));
     }
 
     /**
@@ -38,28 +40,19 @@ public class ProcessedDocumentDTO {
     /**
      * @return the document PID
      */
-    public int getPid() {
+    public String getPid() {
         return pid;
     }
 
-    /**
-     * @param pid the PID to set
-     */
-    public void setPid(int pid) {
+    public void setPid(String pid) {
         this.pid = pid;
     }
 
-    /**
-     * @return the array of the tokens
-     */
-    public String[] getTokens() {
+    public ArrayList<String> getTokens() {
         return tokens;
     }
 
-    /**
-     * @param tokens the tokens to set for the document
-     */
-    public void setTokens(String[] tokens) {
+    public void setTokens(ArrayList<String> tokens) {
         this.tokens = tokens;
     }
 
@@ -71,18 +64,18 @@ public class ProcessedDocumentDTO {
     public String toString(){
         StringBuilder str = new StringBuilder(pid + "\t");
 
-        if(tokens.length == 0) {
+        if(tokens.size() == 0) {
             str.append('\n');
             return str.toString();
         }
 
         //Append to the StringBuilder all the tokens than the last, separated by comma
-        for(int i = 0; i < tokens.length - 1; i++){
-            str.append(tokens[i]);
+        for(int i = 0; i < tokens.size() - 1; i++){
+            str.append(tokens.get(i));
             str.append(',');
         }
         // Append the last element without the comma, then append the newline character
-        str.append(tokens[tokens.length - 1]);
+        str.append(tokens.get(tokens.size() - 1));
         str.append('\n');
         return str.toString();
     }
