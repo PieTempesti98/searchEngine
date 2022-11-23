@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
-    <rawCollectionPath>data/collection.tsv</rawCollectionPath>
+    <rawCollectionPath>data/sampled_collection.tsv</rawCollectionPath>
     <loadedCollectionPath>data/loadedData.tsv</loadedCollectionPath>
     <stopwordsPath>config/stopwords.txt</stopwordsPath>
     <processedCollectionPath>data/processedCollection.db</processedCollectionPath>
-    <documentIndexPath>data/document_index.db</documentIndexPath>
-    <partialIndexPath>data/index/index.db</partialIndexPath>
+    <documentIndexPath>data/documentIndex.db</documentIndexPath>
+    <partialIndexPath>data/partialIndex.db</partialIndexPath>
     <vocabularyPath>data/vocabulary.db</vocabularyPath>
     <invertedIndexPath>data/invertedIndex.txt</invertedIndexPath>
 </it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
