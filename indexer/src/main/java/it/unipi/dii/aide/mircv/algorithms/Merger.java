@@ -168,7 +168,7 @@ public class Merger {
     public static boolean mergeIndexes(){
 
         try(DB dbVoc = DBMaker.fileDB(PATH_TO_VOCABULARY).fileChannelEnable().fileMmapEnable().make(); // vocabulary memory mapped file
-            DB dbInd = DBMaker.fileDB(INTERMEDIATE_INDEX_PATH +".db").fileChannelEnable().fileMmapEnable().make() // intermediate indexes memory mapped file
+            DB dbInd = DBMaker.fileDB(INTERMEDIATE_INDEX_PATH).fileChannelEnable().fileMmapEnable().make() // intermediate indexes memory mapped file
         ){
 
             // initialization operations
