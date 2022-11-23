@@ -58,7 +58,7 @@ public class VocabularyEntry {
      * size of the term's posting list in the inverted index in bytes
      */
     private long memorySize = 0;
-    
+
     private static final String PATH_TO_VOCABULARY = ConfigurationParameters.geVocabularyPath();
 
     /**
@@ -100,24 +100,7 @@ public class VocabularyEntry {
     public void computeIDF(){
         this.idf = Math.log10(CollectionStatistics.getNumDocuments()/(double)this.df);
     }
-
-    /**
-     * Appends the vocabulary entry in vocabulary's file
-     */
-    public void saveToDisk() {
-        //TODO: implement the method [Francesca]
-
-        //create vocabulary file if not exists
-        createIfNotExists(PATH_TO_VOCABULARY);
-
-        //Save vocabulary entry to file using append mode
-        try {
-            Files.writeString(Paths.get(PATH_TO_VOCABULARY), this.toString(), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
-        } catch (IOException e) {
-           e.printStackTrace();
-        }
-    }
-
+    
     /**
      * Returns the vocabulary entry as a string formatted in the following way:
      * [termid]-[term]-[idf] [tf] [memoryOffset] [memorySize]\n
@@ -134,10 +117,11 @@ public class VocabularyEntry {
         return str;
     }
 
-    public void setMemorySize(int memorySize) {
+    public void setMemorySize(long memorySize) {
         this.memorySize = memorySize;
     }
 
-    public void setMemoryOffset(int memoryOffset) {this.memoryOffset = memoryOffset;
+    public void setMemoryOffset(long memoryOffset) {this.memoryOffset = memoryOffset;
     }
+
 }

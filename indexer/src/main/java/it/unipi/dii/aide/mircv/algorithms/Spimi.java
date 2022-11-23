@@ -6,11 +6,13 @@ import it.unipi.dii.aide.mircv.common.dto.ProcessedDocumentDTO;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 import it.unipi.dii.aide.mircv.utils.Utility;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 
+import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -35,7 +37,7 @@ public class Spimi {
 
     //chunk of memory to be kept free
 //    private static final long MEMORY_TRESHOLD = 1048576; //1MB
-    private static final long MEMORY_TRESHOLD = 80000000;
+    private static final long MEMORY_TRESHOLD = 70000000;
 
     //structure storing the partial inverted index
     //private static HashMap<String, ArrayList<MutablePair<Integer, Integer>>> index = new HashMap<>();

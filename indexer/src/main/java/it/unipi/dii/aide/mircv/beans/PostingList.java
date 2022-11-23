@@ -60,7 +60,7 @@ public class PostingList {
         // memory occupancy of the posting list:
         // - for each posting we have to store 2 integers (docid and freq)
         // - each integer will occupy 4 bytes since we are storing integers in byte arrays
-        int numBytes = postings.size()*4*2;
+        int numBytes = getNumBytes();
 
         // create inverted index's file if not exists
         createIfNotExists(PATH_TO_INVERTED_INDEX);
@@ -95,4 +95,11 @@ public class PostingList {
         return -1;
     }
 
+    /**
+     * method to return the numbers of bytes occupied by this posting list when stored in memory
+     * @return posting list's space occupancy in bytes
+     */
+    public int getNumBytes() {
+        return postings.size()*4*2;
+    }
 }
