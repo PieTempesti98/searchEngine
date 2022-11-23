@@ -6,6 +6,14 @@ import java.util.Map;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+
+import static it.unipi.dii.aide.mircv.common.utils.FileUtils.createIfNotExists;
+
 /**
  * Entry of the vocabulary for a term
  */
@@ -24,7 +32,7 @@ public class VocabularyEntry {
     /**
      * Term to which refers the vocabulary entry
      */
-    private final String term;
+    private String term;
 
     /**
      * Document frequency of the term
@@ -50,6 +58,8 @@ public class VocabularyEntry {
      * size of the term's posting list in the inverted index in bytes
      */
     private long memorySize = 0;
+
+    private static final String PATH_TO_VOCABULARY = ConfigurationParameters.getVocabularyPath();
 
     /**
      * Constructor for the vocabulary entry for the term passed as parameter
@@ -90,7 +100,7 @@ public class VocabularyEntry {
     public void computeIDF(){
         this.idf = Math.log10(CollectionStatistics.getNumDocuments()/(double)this.df);
     }
-    
+
     /**
      * Returns the vocabulary entry as a string formatted in the following way:
      * [termid]-[term]-[idf] [tf] [memoryOffset] [memorySize]\n
@@ -106,7 +116,6 @@ public class VocabularyEntry {
                         '\n';
         return str;
     }
-
 
     public void setMemorySize(long memorySize) {
         this.memorySize = memorySize;
