@@ -4,7 +4,7 @@
     <loadedCollectionPath>data/loadedData.tsv</loadedCollectionPath>
     <stopwordsPath>config/stopwords.txt</stopwordsPath>
     <processedCollectionPath>data/processedCollection.db</processedCollectionPath>
-    <documentIndexPath>data/document_index.txt</documentIndexPath>
+    <documentIndexPath>data/document_index.db</documentIndexPath>
     <partialIndexPath>data/index/index_</partialIndexPath>
     <vocabularyPath>data/vocabulary.db</vocabularyPath>
     <invertedIndexPath>data/invertedIndex.txt</invertedIndexPath>

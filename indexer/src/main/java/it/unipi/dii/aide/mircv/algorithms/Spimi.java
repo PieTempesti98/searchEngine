@@ -1,53 +1,49 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
+import it.unipi.dii.aide.mircv.beans.DocumentIndexEntry;
 import it.unipi.dii.aide.mircv.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.dto.ProcessedDocumentDTO;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
-import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 import it.unipi.dii.aide.mircv.utils.Utility;
-import org.apache.commons.lang3.tuple.MutablePair;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 
-import java.io.BufferedReader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-
-import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
 
 public class Spimi {
 
-    //TODO: javadocs [Benedetta]
-
-    //path to the file on the disk storing the processed collection
+    /**
+     * path to the file on the disk storing the processed collection
+     */
     private static final String PATH_TO_DOCUMENTS = ConfigurationParameters.getProcessedCollectionPath();
 
-    //path to the file on the disk storing the partial indexes
+    /*
+    path to the file on the disk storing the partial indexes
+     */
     private static final String PATH_BASE_TO_INDEX = ConfigurationParameters.getPartialIndexPath();
 
-    //path to the file on the disk storing the document index
+    /*
+    path to the file on the disk storing the document index
+     */
     private static final String PATH_TO_DOCUMENT_INDEX = ConfigurationParameters.getDocumentIndexPath();
 
-    //chunk of memory to be kept free
-//    private static final long MEMORY_TRESHOLD = 1048576; //1MB
-    private static final long MEMORY_TRESHOLD = 70000000;
-
-    //structure storing the partial inverted index
-    //private static HashMap<String, ArrayList<MutablePair<Integer, Integer>>> index = new HashMap<>();
-
-    //counts the number of partial indexes created
+    /*
+    counts the number of partial indexes created
+     */
     private static int num_index = 0;
 
 
-
+    /**
+     *
+     * @param index: partial index that must be saved onto file
+     */
     private static void saveIndexToDisk(HashMap<String, PostingList> index){
+
         if(index.isEmpty()) //if the index is empty there is nothing to write on disk
             return;
 
@@ -61,8 +57,9 @@ public class Spimi {
                         (e1, e2) -> e1, LinkedHashMap::new));
 
 
+        //write index to disk
         try(DB db = DBMaker.fileDB(PATH_BASE_TO_INDEX + num_index + ".db").fileChannelEnable().fileMmapEnable().make()){
-            ArrayList<PostingList> partialIndex = (ArrayList<PostingList>) db.indexTreeList("index_" + num_index, Serializer.JAVA).createOrOpen();
+            List<PostingList> partialIndex = (List<PostingList>) db.indexTreeList("index_" + num_index, Serializer.JAVA).createOrOpen();
             partialIndex.addAll(index.values());
 
             //update number of partial inverted indexes
@@ -79,71 +76,120 @@ public class Spimi {
      *
      *                   Function that searched for a given docid in a posting list.
      *                   If the document is already present it updates the term frequency for that
-     *                   specific document, if that's not the case creates a new Pair(docid,freq)
+     *                   specific document, if that's not the case creates a new pair (docid,freq)
      *                   in which frequency is set to 1 and adds this pair to the posting list
      * **/
     private static void updateOrAddPosting(int docid, PostingList postingList){
         boolean found = false;
         for(Map.Entry<Integer, Integer> posting: postingList.getPostings()){ //iterate for each posting in postinglist
 
+            if(docid > posting.getKey()) //since postings are sorted by docid, if I read a value higher than the
+                break;                 //docid we want to find we can stop the search
+
             if(docid == posting.getKey()){ //docid found
                 posting.setValue(posting.getValue() + 1); //update frequency
                 found = true;
+                break;
             }
         }
 
-        if(!found) //document with that docid wasn't int the posting list
+        if(!found) //document with that docid wasn't in the posting list
             postingList.getPostings().add(new AbstractMap.SimpleEntry<>(docid,1)); //create new pair and add it
 
     }
 
-    public static void spimi(){
+    public static void read(){
 
-        try(DB db = DBMaker.fileDB(PATH_TO_DOCUMENTS).fileChannelEnable().fileMmapEnable().make();
-            DB docIndexDb = DBMaker.fileDB(PATH_TO_DOCUMENT_INDEX).fileChannelEnable().fileMmapEnable().make();
-            HTreeMap collection = db.hashMap("processedCollection")
-                    .keySerializer(Serializer.STRING)
-                    .valueSerializer(Serializer.JAVA)
+        //use DBMaker to create a DB object of HashMap stored on disk
+        //provide location
+        DB db = DBMaker.fileDB(PATH_BASE_TO_INDEX + "0.db").make();
+
+        //use the DB object to open the "myMap" HashMap
+        List<PostingList> partialIndex = (List<PostingList>) db.indexTreeList("index_" + 0, Serializer.JAVA).createOrOpen();
+
+        //read from map
+        Iterator<PostingList> keys = partialIndex.stream().iterator();
+        while (keys.hasNext()) {
+            System.out.println(keys.next());
+        }
+
+        //close to protect from data corruption
+        db.close();
+    }
+
+    public static void readDI(){
+
+        //use DBMaker to create a DB object of HashMap stored on disk
+        //provide location
+        DB db = DBMaker.fileDB(PATH_TO_DOCUMENT_INDEX).make();
+
+        //use the DB object to open the "myMap" HashMap
+        List<DocumentIndexEntry> docIndex= (List<DocumentIndexEntry>) db.indexTreeList("docIndex",Serializer.JAVA).createOrOpen();
+
+        System.out.println(docIndex.size());
+        //read from map
+        Iterator<DocumentIndexEntry> keys = docIndex.stream().iterator();
+        while (keys.hasNext()) {
+            System.out.println(keys.next());
+        }
+
+        //close to protect from data corruption
+        db.close();
+    }
+
+
+
+    /*
+    *  performs Spimi algorithm
+    * */
+    public static void executeSpimi(){
+
+
+        try(DB db = DBMaker.fileDB(PATH_TO_DOCUMENTS).fileChannelEnable().fileMmapEnable().make(); //fileDb for  processed documents
+            DB docIndexDb = DBMaker.fileDB(PATH_TO_DOCUMENT_INDEX).fileChannelEnable().fileMmapEnable().make(); //fileDB for document index
+            HTreeMap collection = db.hashMap("processedCollection")//hashmap containing processd collection
+                    .keySerializer(Serializer.STRING) //key ->pid
+                    .valueSerializer(Serializer.JAVA) // value -> posting list
                     .createOrOpen();
-            HTreeMap<Integer, String> docIndex= docIndexDb.hashMap("docIndex")
-                    .keySerializer(Serializer.INTEGER)
-                    .valueSerializer(Serializer.STRING)
-                    .createOrOpen()
         ){
-            boolean allDocumentsProcessed = false;
+            boolean allDocumentsProcessed = false; //is set to true when all documents are read
+
+            //list containing all documents indexes that must be written on file
+            List<DocumentIndexEntry> docIndex= (List<DocumentIndexEntry>) docIndexDb.indexTreeList("docIndex",Serializer.JAVA).createOrOpen();
 
             int docid = 0; //assign docid in a incremental manner
 
+            long MEMORY_THRESHOLD = Runtime.getRuntime().totalMemory() * 20 / 100; // leave 20% of memory free
+            Iterator<String> keyterator = (Iterator<String>) collection.keySet().iterator();
+
             while(!allDocumentsProcessed) {
-                HashMap<String, PostingList> index = new HashMap<>();;
-                while (Runtime.getRuntime().freeMemory() > MEMORY_TRESHOLD ) { //build index until memory is available
-                    // taking into account a threshold
+                HashMap<String, PostingList> index = new HashMap<>(); //hashmap containing partial index
+                while (Runtime.getRuntime().freeMemory() > MEMORY_THRESHOLD) { //build index until 80% of total memory is used
 
-
-//                    System.out.println(Runtime.getRuntime().freeMemory());
-
-                    Iterator<String> keyterator = (Iterator<String>) collection.keySet().iterator();
                     if(!keyterator.hasNext()){ // all documents were processed
                         allDocumentsProcessed = true;
                         break;
                     }
                     //parse line to get pid and all terms of a document
                     ProcessedDocumentDTO document = new ProcessedDocumentDTO();
-                    String pid = keyterator.next();
+                    String pid = keyterator.next(); //the pid is the key of the hashmap
                     document.setPid(pid);
                     document.setTokens((ArrayList<String>) collection.get(pid));
 
-                    //create new document index entry and save it onto disk in format docid \t pid,document length \n
-                    String entry = docid++ + "\t" + pid + "," + document.getTokens().size() + "\n";
-                    docIndex
-                    System.out.println(docid);
-                    CollectionStatistics.addDocument();
+
+                    //create new document index entry and add it to file
+                    DocumentIndexEntry entry = new DocumentIndexEntry(pid,docid++,document.getTokens().size());
+                    docIndex.add(entry);
+
+                    CollectionStatistics.addDocument(); //keeps track of number of processed documents,
+                                                        // useful for calculating collection statistics later on
+
                     for (String term : document.getTokens()) {
-                        PostingList posting;
+                        PostingList posting; //posting list of a given term
                         if (!index.containsKey(term)) {
                            // create new posting list if term wasn't present yet
                             posting = new PostingList(term);
-                            index.put(term, posting);
+                            index.put(term, posting); //add new entry (term, posting list) to entry
                         } else {
                             //term is present, we can get its posting list
                             posting = index.get(term);
@@ -151,13 +197,17 @@ public class Spimi {
 
                         updateOrAddPosting(docid, posting); //insert or update new posting
                     }
-                    saveIndexToDisk(index);
+
                 }
 
-                //either if there is no  memory available or all documents were read, flush partial index onto disk
+
+
+                saveIndexToDisk(index);  //either if there is no  memory available or all documents were read, flush partial index onto disk
+
 
             }
-            Utility.setNumIndexes(num_index);
+
+            Utility.setNumIndexes(num_index); //keeps track of number of partial indexed created, useful in the merging phase
         }catch (Exception e){
             e.printStackTrace();
         }

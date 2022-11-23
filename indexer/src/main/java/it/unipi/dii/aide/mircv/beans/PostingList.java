@@ -3,6 +3,8 @@ package it.unipi.dii.aide.mircv.beans;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 
 import java.io.IOException;
+import java.io.Serial;
+import java.io.Serializable;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -15,16 +17,17 @@ import java.util.Map;
 
 import static it.unipi.dii.aide.mircv.common.utils.FileUtils.createIfNotExists;
 
-public class PostingList {
+public class PostingList implements Serializable{
 
     private String term;
-    private final ArrayList<Map.Entry<Integer, Integer>> postings = new ArrayList<>();
+    private ArrayList<Map.Entry<Integer, Integer>> postings = new ArrayList<>();
     private final static String PATH_TO_INVERTED_INDEX = ConfigurationParameters.getInvertedIndexPath();
 
     public PostingList(String toParse) {
         String[] termRow = toParse.split("\t");
         this.term = termRow[0];
-        parsePostings(termRow[1]);
+        if(termRow.length > 1)
+            parsePostings(termRow[1]);
     }
 
     public PostingList(){}
@@ -101,5 +104,28 @@ public class PostingList {
      */
     public int getNumBytes() {
         return postings.size()*4*2;
+    }
+    @Override
+    public String toString() {
+        return "PostingList{" +
+                "term='" + term + '\'' +
+                ", postings=" + postings +
+                '}';
+    }
+
+    @Serial
+    private void writeObject(java.io.ObjectOutputStream stream)
+            throws IOException {
+
+        stream.writeUTF(term);
+        stream.writeObject(postings);
+    }
+
+    @Serial
+    private void readObject(java.io.ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+        term = stream.readUTF();
+        postings = (ArrayList<Map.Entry<Integer, Integer>>) stream.readObject();
+
     }
 }
