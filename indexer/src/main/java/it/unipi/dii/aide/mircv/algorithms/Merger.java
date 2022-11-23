@@ -17,7 +17,7 @@ import java.util.Map;
 public class Merger {
 
     /**
-     * Inverted index's nex free memory offset
+     * Inverted index's next free memory offset
      * */
     private static long memOffset = 0;
 
@@ -33,7 +33,7 @@ public class Merger {
 
     /**
      * number of intermediate indexes produced by SPIMI algorithm
-     */
+     * */
     private static final int NUM_INTERMEDIATE_INDEXES = Utility.getNumIndexes();
 
     /**
@@ -42,52 +42,29 @@ public class Merger {
     private static final String PATH_TO_VOCABULARY = ConfigurationParameters.geVocabularyPath();
 
     /**
-     * mapDBs for intermediate indexes
-     * **/
-    private static final ArrayList<DB> mapped_dbs = new ArrayList<>();
-
-    // TODO: convert the NUM_INVERTED_INDEXES mapped databases into a single collection of intermediate inverted indexes
-
-    /**
      * memory mapped intermediate indexes
      * */
     private static final Map<Integer, ArrayList<PostingList>> intermediateIndexes = new HashMap<>();
 
     /**
-     * vocabulary
+     * vocabulary for the final inverted index
      * */
     private static ArrayList<VocabularyEntry> vocabulary;
 
     /**
-     * Method that initializes all the data structures, opening the buffers
-     * and initializing the lists pointing to the first term to process in each index
+     * Method that initializes all the data structures:
+     * - setting openIndexes to the total number of indexes produced by SPIMI
+     * - initializing all the intermediate inverted index structures
      */
-    private static void initialize() {
+    private static void initialize(DB dbInd, DB dbVoc) {
         openIndexes = NUM_INTERMEDIATE_INDEXES;
 
+        // open the vocabulary
+        vocabulary = (ArrayList<VocabularyEntry>) dbVoc.indexTreeList("vocabulary", Serializer.JAVA).createOrOpen();
+
+        // get all the intermediate indexes
         for(int i = 0; i < openIndexes; i++) {
-
-            // try to open intermediate index 'i' file
-            try {
-                DB db = DBMaker.fileDB(INTERMEDIATE_INDEX_PATH + i + ".db").fileChannelEnable().fileMmapEnable().make();
-                mapped_dbs.add(i, db);
-                intermediateIndexes.put(i, (ArrayList<PostingList>) db.indexTreeList("index_" + i, Serializer.JAVA).createOrOpen());
-            } catch (Exception e) {
-                e.printStackTrace();
-                mapped_dbs.add(i, null);
-                openIndexes--;
-            }
-        }
-    }
-
-    /**
-     * method to clean and close the databases
-     */
-    private static void clean(){
-        // TODO: change this to a single mapped db for multiple indexes
-        // close the map databases for each mapped db (index)
-        for(int i=0; i<NUM_INTERMEDIATE_INDEXES; i++){
-            mapped_dbs.get(i).close();
+            intermediateIndexes.put(i, (ArrayList<PostingList>) dbInd.indexTreeList("index_" + i, Serializer.JAVA).createOrOpen());
         }
     }
 
@@ -190,11 +167,12 @@ public class Merger {
      */
     public static boolean mergeIndexes(){
 
-        try(DB db = DBMaker.fileDB(PATH_TO_VOCABULARY).fileChannelEnable().fileMmapEnable().make()){
-            vocabulary = (ArrayList<VocabularyEntry>) db.indexTreeList("vocabulary", Serializer.JAVA).createOrOpen();
+        try(DB dbVoc = DBMaker.fileDB(PATH_TO_VOCABULARY).fileChannelEnable().fileMmapEnable().make(); // vocabulary memory mapped file
+            DB dbInd = DBMaker.fileDB(INTERMEDIATE_INDEX_PATH +".db").fileChannelEnable().fileMmapEnable().make() // intermediate indexes memory mapped file
+        ){
 
             // initialization operations
-            initialize();
+            initialize(dbInd, dbVoc);
 
             // open all the indexes in parallel and start merging their posting lists
             while(openIndexes > 0){
@@ -212,8 +190,7 @@ public class Merger {
 
             }
             return true;
-        }
-        catch(Exception e){
+        } catch (Exception e){
             e.printStackTrace();
         }
         return false;
