@@ -25,7 +25,7 @@ public class Spimi {
     /*
     path to the file on the disk storing the partial indexes
      */
-    private static final String PATH_BASE_TO_INDEX = ConfigurationParameters.getPartialIndexPath();
+    private static final String PATH_PARTIAL_INDEX = ConfigurationParameters.getPartialIndexPath();
 
     /*
     path to the file on the disk storing the document index
@@ -42,7 +42,7 @@ public class Spimi {
      *
      * @param index: partial index that must be saved onto file
      */
-    private static void saveIndexToDisk(HashMap<String, PostingList> index){
+    private static void saveIndexToDisk(HashMap<String, PostingList> index, DB db){
 
         if(index.isEmpty()) //if the index is empty there is nothing to write on disk
             return;
@@ -58,15 +58,15 @@ public class Spimi {
 
 
         //write index to disk
-        try(DB db = DBMaker.fileDB(PATH_BASE_TO_INDEX + num_index + ".db").fileChannelEnable().fileMmapEnable().make()){
-            List<PostingList> partialIndex = (List<PostingList>) db.indexTreeList("index_" + num_index, Serializer.JAVA).createOrOpen();
-            partialIndex.addAll(index.values());
+        //try(DB db = DBMaker.fileDB(PATH_BASE_TO_INDEX + num_index + ".db").fileChannelEnable().fileMmapEnable().make()){
+        List<PostingList> partialIndex = (List<PostingList>) db.indexTreeList("index_" + num_index, Serializer.JAVA).createOrOpen();
+        partialIndex.addAll(index.values());
 
-            //update number of partial inverted indexes
-            num_index ++;
-        }catch(Exception e){
+        //update number of partial inverted indexes
+        num_index ++;
+       /* }catch(Exception e){
             e.printStackTrace();
-        }
+        }*/
 
     }
 
@@ -102,7 +102,7 @@ public class Spimi {
 
         //use DBMaker to create a DB object of HashMap stored on disk
         //provide location
-        DB db = DBMaker.fileDB(PATH_BASE_TO_INDEX + "0.db").make();
+        DB db = DBMaker.fileDB(PATH_PARTIAL_INDEX).make();
 
         //use the DB object to open the "myMap" HashMap
         List<PostingList> partialIndex = (List<PostingList>) db.indexTreeList("index_" + 0, Serializer.JAVA).createOrOpen();
@@ -146,6 +146,7 @@ public class Spimi {
 
 
         try(DB db = DBMaker.fileDB(PATH_TO_DOCUMENTS).fileChannelEnable().fileMmapEnable().make(); //fileDb for  processed documents
+            DB partialIndex = DBMaker.fileDB(PATH_PARTIAL_INDEX).fileChannelEnable().fileMmapEnable().make();
             DB docIndexDb = DBMaker.fileDB(PATH_TO_DOCUMENT_INDEX).fileChannelEnable().fileMmapEnable().make(); //fileDB for document index
             HTreeMap collection = db.hashMap("processedCollection")//hashmap containing processd collection
                     .keySerializer(Serializer.STRING) //key ->pid
@@ -202,7 +203,7 @@ public class Spimi {
 
 
 
-                saveIndexToDisk(index);  //either if there is no  memory available or all documents were read, flush partial index onto disk
+                saveIndexToDisk(index,partialIndex);  //either if there is no  memory available or all documents were read, flush partial index onto disk
 
 
             }
