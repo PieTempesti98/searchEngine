@@ -65,7 +65,7 @@ public class ConfigurationParameters {
     public static String getPartialIndexPath() {return partialIndexPath;}
 
 
-    public static String geVocabularyPath() {return vocabularyPath;}
+    public static String getVocabularyPath() {return vocabularyPath;}
 
     public static String getInvertedIndexPath() {return invertedIndexPath;
     }

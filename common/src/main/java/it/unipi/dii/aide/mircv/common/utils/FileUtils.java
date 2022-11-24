@@ -43,4 +43,11 @@ public class FileUtils {
             e.printStackTrace();
         }
     }
+
+    public static void removeFile(String path){
+        File file = new File(path);
+        if(file.exists())
+            file.delete();
+    }
+
 }

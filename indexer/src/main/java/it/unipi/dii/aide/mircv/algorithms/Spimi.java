@@ -204,6 +204,7 @@ public class Spimi {
             }
             //TODO: Decide if num indexes can be the return parameter of spimi to pass it directly to the merger
             Utility.setNumIndexes(num_index); //keeps track of number of partial indexed created, useful in the merging phase
+            System.out.println(Utility.getNumIndexes());
         }catch (Exception e){
             e.printStackTrace();
         }

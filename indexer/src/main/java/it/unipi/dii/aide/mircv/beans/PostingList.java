@@ -65,9 +65,6 @@ public class PostingList implements Serializable{
         // - each integer will occupy 4 bytes since we are storing integers in byte arrays
         int numBytes = getNumBytes();
 
-        // create inverted index's file if not exists
-        createIfNotExists(PATH_TO_INVERTED_INDEX);
-
         // try to open a file channel to the file of the inverted index
         try (FileChannel fChan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_INVERTED_INDEX), StandardOpenOption.WRITE,
                 StandardOpenOption.READ, StandardOpenOption.CREATE)){

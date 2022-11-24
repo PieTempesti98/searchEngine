@@ -12,14 +12,12 @@ import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 
-import static it.unipi.dii.aide.mircv.common.utils.FileUtils.createOrCleanFile;
+import static it.unipi.dii.aide.mircv.common.utils.FileUtils.removeFile;
 
 public class MapDBLoader {
     /**
@@ -46,8 +44,7 @@ public class MapDBLoader {
         // load the stopwords into the preprocesser
         Preprocesser.readStopwords();
 
-        //createOrCleanFile(OUTPUT_PATH);
-        // Create the database
+        removeFile(OUTPUT_PATH);
 
         try(BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
             DB db = DBMaker.fileDB(OUTPUT_PATH).fileChannelEnable().fileMmapEnable().make();
