@@ -200,14 +200,9 @@ public class Spimi {
                     }
 
                 }
-
-
-
                 saveIndexToDisk(index,partialIndex);  //either if there is no  memory available or all documents were read, flush partial index onto disk
-
-
             }
-
+            //TODO: Decide if num indexes can be the return parameter of spimi to pass it directly to the merger
             Utility.setNumIndexes(num_index); //keeps track of number of partial indexed created, useful in the merging phase
         }catch (Exception e){
             e.printStackTrace();
