@@ -5,7 +5,7 @@ import it.unipi.dii.aide.mircv.algorithms.Spimi;
 
 public class Main {
     public static void main(String[] args) {
-        Spimi.spimi();
+        Spimi.executeSpimi();
         Merger.mergeIndexes();
     }
 }
