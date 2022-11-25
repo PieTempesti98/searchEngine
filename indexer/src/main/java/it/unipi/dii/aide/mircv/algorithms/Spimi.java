@@ -5,6 +5,7 @@ import it.unipi.dii.aide.mircv.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.dto.ProcessedDocumentDTO;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
+import it.unipi.dii.aide.mircv.utils.Utility;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
@@ -138,9 +139,11 @@ public class Spimi {
 
 
 
+
     /*
     *  performs Spimi algorithm
     * */
+
     public static int executeSpimi(){
 
         try(DB db = DBMaker.fileDB(PATH_TO_DOCUMENTS).fileChannelEnable().fileMmapEnable().make(); //fileDb for  processed documents
@@ -200,8 +203,8 @@ public class Spimi {
                 }
                 saveIndexToDisk(index,partialIndex);  //either if there is no  memory available or all documents were read, flush partial index onto disk
             }
-            //TODO: Decide if num indexes can be the return parameter of spimi to pass it directly to the merger
             return numIndex;
+
         }catch (Exception e){
             e.printStackTrace();
             return 0;

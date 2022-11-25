@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
-    <rawCollectionPath>data/sampled_collection.tsv</rawCollectionPath>
+    <rawCollectionPath>data/collection.tsv</rawCollectionPath>
     <loadedCollectionPath>data/loadedData.tsv</loadedCollectionPath>
     <stopwordsPath>config/stopwords.txt</stopwordsPath>
     <processedCollectionPath>data/processedCollection.db</processedCollectionPath>
