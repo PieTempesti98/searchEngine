@@ -59,7 +59,7 @@ public class PostingList implements Serializable{
      * save to disk the posting list as a 2 byte arrays (first for docids, second for freqs)
      * @param memoryOffset the memory offset (in the inverted index file) at which the posting list will be stored
      */
-    public int saveToDisk(long memoryOffset) {
+    public int saveToDisk(long memoryOffset, VocabularyEntry vocabularyEntry) {
         // memory occupancy of the posting list:
         // - for each posting we have to store 2 integers (docid and freq)
         // - each integer will occupy 4 bytes since we are storing integers in byte arrays
@@ -70,20 +70,24 @@ public class PostingList implements Serializable{
                 StandardOpenOption.READ, StandardOpenOption.CREATE)){
 
             // instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer docsBuf = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset, numBytes/2);
-
-            // instantiation of MappedByteBuffer for integer list of freqs
-            MappedByteBuffer freqBuf = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset+numBytes/2, numBytes/2);
+            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset, numBytes);
 
             // check if MappedByteBuffers are correctly instantiated
-            if (docsBuf != null && freqBuf != null) {
+            if (buffer != null) {
 
                 // write postings to file
                 for (Map.Entry<Integer, Integer> posting : postings) {
                     // encode docid
-                    docsBuf.putInt(posting.getKey());
-                    // encode freq
-                    freqBuf.putInt(posting.getValue());
+                    buffer.putInt(posting.getKey());
+                }
+                long freqOffset = buffer.position();
+
+                // set the frequency offset in the vocabulary
+                vocabularyEntry.setFrequencyOffset(freqOffset);
+
+                for (Map.Entry<Integer, Integer> posting : postings) {
+                    // encode docid
+                    buffer.putInt(posting.getValue());
                 }
                 return numBytes;
             }

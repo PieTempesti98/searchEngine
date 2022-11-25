@@ -8,6 +8,13 @@ import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.Serializer;
 
+import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 
 /**
@@ -23,12 +30,12 @@ public class Merger {
     /**
      * Standard pathname for the intermediate index files
      */
-    private static final String INTERMEDIATE_INDEX_PATH = ConfigurationParameters.getPartialIndexPath();
+    private static final String PARTIAL_INDEX_PATH = ConfigurationParameters.getPartialIndexPath();
 
     /**
      * number of intermediate indexes produced by SPIMI algorithm
      */
-    private static final int NUM_INTERMEDIATE_INDEXES = Utility.getNumIndexes();
+    private static int numIndexes;
 
     /**
      * vocabulary path to mapped db
@@ -43,7 +50,11 @@ public class Merger {
     /**
      * vocabulary for the final inverted index
      */
-    private static List<VocabularyEntry> vocabulary;
+    private static Map<String, VocabularyEntry> vocabulary;
+
+    private final static String PATH_TO_INVERTED_INDEX = ConfigurationParameters.getInvertedIndexPath();
+
+    private static PostingList[] nextLists = null;
 
     /**
      * Method that initializes all the data structures:
@@ -53,12 +64,17 @@ public class Merger {
     private static void initialize(DB dbInd, DB dbVoc) {
 
         // open the vocabulary
-        vocabulary = (List<VocabularyEntry>) dbVoc.indexTreeList("vocabulary", Serializer.JAVA).createOrOpen();
+        vocabulary = (Map<String, VocabularyEntry>) dbVoc.hashMap("vocabulary")
+                .keySerializer(Serializer.STRING)
+                .valueSerializer(Serializer.JAVA)
+                .createOrOpen();
 
+        nextLists = new PostingList[numIndexes];
         // get all the intermediate indexes
-        for (int i = 0; i < NUM_INTERMEDIATE_INDEXES; i++) {
+        for (int i = 0; i < numIndexes; i++) {
             List<PostingList> list = (List<PostingList>) dbInd.indexTreeList("index_" + i, Serializer.JAVA).createOrOpen();
             intermediateIndexes.put(i, list.iterator());
+            nextLists[i] = intermediateIndexes.get(i).next();
         }
     }
 
@@ -70,13 +86,15 @@ public class Merger {
     private static String getMinTerm() {
         String term = null;
 
-        for (int i = 0; i < NUM_INTERMEDIATE_INDEXES; i++) {
+        for (int i = 0; i < numIndexes; i++) {
+
             // check if there are still posting lists to be processed at intermediate index 'i'
-            if (intermediateIndexes.get(i) == null || !intermediateIndexes.get(i).hasNext())
+            if(nextLists[i] == null)
                 continue;
 
+
             // next term to be processed at the intermediate index 'i'
-            String nextTerm = intermediateIndexes.get(i).next().getTerm();
+            String nextTerm = nextLists[i].getTerm();
 
             if (term == null) {
                 term = nextTerm;
@@ -110,14 +128,12 @@ public class Merger {
         long numBytes = 0;
 
         // processing the term
-        for (int i = 0; i < NUM_INTERMEDIATE_INDEXES; i++) {
-
+        for (int i = 0; i < numIndexes; i++) {
             // Found the matching term
-            if (intermediateIndexes.get(i) != null && intermediateIndexes.get(i).hasNext()) {
+            if (nextLists[i] != null) {
                 // intermediate posting list for term 'termToProcess' in index 'i'
-                PostingList intermediatePostingList = intermediateIndexes.get(i).next();
+                PostingList intermediatePostingList = nextLists[i];
                 if (intermediatePostingList.getTerm().equals(term)) {
-
 
                     // compute memory occupancy and add it to total space occupancy
                     numBytes += intermediatePostingList.getNumBytes();
@@ -128,10 +144,12 @@ public class Merger {
                     //update vocabulary statistics
                     vocabularyEntry.updateStatistics(intermediatePostingList);
 
-                    // check if index 'i' is empty
-                    if (!intermediateIndexes.get(i).hasNext()) {
+                    // Update the nextList array with the next term to process
+                    if(intermediateIndexes.get(i).hasNext())
+                        nextLists[i] = intermediateIndexes.get(i).next();
+                    else{
                         // set index 'i' to null since it is empty
-                        intermediateIndexes.replace(i, null);
+                        nextLists[i] = null;
                     }
                 }
             }
@@ -145,11 +163,55 @@ public class Merger {
         vocabularyEntry.computeIDF();
 
         // add vocabulary entry to vocabulary
-        vocabulary.add(vocabularyEntry);
+        vocabulary.put(term, vocabularyEntry);
 
         return finalList;
     }
 
+
+    private static long saveToDisk(PostingList list) {
+        // memory occupancy of the posting list:
+        // - for each posting we have to store 2 integers (docid and freq)
+        // - each integer will occupy 4 bytes since we are storing integers in byte arrays
+        int numBytes = list.getNumBytes();
+
+        // try to open a file channel to the file of the inverted index
+        try (FileChannel fChan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_INVERTED_INDEX), StandardOpenOption.WRITE,
+                StandardOpenOption.READ, StandardOpenOption.CREATE)){
+
+            // instantiation of MappedByteBuffer for integer list of docids
+            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memOffset, numBytes);
+
+            // check if MappedByteBuffers are correctly instantiated
+            if (buffer != null) {
+
+                // write postings to file
+                for (Map.Entry<Integer, Integer> posting : list.getPostings()) {
+                    // encode docid
+                    buffer.putInt(posting.getKey());
+                }
+                long freqOffset = memOffset + buffer.position();
+
+                // set the frequency offset in the vocabulary
+                vocabulary.get(list.getTerm()).setFrequencyOffset(freqOffset);
+
+
+                for (Map.Entry<Integer, Integer> posting : list.getPostings()) {
+                    // encode docid
+                    buffer.putInt(posting.getValue());
+                }
+                long memorySize = buffer.position();
+                memOffset += buffer.position();
+                vocabulary.get(list.getTerm()).setMemorySize(memorySize);
+                return memorySize;
+            }
+        } catch (InvalidPathException e) {
+            System.out.println("Path Error " + e);
+        } catch (IOException e) {
+            System.out.println("I/O Error " + e);
+        }
+        return -1;
+    }
     /**
      * The effective merging pipeline:
      * - finds the minimum term between the indexes
@@ -158,10 +220,11 @@ public class Merger {
      *
      * @return true if the merging is complete, false otherwise
      */
-    public static boolean mergeIndexes() {
+    public static boolean mergeIndexes(int numIndexes) {
+        Merger.numIndexes = numIndexes;
 
         try (DB dbVoc = DBMaker.fileDB(PATH_TO_VOCABULARY).fileChannelEnable().fileMmapEnable().make(); // vocabulary memory mapped file
-             DB dbInd = DBMaker.fileDB(INTERMEDIATE_INDEX_PATH).fileChannelEnable().fileMmapEnable().make() // intermediate indexes memory mapped file
+             DB dbInd = DBMaker.fileDB(PARTIAL_INDEX_PATH).fileChannelEnable().fileMmapEnable().make() // intermediate indexes memory mapped file
         ) {
 
             // initialization operations
@@ -176,14 +239,13 @@ public class Merger {
 
                 if(termToProcess == null)
                     break;
-
+                System.out.println(termToProcess);
                 // merge the posting lists for the term to be processed
                 PostingList mergedPostingList = processTerm(termToProcess);
 
                 // save it on disk and compute the information to store in vocabulary
-                int memorySize = mergedPostingList.saveToDisk(memOffset);
-
-                memOffset += memorySize;
+                long memorySize = saveToDisk(mergedPostingList);
+                System.out.println(memOffset);
 
             }
             return true;

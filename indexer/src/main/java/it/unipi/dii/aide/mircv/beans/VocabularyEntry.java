@@ -58,6 +58,8 @@ public class VocabularyEntry implements Serializable {
      */
     private long memoryOffset = 0;
 
+    private long frequencyOffset = 0;
+
     /**
      * size of the term's posting list in the inverted index in bytes
      */
@@ -137,6 +139,7 @@ public class VocabularyEntry implements Serializable {
         stream.writeInt(df);
         stream.writeDouble(idf);
         stream.writeLong(memoryOffset);
+        stream.writeLong(frequencyOffset);
         stream.writeLong(memorySize);
     }
 
@@ -149,8 +152,48 @@ public class VocabularyEntry implements Serializable {
         df = stream.readInt();
         idf = stream.readDouble();
         memoryOffset = stream.readLong();
+        frequencyOffset = stream.readLong();
         memorySize = stream.readLong();
 
     }
 
+    public static int getTermCount() {
+        return termCount;
+    }
+
+    public int getTermid() {
+        return termid;
+    }
+
+    public String getTerm() {
+        return term;
+    }
+
+    public int getDf() {
+        return df;
+    }
+
+    public int getTf() {
+        return tf;
+    }
+
+    public double getIdf() {
+        return idf;
+    }
+
+    public long getMemoryOffset() {
+        return memoryOffset;
+    }
+
+    public long getMemorySize() {
+        return memorySize;
+    }
+
+    public long getFrequencyOffset() {
+        return frequencyOffset;
+    }
+
+    public void setFrequencyOffset(long frequencyOffset) {
+        this.frequencyOffset = frequencyOffset;
+    }
 }
