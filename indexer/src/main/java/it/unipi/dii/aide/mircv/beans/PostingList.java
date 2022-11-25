@@ -59,34 +59,35 @@ public class PostingList implements Serializable{
      * save to disk the posting list as a 2 byte arrays (first for docids, second for freqs)
      * @param memoryOffset the memory offset (in the inverted index file) at which the posting list will be stored
      */
-    public int saveToDisk(long memoryOffset) {
+    public int saveToDisk(long memoryOffset, VocabularyEntry vocabularyEntry) {
         // memory occupancy of the posting list:
         // - for each posting we have to store 2 integers (docid and freq)
         // - each integer will occupy 4 bytes since we are storing integers in byte arrays
-        int numBytes = postings.size()*4*2;
-
-        // create inverted index's file if not exists
-        createIfNotExists(PATH_TO_INVERTED_INDEX);
+        int numBytes = getNumBytes();
 
         // try to open a file channel to the file of the inverted index
         try (FileChannel fChan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_INVERTED_INDEX), StandardOpenOption.WRITE,
                 StandardOpenOption.READ, StandardOpenOption.CREATE)){
 
             // instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer docsBuf = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset, numBytes/2);
-
-            // instantiation of MappedByteBuffer for integer list of freqs
-            MappedByteBuffer freqBuf = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset+numBytes/2, numBytes/2);
+            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset, numBytes);
 
             // check if MappedByteBuffers are correctly instantiated
-            if (docsBuf != null && freqBuf != null) {
+            if (buffer != null) {
 
                 // write postings to file
                 for (Map.Entry<Integer, Integer> posting : postings) {
                     // encode docid
-                    docsBuf.putInt(posting.getKey());
-                    // encode freq
-                    freqBuf.putInt(posting.getValue());
+                    buffer.putInt(posting.getKey());
+                }
+                long freqOffset = buffer.position();
+
+                // set the frequency offset in the vocabulary
+                vocabularyEntry.setFrequencyOffset(freqOffset);
+
+                for (Map.Entry<Integer, Integer> posting : postings) {
+                    // encode docid
+                    buffer.putInt(posting.getValue());
                 }
                 return numBytes;
             }
@@ -98,6 +99,13 @@ public class PostingList implements Serializable{
         return -1;
     }
 
+    /**
+     * method to return the numbers of bytes occupied by this posting list when stored in memory
+     * @return posting list's space occupancy in bytes
+     */
+    public int getNumBytes() {
+        return postings.size()*4*2;
+    }
     @Override
     public String toString() {
         return "PostingList{" +

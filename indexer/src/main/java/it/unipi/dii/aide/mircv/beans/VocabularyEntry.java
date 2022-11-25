@@ -2,6 +2,10 @@ package it.unipi.dii.aide.mircv.beans;
 
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 
+import java.io.IOException;
+import java.io.Serial;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Map;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
@@ -17,7 +21,7 @@ import static it.unipi.dii.aide.mircv.common.utils.FileUtils.createIfNotExists;
 /**
  * Entry of the vocabulary for a term
  */
-public class VocabularyEntry {
+public class VocabularyEntry implements Serializable {
 
     /**
      * incremental counter of the terms, used to assign the termid
@@ -27,7 +31,7 @@ public class VocabularyEntry {
     /**
      * termid of the specific term
      */
-    private final int termid;
+    private int termid;
 
     /**
      * Term to which refers the vocabulary entry
@@ -54,12 +58,14 @@ public class VocabularyEntry {
      */
     private long memoryOffset = 0;
 
+    private long frequencyOffset = 0;
+
     /**
      * size of the term's posting list in the inverted index in bytes
      */
     private long memorySize = 0;
-    
-    private static final String PATH_TO_VOCABULARY = ConfigurationParameters.geVocabularyPath();
+
+    private static final String PATH_TO_VOCABULARY = ConfigurationParameters.getVocabularyPath();
 
     /**
      * Constructor for the vocabulary entry for the term passed as parameter
@@ -102,23 +108,6 @@ public class VocabularyEntry {
     }
 
     /**
-     * Appends the vocabulary entry in vocabulary's file
-     */
-    public void saveToDisk() {
-        //TODO: implement the method [Francesca]
-
-        //create vocabulary file if not exists
-        createIfNotExists(PATH_TO_VOCABULARY);
-
-        //Save vocabulary entry to file using append mode
-        try {
-            Files.writeString(Paths.get(PATH_TO_VOCABULARY), this.toString(), StandardCharsets.UTF_8, StandardOpenOption.APPEND);
-        } catch (IOException e) {
-           e.printStackTrace();
-        }
-    }
-
-    /**
      * Returns the vocabulary entry as a string formatted in the following way:
      * [termid]-[term]-[idf] [tf] [memoryOffset] [memorySize]\n
      * @return the formatted string
@@ -134,10 +123,77 @@ public class VocabularyEntry {
         return str;
     }
 
-    public void setMemorySize(int memorySize) {
+    public void setMemorySize(long memorySize) {
         this.memorySize = memorySize;
     }
 
-    public void setMemoryOffset(int memoryOffset) {this.memoryOffset = memoryOffset;
+    public void setMemoryOffset(long memoryOffset) {this.memoryOffset = memoryOffset;
+    }
+    @Serial
+    private void writeObject(java.io.ObjectOutputStream stream)
+            throws IOException {
+
+        stream.writeInt(termid);
+        stream.writeUTF(term);
+        stream.writeInt(tf);
+        stream.writeInt(df);
+        stream.writeDouble(idf);
+        stream.writeLong(memoryOffset);
+        stream.writeLong(frequencyOffset);
+        stream.writeLong(memorySize);
+    }
+
+    @Serial
+    private void readObject(java.io.ObjectInputStream stream)
+            throws IOException, ClassNotFoundException {
+        termid = stream.readInt();
+        term = stream.readUTF();
+        tf = stream.readInt();
+        df = stream.readInt();
+        idf = stream.readDouble();
+        memoryOffset = stream.readLong();
+        frequencyOffset = stream.readLong();
+        memorySize = stream.readLong();
+
+    }
+
+    public static int getTermCount() {
+        return termCount;
+    }
+
+    public int getTermid() {
+        return termid;
+    }
+
+    public String getTerm() {
+        return term;
+    }
+
+    public int getDf() {
+        return df;
+    }
+
+    public int getTf() {
+        return tf;
+    }
+
+    public double getIdf() {
+        return idf;
+    }
+
+    public long getMemoryOffset() {
+        return memoryOffset;
+    }
+
+    public long getMemorySize() {
+        return memorySize;
+    }
+
+    public long getFrequencyOffset() {
+        return frequencyOffset;
+    }
+
+    public void setFrequencyOffset(long frequencyOffset) {
+        this.frequencyOffset = frequencyOffset;
     }
 }

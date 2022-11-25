@@ -35,7 +35,7 @@ public class Spimi {
     /*
     counts the number of partial indexes created
      */
-    private static int num_index = 0;
+    private static int numIndex = 0;
 
 
     /**
@@ -59,11 +59,11 @@ public class Spimi {
 
         //write index to disk
         //try(DB db = DBMaker.fileDB(PATH_BASE_TO_INDEX + num_index + ".db").fileChannelEnable().fileMmapEnable().make()){
-        List<PostingList> partialIndex = (List<PostingList>) db.indexTreeList("index_" + num_index, Serializer.JAVA).createOrOpen();
+        List<PostingList> partialIndex = (List<PostingList>) db.indexTreeList("index_" + numIndex, Serializer.JAVA).createOrOpen();
         partialIndex.addAll(index.values());
 
         //update number of partial inverted indexes
-        num_index ++;
+        numIndex++;
        /* }catch(Exception e){
             e.printStackTrace();
         }*/
@@ -139,11 +139,12 @@ public class Spimi {
 
 
 
+
     /*
     *  performs Spimi algorithm
     * */
-    public static void executeSpimi(){
 
+    public static int executeSpimi(){
 
         try(DB db = DBMaker.fileDB(PATH_TO_DOCUMENTS).fileChannelEnable().fileMmapEnable().make(); //fileDb for  processed documents
             DB partialIndex = DBMaker.fileDB(PATH_PARTIAL_INDEX).fileChannelEnable().fileMmapEnable().make();
@@ -202,10 +203,11 @@ public class Spimi {
                 }
                 saveIndexToDisk(index,partialIndex);  //either if there is no  memory available or all documents were read, flush partial index onto disk
             }
-            //TODO: Decide if num indexes can be the return parameter of spimi to pass it directly to the merger
-            Utility.setNumIndexes(num_index); //keeps track of number of partial indexed created, useful in the merging phase
+            return numIndex;
+
         }catch (Exception e){
             e.printStackTrace();
+            return 0;
         }
     }
 
