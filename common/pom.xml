@@ -28,5 +28,11 @@
             <version>2.13.4.2</version>
             <scope>compile</scope>
         </dependency>
+        <dependency>
+            <groupId>ca.rmen</groupId>
+            <artifactId>porter-stemmer</artifactId>
+            <version>1.0.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 </project>

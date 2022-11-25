@@ -3,9 +3,8 @@ package it.unipi.dii.aide.mircv.algorithms;
 import it.unipi.dii.aide.mircv.beans.DocumentIndexEntry;
 import it.unipi.dii.aide.mircv.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import it.unipi.dii.aide.mircv.common.dto.ProcessedDocumentDTO;
+import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
-import it.unipi.dii.aide.mircv.utils.Utility;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
@@ -173,7 +172,7 @@ public class Spimi {
                         break;
                     }
                     //parse line to get pid and all terms of a document
-                    ProcessedDocumentDTO document = new ProcessedDocumentDTO();
+                    ProcessedDocument document = new ProcessedDocument();
                     String pid = keyterator.next(); //the pid is the key of the hashmap
                     document.setPid(pid);
                     document.setTokens((ArrayList<String>) collection.get(pid));

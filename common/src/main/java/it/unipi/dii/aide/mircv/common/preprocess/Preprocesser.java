@@ -1,9 +1,9 @@
-package it.unipi.dii.aide.mircv.collectionLoader.preprocess;
+package it.unipi.dii.aide.mircv.common.preprocess;
 
 import ca.rmen.porterstemmer.PorterStemmer;
-import it.unipi.dii.aide.mircv.collectionLoader.beans.TextDocument;
+import it.unipi.dii.aide.mircv.common.beans.TextDocument;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import it.unipi.dii.aide.mircv.common.dto.ProcessedDocumentDTO;
+import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -19,7 +19,6 @@ public class Preprocesser {
     private static final String NON_DIGIT_MATCHER = "[^a-zA-Z\s]";
     private static final String MULTIPLE_SPACE_MATCHER = "\s+";
     private static final String PATH_TO_STOPWORDS = ConfigurationParameters.getStopwordsPath();
-    private static final String PATH_TO_OUTPUT_FILE = ConfigurationParameters.getProcessedCollectionPath();
     private static final ArrayList<String> stopwords = new ArrayList<>();
     private static final PorterStemmer stemmer = new PorterStemmer();
 
@@ -120,7 +119,7 @@ public class Preprocesser {
      * @param doc the TextDocument to preprocess
      * @return the processed document
      */
-    public static ProcessedDocumentDTO processDocument(TextDocument doc) {
+    public static ProcessedDocument processDocument(TextDocument doc) {
 
         String text = doc.getText();
 
@@ -140,7 +139,7 @@ public class Preprocesser {
         getStems(tokens);
 
         // Return the processed document
-        return new ProcessedDocumentDTO(doc.getPid(), tokens);
+        return new ProcessedDocument(doc.getPid(), tokens);
 
     }
 

@@ -1,4 +1,4 @@
-package it.unipi.dii.aide.mircv.common.dto;
+package it.unipi.dii.aide.mircv.common.beans;
 
 
 import java.util.ArrayList;
@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * DTO object for the processed class
  */
-public class ProcessedDocumentDTO {
+public class ProcessedDocument {
 
     /**
      * Document PID
@@ -26,7 +26,7 @@ public class ProcessedDocumentDTO {
      * @param pid PID of the document
      * @param tokens array with the processed tokens
      */
-    public ProcessedDocumentDTO(String pid, String[] tokens) {
+    public ProcessedDocument(String pid, String[] tokens) {
         this.pid = pid;
         this.tokens = new ArrayList<>(List.of(tokens));
     }
@@ -34,7 +34,7 @@ public class ProcessedDocumentDTO {
     /**
      * 0-parameter constructor: instantiates the document
      */
-    public ProcessedDocumentDTO() {
+    public ProcessedDocument() {
     }
 
     /**

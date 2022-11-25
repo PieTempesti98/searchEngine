@@ -1,9 +1,9 @@
-package it.unipi.dii.aide.mircv.collectionLoader;
+package it.unipi.dii.aide.mircv.dataLoader;
 
-import it.unipi.dii.aide.mircv.collectionLoader.beans.TextDocument;
-import it.unipi.dii.aide.mircv.collectionLoader.preprocess.Preprocesser;
+import it.unipi.dii.aide.mircv.common.beans.TextDocument;
+import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import it.unipi.dii.aide.mircv.common.dto.ProcessedDocumentDTO;
+import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -19,7 +19,7 @@ import org.mapdb.Serializer;
 
 import static it.unipi.dii.aide.mircv.common.utils.FileUtils.removeFile;
 
-public class MapDBLoader {
+public class CollectionLoader {
     /**
      * Path to the raw collection
      */
@@ -40,7 +40,7 @@ public class MapDBLoader {
      * </ol>
      * @param args input parameters for the main method, not used
      */
-    public static void main(String[] args) {
+    public static void loadCollection() {
         // load the stopwords into the preprocesser
         Preprocesser.readStopwords();
 
@@ -67,7 +67,7 @@ public class MapDBLoader {
                 TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
 
                 // Perform text preprocessing on the document
-                ProcessedDocumentDTO processedDocument = Preprocesser.processDocument(document);
+                ProcessedDocument processedDocument = Preprocesser.processDocument(document);
 
                 if(processedDocument.getTokens().size() > 0)
                     //Save it to the file if body is non empty

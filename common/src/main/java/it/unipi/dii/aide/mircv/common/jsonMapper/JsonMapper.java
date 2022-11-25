@@ -1,17 +1,17 @@
 package it.unipi.dii.aide.mircv.common.jsonMapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import it.unipi.dii.aide.mircv.common.dto.ProcessedCollectionDTO;
-import it.unipi.dii.aide.mircv.common.dto.ProcessedDocumentDTO;
+import it.unipi.dii.aide.mircv.common.beans.ProcessedCollection;
+import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
 public class JsonMapper {
-    public static void toJson(ArrayList<ProcessedDocumentDTO> documents, String outputPath) {
+    public static void toJson(ArrayList<ProcessedDocument> documents, String outputPath) {
         ObjectMapper mapper = new ObjectMapper();
-        ProcessedCollectionDTO collection = new ProcessedCollectionDTO(documents);
+        ProcessedCollection collection = new ProcessedCollection(documents);
 
         try {
             mapper.writeValue(new File(outputPath), collection);

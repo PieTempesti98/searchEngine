@@ -1,4 +1,4 @@
-package it.unipi.dii.aide.mircv.common.dto;
+package it.unipi.dii.aide.mircv.common.beans;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -7,32 +7,32 @@ import java.util.ArrayList;
 /**
  * DTO object to map the processed collection to JSON file
  */
-public class ProcessedCollectionDTO {
+public class ProcessedCollection {
 
     /**
      * List of the processed documents in the collection
      */
     @JsonProperty("data")
-    private ArrayList<ProcessedDocumentDTO> data = new ArrayList<>();
+    private ArrayList<ProcessedDocument> data = new ArrayList<>();
 
     /**
      * Creates the object with the given list of processed documents to map into JSON
      * @param data the list of documents
      */
-    public ProcessedCollectionDTO(ArrayList<ProcessedDocumentDTO> data) {
+    public ProcessedCollection(ArrayList<ProcessedDocument> data) {
         this.data = data;
     }
 
     /**
      * 0-parameter constructor, instantiating the collection with no documents in the list
      */
-    public ProcessedCollectionDTO() {
+    public ProcessedCollection() {
     }
 
     /**
      * @return the list of documents
      */
-    public ArrayList<ProcessedDocumentDTO> getData() {
+    public ArrayList<ProcessedDocument> getData() {
         return data;
     }
 
@@ -40,7 +40,7 @@ public class ProcessedCollectionDTO {
     /**
      * @param data the list of documents to set as the collection
      */
-    public void setData(ArrayList<ProcessedDocumentDTO> data) {
+    public void setData(ArrayList<ProcessedDocument> data) {
         this.data = data;
     }
 }
