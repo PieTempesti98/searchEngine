@@ -82,10 +82,10 @@ public class StructureReaders {
                 long docSize = freqOffset - memOffset;
 
                 // instantiation of MappedByteBuffer for integer list of docids
-                MappedByteBuffer docBuffer = fChan.map(FileChannel.MapMode.READ_WRITE, memOffset, docSize);
+                MappedByteBuffer docBuffer = fChan.map(FileChannel.MapMode.READ_WRITE, memOffset, memSize);
 
                 // instantiation of MappedByteBuffer for integer list of frequencies
-                MappedByteBuffer freqBuffer = fChan.map(FileChannel.MapMode.READ_WRITE, freqOffset, memSize - docSize);
+                MappedByteBuffer freqBuffer = fChan.map(FileChannel.MapMode.READ_WRITE, freqOffset, memSize);
 
                 // create the posting list for the term
                 PostingList postingList = new PostingList(term.getTerm());
