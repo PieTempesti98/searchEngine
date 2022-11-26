@@ -9,7 +9,6 @@
     <version>1.0-SNAPSHOT</version>
     <modules>
         <module>common</module>
-        <module>collectionLoader</module>
         <module>indexer</module>
         <module>queryHandler</module>
         <module>cli</module>
