@@ -67,6 +67,8 @@ public class DAAT {
                 else{
                     // CONJUNCTIVE MODE
                     // search for the maximum docid
+
+                    // update maximum docid
                     if(pointedDocid > docidToProcess)
                         docidToProcess = pointedDocid;
                 }
@@ -95,7 +97,7 @@ public class DAAT {
             if (postingList.getPostings() != null && postingList.getPostings().get(0).getKey() == docid) {
                 // process the posting
                 int tf = postingList.getPostings().get(0).getValue();
-                double idf = //TODO: get idf from vocabulary entry
+                double idf = 1; //TODO: get idf from vocabulary entry
 
                 // adding tfidf to doc score
                 docScore += ((1 + Math.log(tf)) * Math.log(idf));
