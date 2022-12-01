@@ -14,14 +14,44 @@ import java.util.Locale;
 
 public class Preprocesser {
 
+    /**
+     * regEx to match urls
+     */
     private static final String URL_MATCHER = "[(http(s)?):\\/\\/(www\\.)?a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)";
+
+    /**
+     * regEx to match html tags
+     */
     private static final String HTML_TAGS_MATCHER = "<[^>]+>";
+
+    /**
+     * regEx to match a character that is not a letter
+     */
     private static final String NON_DIGIT_MATCHER = "[^a-zA-Z\s]";
+
+    /**
+     * regEx to match sequential spaces
+     */
     private static final String MULTIPLE_SPACE_MATCHER = "\s+";
+
+    /**
+     * path to file storing stopwords
+     */
     private static final String PATH_TO_STOPWORDS = ConfigurationParameters.getStopwordsPath();
+
+    /**
+     * list of stopwords
+     */
     private static final ArrayList<String> stopwords = new ArrayList<>();
+
+    /**
+     * object performing stemming
+     */
     private static final PorterStemmer stemmer = new PorterStemmer();
 
+    /**
+     * reads stopwords from a file and loads them in main memory
+     */
     public static void readStopwords() {
 
         try (BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_STOPWORDS), StandardCharsets.UTF_8)) {
@@ -41,7 +71,9 @@ public class Preprocesser {
 
     /**
      * @param text:text to tokenize
-     *                  performs tokenization and returns the tokens
+*                  performs tokenization
+* @return array of tokens
+*
      */
     public static String[] tokenize(String text) {
 
@@ -50,7 +82,7 @@ public class Preprocesser {
 
     /**
      * @param text: text to lower
-     *              returns text in lower case
+     * @return text in lower case
      */
     public static String lowerText(String text) {
         return text.toLowerCase(Locale.ROOT);
@@ -59,6 +91,7 @@ public class Preprocesser {
     /**
      * @param text: text to clean
      *              performs text cleaning
+     * @return cleaned text
      */
     public static String cleanText(String text) {
 
@@ -85,23 +118,26 @@ public class Preprocesser {
      * @param tokens: tokens to check
      *                Check whether there are stopwords in a set
      *                of tokens and if that's the case, removes them
+     * @return tokens without stopwords
      */
     public static String[] removeStopwords(String[] tokens) {
 
         //holder for tokens who are not stopwords
         ArrayList<String> usefulTokens = new ArrayList<>();
 
-        for (String token : tokens)
+        for (String token : tokens) {
             if (!stopwords.contains(token)) //if token is not a stopword , keep it
                 usefulTokens.add(token);
+        }
+
 
         return usefulTokens.toArray(new String[0]);
     }
 
     /**
      * @param tokens: tokens to stem
-     *                <p>
-     *                Returns stem of each token
+     *
+     * @return Returns stem of each token
      */
     public static String[] getStems(String[] tokens) {
 
@@ -142,6 +178,7 @@ public class Preprocesser {
         return new ProcessedDocument(doc.getPid(), tokens);
 
     }
+
 
 }
 

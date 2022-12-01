@@ -1,8 +1,20 @@
 package queryProcessing;
 
+
 import indexLoading.IndexLoader;
 import it.unipi.dii.aide.mircv.common.beans.*;
+
+import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
+
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.Serializer;
+
+import java.io.File;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import java.util.ArrayList;
 
@@ -25,17 +37,36 @@ public class QueryProcesser {
 
     public String[] processQuery(String query, int k, boolean isConjunctive){
 
-        // Query preprocessing
-        ProcessedDocument processedQuery = Preprocesser.processDocument(new TextDocument("query", query));
+    /**
+     * path to file storing inverted index
+     */
+    private static final String PATH_TO_INVERTED_INDEX = ConfigurationParameters.getInvertedIndexPath();
+
+
+    /**
+     * checks if the data structures needed for query processing were correctly created
+     * @return boolean
+     */
+    public static boolean setupProcesser(){
+
 
         // load the posting lists of the tokens
         ArrayList<PostingList> queryPostings = getQueryPostings(processedQuery);
 
 
 
-        //TODO: perform DAAT to compute scores and sort the documents
+        //check if document index exists. If not the setup failed
+        if(! new File(PATH_TO_INVERTED_INDEX).exists())
+            return false;
 
-        // return the top-k documents
-        return new String[k];
+
+        //check if vocabulary and document index were correctly created. If not the setup failed
+        if(vocabulary.isEmpty() || documentIndex.isEmpty())
+            return false;
+
+        //successful setup
+        return true;
     }
+
+
 }

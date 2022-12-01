@@ -246,4 +246,93 @@ public class Merger {
         }
         return false;
     }
+
+    public static  List<PostingList> testMerger(Map<Integer, List<PostingList>> partialIndexes){
+
+        List<PostingList> finalIndex = new ArrayList<>();
+
+        numIndexes = partialIndexes.size();
+
+        // initialization
+        try (DB dbVoc = DBMaker.fileDB(PATH_TO_VOCABULARY).fileChannelEnable().fileMmapEnable().make(); // vocabulary memory mapped file
+        ){
+            // open the vocabulary
+            vocabulary = (Map<String, VocabularyEntry>) dbVoc.hashMap("vocabulary")
+                    .keySerializer(Serializer.STRING)
+                    .valueSerializer(Serializer.JAVA)
+                    .createOrOpen();
+            nextLists = new PostingList[numIndexes];
+
+            // get all the intermediate indexes
+            for (int i = 0; i < numIndexes; i++) {
+                intermediateIndexes.put(i, partialIndexes.get(i).iterator());
+                nextLists[i] = intermediateIndexes.get(i).next();
+            }
+
+            while(true){
+                String termToProcess = getMinTerm();
+
+                if(termToProcess == null)
+                    break;
+
+                // merge the posting lists for the term to be processed
+                PostingList mergedPostingList = processTerm(termToProcess);
+
+                finalIndex.add(mergedPostingList);
+            }
+
+            return finalIndex;
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static  List<VocabularyEntry> testVocabularyCreation(Map<Integer, List<PostingList>> partialIndexes){
+
+        List<PostingList> finalIndex = new ArrayList<>();
+
+        numIndexes = partialIndexes.size();
+
+        List<VocabularyEntry> testVocabulary = new ArrayList<>();
+
+        // initialization
+        try (DB dbVoc = DBMaker.fileDB(PATH_TO_VOCABULARY).fileChannelEnable().fileMmapEnable().make(); // vocabulary memory mapped file
+        ){
+            // open the vocabulary
+            vocabulary = (Map<String, VocabularyEntry>) dbVoc.hashMap("vocabulary")
+                    .keySerializer(Serializer.STRING)
+                    .valueSerializer(Serializer.JAVA)
+                    .createOrOpen();
+            nextLists = new PostingList[numIndexes];
+
+            // get all the intermediate indexes
+            for (int i = 0; i < numIndexes; i++) {
+                intermediateIndexes.put(i, partialIndexes.get(i).iterator());
+                nextLists[i] = intermediateIndexes.get(i).next();
+            }
+
+            while(true){
+                String termToProcess = getMinTerm();
+
+                if(termToProcess == null)
+                    break;
+
+                // merge the posting lists for the term to be processed
+                PostingList mergedPostingList = processTerm(termToProcess);
+
+                finalIndex.add(mergedPostingList);
+
+                VocabularyEntry testVocEntry = vocabulary.get(termToProcess);
+                testVocabulary.add(testVocEntry);
+            }
+
+            return testVocabulary;
+        }
+        catch(Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
 }
