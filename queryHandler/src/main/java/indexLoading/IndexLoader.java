@@ -33,6 +33,7 @@ public class IndexLoader {
 
             // create the posting list for the term
             PostingList postingList = new PostingList(term.getTerm());
+
             for (int i = 0; i < term.getDf(); i++) {
 
                 Map.Entry<Integer, Integer> posting = new AbstractMap.SimpleEntry<>(docBuffer.getInt(), freqBuffer.getInt());

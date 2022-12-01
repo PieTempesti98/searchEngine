@@ -13,7 +13,6 @@ public class DocumentIndex extends HashMap<Integer, DocumentIndexEntry> {
     private static DocumentIndex instance = null;
 
     private DocumentIndex(){
-        // TODO: load from disk
         //use DBMaker to create a DB object of HashMap stored on disk
         //provide location
         DB db = DBMaker.fileDB(ConfigurationParameters.getDocumentIndexPath()).make();
@@ -22,11 +21,9 @@ public class DocumentIndex extends HashMap<Integer, DocumentIndexEntry> {
                 .keySerializer(Serializer.INTEGER)
                 .valueSerializer(Serializer.JAVA).createOrOpen();
 
-        System.out.println(docIndex.size());
         //read from map
         for(int docid: docIndex.keySet()){
             this.put(docid, docIndex.get(docid));
-            System.out.println(docIndex.get(docid));
         }
 
         //close to protect from data corruption

@@ -1,8 +1,8 @@
 package it.unipi.dii.aide.mircv.algorithms.test;
 
 import it.unipi.dii.aide.mircv.algorithms.Spimi;
-import it.unipi.dii.aide.mircv.beans.DocumentIndexEntry;
-import it.unipi.dii.aide.mircv.beans.PostingList;
+import it.unipi.dii.aide.mircv.common.beans.DocumentIndexEntry;
+import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 
 import java.util.ArrayList;
@@ -30,7 +30,7 @@ public class SpimiMock extends Spimi {
                     posting = index.get(term);
                 }
 
-                updateOrAddPosting(docid, posting); //insert or update new posting
+                //updateOrAddPosting(docid, posting); //insert or update new posting
             }
 
             docid++;

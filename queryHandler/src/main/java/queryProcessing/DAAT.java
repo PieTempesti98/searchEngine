@@ -1,22 +1,21 @@
 package queryProcessing;
 
-import it.unipi.dii.aide.mircv.beans.PostingList;
+import it.unipi.dii.aide.mircv.common.beans.PostingList;
+import it.unipi.dii.aide.mircv.common.beans.Vocabulary;
 
 import java.util.*;
 
 
 public class DAAT {
 
-    /**
-     * iterators to the next posting to be scored for each posting list relative to query terms
-     */
-    private static ArrayList<PostingList> postingsToScore;
-
+    private static final Vocabulary vocabulary = Vocabulary.getInstance();
     /** method to move the iterators of postingsToScore to the given docid
      * @param docidToProcess: docid to which the iterators must be moved to
      * @return -1 if there is at least a list for which there is no docid >= docidToProcess
      */
-    private int moveIteratorsToDocid(int docidToProcess){
+
+
+    private static int moveIteratorsToDocid(int docidToProcess, ArrayList<PostingList> postingsToScore){
         // move the iterators for posting lists pointing to docids < docidToProcess
         for(int i=1; i<postingsToScore.size(); i++){
             // i-th posting list
@@ -43,7 +42,7 @@ public class DAAT {
      * - else, query mode is CONJUNCTIVE, return the maximum docid among all the first docids in the posting lists of the array,
      *      it returns -1 if the maximum docid is not present in all the posting lists to be scored
      * */
-    private int nextDocToProcess(boolean isConjunctive){
+    private static int nextDocToProcess(boolean isConjunctive, ArrayList<PostingList>postingsToScore){
         int docidToProcess = -1;
 
         // go through all the posting lists of other query terms
@@ -76,7 +75,7 @@ public class DAAT {
         }
 
         if(isConjunctive)
-            return moveIteratorsToDocid(docidToProcess);
+            return moveIteratorsToDocid(docidToProcess, postingsToScore);
         else
             return docidToProcess;
     }
@@ -86,7 +85,7 @@ public class DAAT {
      * @param docid: docid of the document to be scored
      * @return score of the document
      */
-    private double scoreDocument(int docid){
+    private static double scoreDocument(int docid, ArrayList<PostingList> postingsToScore){
         // initialization of document's score
         double docScore = 0;
 
@@ -97,7 +96,7 @@ public class DAAT {
             if (postingList.getPostings() != null && postingList.getPostings().get(0).getKey() == docid) {
                 // process the posting
                 int tf = postingList.getPostings().get(0).getValue();
-                double idf = 1; //TODO: get idf from vocabulary entry
+                double idf = vocabulary.getIdf(postingList.getTerm());
 
                 // adding tfidf to doc score
                 docScore += ((1 + Math.log(tf)) * Math.log(idf));
@@ -115,20 +114,18 @@ public class DAAT {
      * @param k: number of top k documents to be returned
      * @return returns a priority queue (of at most K elements) in the format <SCORE (Double), DOCID (Integer)> ordered by increasing score value
      */
-    public PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, boolean isConjuctive, int k){
+    public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, boolean isConjuctive, int k){
 
-        // avoid side effects
-        postingsToScore = new ArrayList<>(queryPostings);
-
+        // TODO: implement deep copy or iterators
         // initialization of the MinHeap for the results
         PriorityQueue<Map.Entry<Double, Integer>> topKDocuments = new PriorityQueue<>(k, Map.Entry.comparingByKey());
 
 
-        int docToProcess = nextDocToProcess(isConjuctive);
+        int docToProcess = nextDocToProcess(isConjuctive, queryPostings);
 
         // until there are documents to be processed
         while(docToProcess!= -1){
-            double docScore = scoreDocument(docToProcess);
+            double docScore = scoreDocument(docToProcess, queryPostings);
 
             // check if the MinHeap is full
             if(topKDocuments.size()==k){
@@ -152,10 +149,9 @@ public class DAAT {
             }
 
             // find next document to be processed
-            docToProcess = nextDocToProcess(isConjuctive);
+            docToProcess = nextDocToProcess(isConjuctive, queryPostings);
         }
 
-        // TODO: change docid into pid
         return topKDocuments;
     }
 

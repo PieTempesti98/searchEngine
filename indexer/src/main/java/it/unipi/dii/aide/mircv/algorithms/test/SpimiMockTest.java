@@ -1,7 +1,7 @@
 package it.unipi.dii.aide.mircv.algorithms.test;
 
 
-import it.unipi.dii.aide.mircv.beans.DocumentIndexEntry;
+import it.unipi.dii.aide.mircv.common.beans.DocumentIndexEntry;
 import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;

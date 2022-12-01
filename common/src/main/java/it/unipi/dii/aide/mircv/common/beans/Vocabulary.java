@@ -22,11 +22,9 @@ public class Vocabulary extends HashMap<String, VocabularyEntry>{
                 .keySerializer(Serializer.STRING)
                 .valueSerializer(Serializer.JAVA).createOrOpen();
 
-        System.out.println(vocabulary.size());
         //read from map
         for(String term: vocabulary.keySet()){
             this.put(term, vocabulary.get(term));
-            System.out.println(vocabulary.get(term));
         }
 
         //close to protect from data corruption

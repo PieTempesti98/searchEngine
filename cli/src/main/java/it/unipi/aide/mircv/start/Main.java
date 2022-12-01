@@ -13,16 +13,18 @@ public class Main {
 
     public static void main(String[] args){
 
-
+        System.out.println("****** SEARCH ENGINE ******");
+        System.out.println("Starting...");
         //check is setup of data structures was successful
         boolean setupSuccess = QueryProcesser.setupProcesser();
+
 
         if(!setupSuccess){
             System.out.println("Error in setup of this service. Shutting down...");
             return;
         }
 
-        System.out.println("****** SEARCH ENGINE ******");
+
         Scanner sc= new Scanner(System.in);
 
         String query;
