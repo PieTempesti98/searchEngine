@@ -1,4 +1,4 @@
-package it.unipi.dii.aide.mircv.beans;
+package it.unipi.dii.aide.mircv.common.beans;
 
 import java.io.IOException;
 import java.io.Serial;
