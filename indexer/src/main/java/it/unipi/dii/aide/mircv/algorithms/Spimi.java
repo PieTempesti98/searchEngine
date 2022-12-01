@@ -1,8 +1,8 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
+import it.unipi.dii.aide.mircv.common.beans.DocumentIndexEntry;
+import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import com.google.common.annotations.VisibleForTesting;
-import it.unipi.dii.aide.mircv.beans.DocumentIndexEntry;
-import it.unipi.dii.aide.mircv.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
@@ -64,9 +64,6 @@ public class Spimi {
 
         //update number of partial inverted indexes
         numIndex++;
-       /* }catch(Exception e){
-            e.printStackTrace();
-        }*/
 
     }
 
@@ -79,67 +76,21 @@ public class Spimi {
      *                   specific document, if that's not the case creates a new pair (docid,freq)
      *                   in which frequency is set to 1 and adds this pair to the posting list
      * **/
-
-    protected static void updateOrAddPosting(int docid, PostingList postingList){
-        boolean found = false;
-        for(Map.Entry<Integer, Integer> posting: postingList.getPostings()){ //iterate for each posting in postinglist
-
-            if(docid > posting.getKey()) //since postings are sorted by docid, if I read a value higher than the
-                break;                 //docid we want to find we can stop the search
-
-            if(docid == posting.getKey()){ //docid found
-                posting.setValue(posting.getValue() + 1); //update frequency
-                found = true;
-                break;
+    private static void updateOrAddPosting(int docid, PostingList postingList){
+        if(postingList.getPostings().size() > 0) {
+            // last document inserted:
+            Map.Entry<Integer, Integer> posting = postingList.getPostings().get(postingList.getPostings().size() - 1);
+            //If the docId is the same I update the posting
+            if (docid == posting.getKey()) {
+                posting.setValue(posting.getValue() + 1);
+                return;
             }
         }
-
-        if(!found) //document with that docid wasn't in the posting list
-            postingList.getPostings().add(new AbstractMap.SimpleEntry<>(docid,1)); //create new pair and add it
+        //the document has not been processed (docIds are incremental):
+        // create new pair and add it to the posting list
+        postingList.getPostings().add(new AbstractMap.SimpleEntry<>(docid,1));
 
     }
-
-    public static void read(){
-
-        //use DBMaker to create a DB object of HashMap stored on disk
-        //provide location
-        DB db = DBMaker.fileDB(PATH_PARTIAL_INDEX).make();
-
-        //use the DB object to open the "myMap" HashMap
-        List<PostingList> partialIndex = (List<PostingList>) db.indexTreeList("index_" + 0, Serializer.JAVA).createOrOpen();
-
-        //read from map
-        Iterator<PostingList> keys = partialIndex.stream().iterator();
-        while (keys.hasNext()) {
-            System.out.println(keys.next());
-        }
-
-        //close to protect from data corruption
-        db.close();
-    }
-
-    public static void readDI(){
-
-        //use DBMaker to create a DB object of HashMap stored on disk
-        //provide location
-        DB db = DBMaker.fileDB(PATH_TO_DOCUMENT_INDEX).make();
-
-        //use the DB object to open the "myMap" HashMap
-        List<DocumentIndexEntry> docIndex= (List<DocumentIndexEntry>) db.indexTreeList("docIndex",Serializer.JAVA).createOrOpen();
-
-        System.out.println(docIndex.size());
-        //read from map
-        Iterator<DocumentIndexEntry> keys = docIndex.stream().iterator();
-        while (keys.hasNext()) {
-            System.out.println(keys.next());
-        }
-
-        //close to protect from data corruption
-        db.close();
-    }
-
-
-
 
     /*
     *  performs Spimi algorithm

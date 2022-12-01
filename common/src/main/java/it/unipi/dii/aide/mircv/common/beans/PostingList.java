@@ -1,4 +1,4 @@
-package it.unipi.dii.aide.mircv.beans;
+package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 
@@ -14,8 +14,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Map;
-
-import static it.unipi.dii.aide.mircv.common.utils.FileUtils.createIfNotExists;
 
 public class PostingList implements Serializable{
 

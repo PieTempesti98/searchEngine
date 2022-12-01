@@ -1,8 +1,8 @@
 package it.unipi.dii.aide.mircv.utils;
 
-import it.unipi.dii.aide.mircv.beans.DocumentIndexEntry;
-import it.unipi.dii.aide.mircv.beans.PostingList;
-import it.unipi.dii.aide.mircv.beans.VocabularyEntry;
+import it.unipi.dii.aide.mircv.common.beans.DocumentIndexEntry;
+import it.unipi.dii.aide.mircv.common.beans.PostingList;
+import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -72,20 +72,21 @@ public class StructureReaders {
         try (FileChannel fChan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexPath()), StandardOpenOption.WRITE,
                 StandardOpenOption.READ, StandardOpenOption.CREATE)) {
 
-
-            while (vocabulary.hasNext()) {
+            int counter = 10;
+            while (vocabulary.hasNext() && counter > 0) {
 
                 VocabularyEntry term = vocabularyDB.get(vocabulary.next());
                 long memOffset = term.getMemoryOffset();
                 long freqOffset = term.getFrequencyOffset();
                 long memSize = term.getMemorySize();
                 long docSize = freqOffset - memOffset;
+                System.out.println("memory offset: " + memOffset + " frequency Offset: " + freqOffset + " memory size: " + memSize);
 
                 // instantiation of MappedByteBuffer for integer list of docids
-                MappedByteBuffer docBuffer = fChan.map(FileChannel.MapMode.READ_WRITE, memOffset, memSize);
+                MappedByteBuffer docBuffer = fChan.map(FileChannel.MapMode.READ_ONLY, memOffset, memSize);
 
                 // instantiation of MappedByteBuffer for integer list of frequencies
-                MappedByteBuffer freqBuffer = fChan.map(FileChannel.MapMode.READ_WRITE, freqOffset, memSize);
+                MappedByteBuffer freqBuffer = fChan.map(FileChannel.MapMode.READ_ONLY, freqOffset, memSize);
 
                 // create the posting list for the term
                 PostingList postingList = new PostingList(term.getTerm());
@@ -96,6 +97,7 @@ public class StructureReaders {
                 }
 
                 System.out.println(postingList);
+                counter--;
 
             }
         } catch (Exception e) {
@@ -104,13 +106,13 @@ public class StructureReaders {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        System.out.println("--- DOCUMENT INDEX ---");
-        readDocIndex();
-        Thread.sleep(2000);
-
-        System.out.println("--- VOCABULARY ---");
-        readVocabulary();
-        Thread.sleep(2000);
+//        System.out.println("--- DOCUMENT INDEX ---");
+//        readDocIndex();
+//        Thread.sleep(2000);
+//
+//        System.out.println("--- VOCABULARY ---");
+//        readVocabulary();
+//        Thread.sleep(2000);
 
         System.out.println("--- INVERTED INDEX ---");
         readInvertedIndex();

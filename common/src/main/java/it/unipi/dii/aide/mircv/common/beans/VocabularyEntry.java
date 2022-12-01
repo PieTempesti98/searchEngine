@@ -1,22 +1,12 @@
-package it.unipi.dii.aide.mircv.beans;
+package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 
 import java.io.IOException;
 import java.io.Serial;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Map;
 
-import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-
-import static it.unipi.dii.aide.mircv.common.utils.FileUtils.createIfNotExists;
 
 /**
  * Entry of the vocabulary for a term
@@ -58,14 +48,15 @@ public class VocabularyEntry implements Serializable {
      */
     private long memoryOffset = 0;
 
+    /**
+     * Starting point of the frequencies in the inverted index in bytes
+     */
     private long frequencyOffset = 0;
 
     /**
      * size of the term's posting list in the inverted index in bytes
      */
     private long memorySize = 0;
-
-    private static final String PATH_TO_VOCABULARY = ConfigurationParameters.getVocabularyPath();
 
     /**
      * Constructor for the vocabulary entry for the term passed as parameter
@@ -114,13 +105,12 @@ public class VocabularyEntry implements Serializable {
      */
     public String toString(){
         //format the string for the vocabulary entry
-        String str =    termid + "-" + term + "-" +
+        return termid + "-" + term + "-" +
+                        tf + " " + df + " "+
                         idf + " " +
-                        tf + " " +
-                        memoryOffset + " " +
+                        memoryOffset + " " + frequencyOffset + " " +
                         memorySize +
                         '\n';
-        return str;
     }
 
     public void setMemorySize(long memorySize) {
@@ -129,6 +119,11 @@ public class VocabularyEntry implements Serializable {
 
     public void setMemoryOffset(long memoryOffset) {this.memoryOffset = memoryOffset;
     }
+
+    public void setFrequencyOffset(long freqOffset) {
+        this.frequencyOffset = freqOffset;
+    }
+
     @Serial
     private void writeObject(java.io.ObjectOutputStream stream)
             throws IOException {
@@ -155,14 +150,6 @@ public class VocabularyEntry implements Serializable {
         frequencyOffset = stream.readLong();
         memorySize = stream.readLong();
 
-    }
-
-    public static int getTermCount() {
-        return termCount;
-    }
-
-    public int getTermid() {
-        return termid;
     }
 
     public String getTerm() {
@@ -193,7 +180,4 @@ public class VocabularyEntry implements Serializable {
         return frequencyOffset;
     }
 
-    public void setFrequencyOffset(long frequencyOffset) {
-        this.frequencyOffset = frequencyOffset;
-    }
 }

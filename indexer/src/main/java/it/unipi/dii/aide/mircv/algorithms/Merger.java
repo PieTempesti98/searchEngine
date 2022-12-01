@@ -1,7 +1,7 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
-import it.unipi.dii.aide.mircv.beans.PostingList;
-import it.unipi.dii.aide.mircv.beans.VocabularyEntry;
+import it.unipi.dii.aide.mircv.common.beans.PostingList;
+import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -115,13 +115,10 @@ public class Merger {
      * @param term: term to be processed
      * @return posting list of the processed term
      */
-    private static PostingList processTerm(String term) {
+    private static PostingList processTerm(String term, VocabularyEntry vocabularyEntry) {
         // new posting list for the term
         PostingList finalList = new PostingList();
         finalList.setTerm(term);
-
-        // new vocabulary entry for the term
-        VocabularyEntry vocabularyEntry = new VocabularyEntry(term);
 
         // total space occupancy in bytes of the final posting list
         long numBytes = 0;
@@ -161,14 +158,11 @@ public class Merger {
         //compute the final idf
         vocabularyEntry.computeIDF();
 
-        // add vocabulary entry to vocabulary
-        vocabulary.put(term, vocabularyEntry);
-
         return finalList;
     }
 
 
-    private static long saveToDisk(PostingList list) {
+    private static long saveToDisk(PostingList list, VocabularyEntry vocEntry) {
         // memory occupancy of the posting list:
         // - for each posting we have to store 2 integers (docid and freq)
         // - each integer will occupy 4 bytes since we are storing integers in byte arrays
@@ -183,25 +177,25 @@ public class Merger {
 
             // check if MappedByteBuffers are correctly instantiated
             if (buffer != null) {
+                ArrayList<Map.Entry<Integer, Integer>> postings = list.getPostings();
 
                 // write postings to file
-                for (Map.Entry<Integer, Integer> posting : list.getPostings()) {
+                for (Map.Entry<Integer, Integer> posting : postings) {
                     // encode docid
                     buffer.putInt(posting.getKey());
                 }
-                long freqOffset = memOffset + buffer.position();
 
                 // set the frequency offset in the vocabulary
-                vocabulary.get(list.getTerm()).setFrequencyOffset(freqOffset);
+                vocEntry.setFrequencyOffset(memOffset + buffer.position());
 
-
-                for (Map.Entry<Integer, Integer> posting : list.getPostings()) {
-                    // encode docid
+                for (Map.Entry<Integer, Integer> posting : postings) {
+                    // encode frequency
                     buffer.putInt(posting.getValue());
                 }
                 long memorySize = buffer.position();
                 memOffset += buffer.position();
-                vocabulary.get(list.getTerm()).setMemorySize(memorySize);
+                vocEntry.setMemorySize(memorySize);
+                vocabulary.put(vocEntry.getTerm(), vocEntry);
                 return memorySize;
             }
         } catch (InvalidPathException e) {
@@ -238,13 +232,12 @@ public class Merger {
 
                 if(termToProcess == null)
                     break;
-                System.out.println(termToProcess);
+                VocabularyEntry vocabularyEntry = new VocabularyEntry(termToProcess);
                 // merge the posting lists for the term to be processed
-                PostingList mergedPostingList = processTerm(termToProcess);
+                PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
 
                 // save it on disk and compute the information to store in vocabulary
-                long memorySize = saveToDisk(mergedPostingList);
-                System.out.println(memOffset);
+                long memorySize = saveToDisk(mergedPostingList, vocabularyEntry);
 
             }
             return true;
