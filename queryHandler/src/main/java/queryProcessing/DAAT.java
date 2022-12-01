@@ -123,9 +123,10 @@ public class DAAT {
         // initialization of the MinHeap for the results
         PriorityQueue<Map.Entry<Double, Integer>> topKDocuments = new PriorityQueue<>(k, Map.Entry.comparingByKey());
 
-        // until there are documents to be processed
+
         int docToProcess = nextDocToProcess(isConjuctive);
 
+        // until there are documents to be processed
         while(docToProcess!= -1){
             double docScore = scoreDocument(docToProcess);
 
@@ -142,7 +143,6 @@ public class DAAT {
 
                     // insert the document and its score in the MinHeap
                     topKDocuments.add(new AbstractMap.SimpleEntry<>(docScore, docToProcess));
-
                 }
             } else {
                 // MinHeap is not full, the current document enters the MinHeap
@@ -154,6 +154,8 @@ public class DAAT {
             // find next document to be processed
             docToProcess = nextDocToProcess(isConjuctive);
         }
+
+        // TODO: change docid into pid
         return topKDocuments;
     }
 
