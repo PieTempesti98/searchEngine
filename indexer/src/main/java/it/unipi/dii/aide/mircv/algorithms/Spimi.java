@@ -1,5 +1,6 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
+import com.google.common.annotations.VisibleForTesting;
 import it.unipi.dii.aide.mircv.beans.DocumentIndexEntry;
 import it.unipi.dii.aide.mircv.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
@@ -78,7 +79,8 @@ public class Spimi {
      *                   specific document, if that's not the case creates a new pair (docid,freq)
      *                   in which frequency is set to 1 and adds this pair to the posting list
      * **/
-    private static void updateOrAddPosting(int docid, PostingList postingList){
+
+    protected static void updateOrAddPosting(int docid, PostingList postingList){
         boolean found = false;
         for(Map.Entry<Integer, Integer> posting: postingList.getPostings()){ //iterate for each posting in postinglist
 
@@ -156,7 +158,10 @@ public class Spimi {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
 
             //list containing all documents indexes that must be written on file
-            List<DocumentIndexEntry> docIndex= (List<DocumentIndexEntry>) docIndexDb.indexTreeList("docIndex",Serializer.JAVA).createOrOpen();
+            Map<Integer,DocumentIndexEntry> docIndex= (Map<Integer,DocumentIndexEntry>)docIndexDb.hashMap("docIndex")
+                    .keySerializer(Serializer.INTEGER) //key-> docid
+                    .valueSerializer(Serializer.JAVA) //value -> document info
+                    .createOrOpen();
 
             int docid = 0; //assign docid in a incremental manner
 
@@ -180,7 +185,7 @@ public class Spimi {
 
                     //create new document index entry and add it to file
                     DocumentIndexEntry entry = new DocumentIndexEntry(pid,docid++,document.getTokens().size());
-                    docIndex.add(entry);
+                    docIndex.put(docid,entry);
 
                     CollectionStatistics.addDocument(); //keeps track of number of processed documents,
                                                         // useful for calculating collection statistics later on
