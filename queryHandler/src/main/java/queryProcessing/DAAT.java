@@ -14,10 +14,13 @@ public class DAAT {
      * @return -1 if there is at least a list for which there is no docid >= docidToProcess
      */
 
-
-    private static int moveIteratorsToDocid(int docidToProcess, ArrayList<PostingList> postingsToScore){
+    private static int nextGEQ(int docidToProcess, ArrayList<PostingList> postingsToScore){
         // move the iterators for posting lists pointing to docids < docidToProcess
-        for(int i=1; i<postingsToScore.size(); i++){
+
+        //System.out.println("moving iterators towards docid: \t"+docidToProcess);
+        //System.out.println("iterators:\t"+postingsToScore);
+
+        for(int i=0; i<postingsToScore.size(); i++){
             // i-th posting list
             PostingList currPostingList = postingsToScore.get(i);
 
@@ -28,11 +31,23 @@ public class DAAT {
                     currPostingList.getPostings().remove(0);
 
                 // check if in the current posting list there is no docid >= docidToProcess to be processed
-                if(currPostingList.getPostings() == null){
+                if(currPostingList.getPostings() == null || currPostingList.getPostings().isEmpty()){
+                   // System.out.println("conjunctive mode end");
                     return -1;
+                }
+
+                // check if in the current posting list is not present docidToProcess but it is present a docid >=
+                if (currPostingList.getPostings().get(0).getKey()>docidToProcess) {
+                    // the current docid will be the candidate next docid to be processed
+                    // move the iterators of other posting lists to new next docid to be processed
+                    return nextGEQ(currPostingList.getPostings().get(0).getKey(), postingsToScore);
+
                 }
             }
         }
+
+        //System.out.println("conjunctive mode, next docid to be processed:\t"+docidToProcess);
+       // System.out.println("moved iterators:\t"+postingsToScore);
         return docidToProcess;
     }
 
@@ -45,14 +60,19 @@ public class DAAT {
     private static int nextDocToProcess(boolean isConjunctive, ArrayList<PostingList>postingsToScore){
         int docidToProcess = -1;
 
+       // System.out.println("finding next doc to score among:\t"+postingsToScore);
+
         // go through all the posting lists of other query terms
         for(int i=0; i<postingsToScore.size(); i++){
             // i-th posting list
             PostingList currPostingList = postingsToScore.get(i);
+
             // check if there are postings to iterate in the i-th posting list
             if(currPostingList != null && currPostingList.getPostings() != null && !currPostingList.getPostings().isEmpty()){
                 // retrieve docid of the first document in the pointed posting list
                 int pointedDocid = currPostingList.getPostings().get(0).getKey();
+
+                //System.out.println("curr iterator points to:\t"+pointedDocid);
 
                 if(!isConjunctive){
                     // DISJUNCTIVE MODE
@@ -71,9 +91,10 @@ public class DAAT {
                         docidToProcess = pointedDocid;
                 }
             }
+            //System.out.println("next docid value after this iteration:\t"+docidToProcess);
         }
         if(isConjunctive)
-            return moveIteratorsToDocid(docidToProcess, postingsToScore);
+            return nextGEQ(docidToProcess, postingsToScore);
         else
             return docidToProcess;
     }
@@ -93,11 +114,12 @@ public class DAAT {
 
             if (postingList.getPostings() != null && !postingList.getPostings().isEmpty() && postingList.getPostings().get(0).getKey() == docid) {
                 // process the posting
-                int tf = postingList.getPostings().get(0).getValue();
+
+                double tf = (1 + Math.log10(postingList.getPostings().get(0).getValue()));
                 double idf = vocabulary.getIdf(postingList.getTerm());
 
                 // adding tfidf to doc score
-                docScore += ((1 + Math.log(tf)) * Math.log(idf));
+                docScore += (tf * idf);
 
                 // posting scored, it can be removed by the postings to be scored
                 postingList.getPostings().remove(0);
@@ -115,22 +137,40 @@ public class DAAT {
     public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, boolean isConjuctive, int k){
 
         // TODO: implement deep copy or iterators
+
+        //System.out.println("query postings:\t"+ queryPostings);
+
+        ArrayList<PostingList> copyPostings = new ArrayList<>();
+
+        for (PostingList pl : queryPostings) {
+            PostingList copy = new PostingList();
+            ArrayList<Map.Entry<Integer, Integer>> postings = new ArrayList<>();
+            for (Map.Entry<Integer, Integer> posting : pl.getPostings()) {
+                postings.add(new AbstractMap.SimpleEntry<>(posting.getKey(), posting.getValue()));
+            }
+            copy.appendPostings(postings);
+            copy.setTerm(pl.getTerm());
+            copyPostings.add(copy);
+        }
+
         // initialization of the MinHeap for the results
         PriorityQueue<Map.Entry<Double, Integer>> topKDocuments = new PriorityQueue<>(k, Map.Entry.comparingByKey());
 
-
-        int docToProcess = nextDocToProcess(isConjuctive, queryPostings);
+        int docToProcess = nextDocToProcess(isConjuctive, copyPostings);
 
         // until there are documents to be processed
         while(docToProcess!= -1){
-            double docScore = scoreDocument(docToProcess, queryPostings);
+            //System.out.println("processing document:\t"+ docToProcess);
+            double docScore = scoreDocument(docToProcess, copyPostings);
 
+            //System.out.println("score document:\t"+ docScore);
             // check if the MinHeap is full
             if(topKDocuments.size()==k){
                 // MinHeap is full
-
+                //System.out.println("heap is full\t");
                 // check if the processed document can enter the MinHeap
                 if (docScore > topKDocuments.peek().getKey()) {
+                    //System.out.println("current enters the heap\t");
                     // the current score enters the MinHeap
 
                     // remove the root of the MinHeap (the lowest score in top K documents)
@@ -141,15 +181,15 @@ public class DAAT {
                 }
             } else {
                 // MinHeap is not full, the current document enters the MinHeap
-
+               // System.out.println("heap is not full\t");
                 // insert the document and its score in the MinHeap
                 topKDocuments.add(new AbstractMap.SimpleEntry<>(docScore, docToProcess));
             }
 
             // find next document to be processed
-            docToProcess = nextDocToProcess(isConjuctive, queryPostings);
+            docToProcess = nextDocToProcess(isConjuctive, copyPostings);
         }
-
+       // System.out.println("top K:\t"+topKDocuments);
         return topKDocuments;
     }
 
