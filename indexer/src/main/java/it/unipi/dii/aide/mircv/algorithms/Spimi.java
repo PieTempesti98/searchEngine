@@ -3,14 +3,20 @@ package it.unipi.dii.aide.mircv.algorithms;
 import it.unipi.dii.aide.mircv.common.beans.DocumentIndexEntry;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import com.google.common.annotations.VisibleForTesting;
+import it.unipi.dii.aide.mircv.common.beans.TextDocument;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
+import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
 import org.mapdb.HTreeMap;
 import org.mapdb.Serializer;
 
+import java.io.BufferedReader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,7 +26,7 @@ public class Spimi {
     /**
      * path to the file on the disk storing the processed collection
      */
-    private static final String PATH_TO_DOCUMENTS = ConfigurationParameters.getProcessedCollectionPath();
+    private static final String PATH_TO_COLLECTION = ConfigurationParameters.getRawCollectionPath();
 
     /*
     path to the file on the disk storing the partial indexes
@@ -98,13 +104,15 @@ public class Spimi {
 
     public static int executeSpimi(){
 
-        try(DB db = DBMaker.fileDB(PATH_TO_DOCUMENTS).fileChannelEnable().fileMmapEnable().make(); //fileDb for  processed documents
-            DB partialIndex = DBMaker.fileDB(PATH_PARTIAL_INDEX).fileChannelEnable().fileMmapEnable().make();
-            DB docIndexDb = DBMaker.fileDB(PATH_TO_DOCUMENT_INDEX).fileChannelEnable().fileMmapEnable().make(); //fileDB for document index
-            HTreeMap collection = db.hashMap("processedCollection")//hashmap containing processd collection
-                    .keySerializer(Serializer.STRING) //key ->pid
-                    .valueSerializer(Serializer.JAVA) // value -> posting list
-                    .createOrOpen();
+        try(
+//                DB db = DBMaker.fileDB(PATH_TO_DOCUMENTS).fileChannelEnable().fileMmapEnable().make(); //fileDb for  processed documents
+                BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
+                DB partialIndex = DBMaker.fileDB(PATH_PARTIAL_INDEX).fileChannelEnable().fileMmapEnable().make();
+                DB docIndexDb = DBMaker.fileDB(PATH_TO_DOCUMENT_INDEX).fileChannelEnable().fileMmapEnable().make(); //fileDB for document index
+//            HTreeMap collection = db.hashMap("processedCollection")//hashmap containing processd collection
+//                    .keySerializer(Serializer.STRING) //key ->pid
+//                    .valueSerializer(Serializer.JAVA) // value -> posting list
+//                    .createOrOpen();
         ){
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
 
@@ -117,31 +125,42 @@ public class Spimi {
             int docid = 0; //assign docid in a incremental manner
 
             long MEMORY_THRESHOLD = Runtime.getRuntime().totalMemory() * 20 / 100; // leave 20% of memory free
-            Iterator<String> keyterator = (Iterator<String>) collection.keySet().iterator();
-
-            while(!allDocumentsProcessed) {
+            String[] split;
+            while(!allDocumentsProcessed){
                 HashMap<String, PostingList> index = new HashMap<>(); //hashmap containing partial index
                 while (Runtime.getRuntime().freeMemory() > MEMORY_THRESHOLD) { //build index until 80% of total memory is used
 
-                    if(!keyterator.hasNext()){ // all documents were processed
+                    String line;
+                    // if we reach the end of file (br.readline() -> null)
+                    if((line = br.readLine()) == null) {
+                        // we've processed all the documents
                         allDocumentsProcessed = true;
                         break;
                     }
-                    //parse line to get pid and all terms of a document
-                    ProcessedDocument document = new ProcessedDocument();
-                    String pid = keyterator.next(); //the pid is the key of the hashmap
-                    document.setPid(pid);
-                    document.setTokens((ArrayList<String>) collection.get(pid));
+                    // if the line is empty we process the next line
+                    if(line.isEmpty())
+                        continue;
 
+                    // split of the line in the format <pid>\t<text>
+                    split = line.split("\t");
+
+                    // Creation of the text document for the line
+                    TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
+                    // Perform text preprocessing on the document
+                    ProcessedDocument processedDocument = Preprocesser.processDocument(document);
+
+                    if(processedDocument.getTokens().size() == 0){
+                        continue;
+                    }
 
                     //create new document index entry and add it to file
-                    DocumentIndexEntry entry = new DocumentIndexEntry(pid,docid++,document.getTokens().size());
+                    DocumentIndexEntry entry = new DocumentIndexEntry(processedDocument.getPid(), docid++,processedDocument.getTokens().size());
                     docIndex.put(docid,entry);
 
                     CollectionStatistics.addDocument(); //keeps track of number of processed documents,
                                                         // useful for calculating collection statistics later on
 
-                    for (String term : document.getTokens()) {
+                    for (String term : processedDocument.getTokens()) {
                         PostingList posting; //posting list of a given term
                         if (!index.containsKey(term)) {
                            // create new posting list if term wasn't present yet

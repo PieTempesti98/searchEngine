@@ -15,7 +15,7 @@ public class DocumentIndex extends HashMap<Integer, DocumentIndexEntry> {
     private DocumentIndex(){
         //use DBMaker to create a DB object of HashMap stored on disk
         //provide location
-        DB db = DBMaker.fileDB(ConfigurationParameters.getDocumentIndexPath()).make();
+        DB db = DBMaker.fileDB(ConfigurationParameters.getDocumentIndexPath()).fileMmapEnable().fileChannelEnable().make();
 
         Map<Integer, DocumentIndexEntry> docIndex = (Map<Integer, DocumentIndexEntry>) db.hashMap("docIndex")
                 .keySerializer(Serializer.INTEGER)

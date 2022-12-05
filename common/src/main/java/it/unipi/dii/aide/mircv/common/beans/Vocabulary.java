@@ -15,7 +15,7 @@ public class Vocabulary extends HashMap<String, VocabularyEntry>{
     private Vocabulary(){
         //use DBMaker to create a DB object of HashMap stored on disk
         //provide location
-        DB db = DBMaker.fileDB(ConfigurationParameters.getVocabularyPath()).make();
+        DB db = DBMaker.fileDB(ConfigurationParameters.getVocabularyPath()).fileMmapEnable().fileChannelEnable().make();
 
         //use the DB object to open the "myMap" HashMap
         Map<String, VocabularyEntry> vocabulary = (Map<String, VocabularyEntry>) db.hashMap("vocabulary")

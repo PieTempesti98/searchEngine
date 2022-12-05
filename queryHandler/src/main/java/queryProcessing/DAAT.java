@@ -24,7 +24,7 @@ public class DAAT {
             // check if there are postings to iterate in the i-th posting list
             if(currPostingList != null){
                 // I should move the iterator until I find a docid >= docidToProcess
-                while(currPostingList.getPostings() != null && currPostingList.getPostings().get(0).getKey() < docidToProcess)
+                while(currPostingList.getPostings() != null && !currPostingList.getPostings().isEmpty() && currPostingList.getPostings().get(0).getKey() < docidToProcess)
                     currPostingList.getPostings().remove(0);
 
                 // check if in the current posting list there is no docid >= docidToProcess to be processed
@@ -46,12 +46,11 @@ public class DAAT {
         int docidToProcess = -1;
 
         // go through all the posting lists of other query terms
-        for(int i=1; i<postingsToScore.size(); i++){
+        for(int i=0; i<postingsToScore.size(); i++){
             // i-th posting list
             PostingList currPostingList = postingsToScore.get(i);
-
             // check if there are postings to iterate in the i-th posting list
-            if(currPostingList != null && currPostingList.getPostings() != null){
+            if(currPostingList != null && currPostingList.getPostings() != null && !currPostingList.getPostings().isEmpty()){
                 // retrieve docid of the first document in the pointed posting list
                 int pointedDocid = currPostingList.getPostings().get(0).getKey();
 
@@ -73,7 +72,6 @@ public class DAAT {
                 }
             }
         }
-
         if(isConjunctive)
             return moveIteratorsToDocid(docidToProcess, postingsToScore);
         else
@@ -93,7 +91,7 @@ public class DAAT {
         for(PostingList postingList : postingsToScore) {
             // check if the current postinglist is pointing to the docid we are currently processing
 
-            if (postingList.getPostings() != null && postingList.getPostings().get(0).getKey() == docid) {
+            if (postingList.getPostings() != null && !postingList.getPostings().isEmpty() && postingList.getPostings().get(0).getKey() == docid) {
                 // process the posting
                 int tf = postingList.getPostings().get(0).getValue();
                 double idf = vocabulary.getIdf(postingList.getTerm());

@@ -2,6 +2,8 @@ package it.unipi.aide.mircv.start;
 
 import queryProcessing.QueryProcesser;
 
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.Scanner;
 
 public class Main {
@@ -29,7 +31,7 @@ public class Main {
 
         String query;
 
-        for(;;) {
+        for(;;) { // forever
             System.out.println("What are you looking for? " + """
             Please insert a query specifying your preferred mode:\s
             -c for conjunctive mode or -d for disjunctive mode. Here's an example:\s
@@ -52,16 +54,18 @@ public class Main {
             }
 
             //third parameter is true if query mode is conjunctive
+            long start = System.currentTimeMillis();
             String[] documents = QueryProcesser.processQuery(queryInfo[0],k,queryInfo[1].equals("c"));
-            if(documents.length == 0){
+            long stop = System.currentTimeMillis();
+            if(documents == null){
                 System.out.println("Unfortunately, no documents satisfy your request.");
                 continue;
             }
 
-            System.out.println("These documents may do for you:");
+            System.out.println("These documents may do for you, in " + (stop - start) + "ms:");
             for(String document: documents){
-
-                System.out.println("-> " + document);
+                if(document != null)
+                    System.out.println("-> " + document);
             }
 
         }

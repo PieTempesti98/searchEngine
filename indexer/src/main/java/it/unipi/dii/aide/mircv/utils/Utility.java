@@ -1,6 +1,7 @@
 package it.unipi.dii.aide.mircv.utils;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
+import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 
 import static it.unipi.dii.aide.mircv.common.utils.FileUtils.removeFile;
 
@@ -31,6 +32,7 @@ public class Utility {
         removeFile(VOCABULARY_PATH);
         removeFile(PARTIAL_INDEX_PATH);
         removeFile(INVERTED_INDEX_PATH);
+        Preprocesser.readStopwords();
     }
 
 

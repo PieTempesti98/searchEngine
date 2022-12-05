@@ -40,46 +40,47 @@ public class CollectionLoader {
      * </ol>
      * @param args input parameters for the main method, not used
      */
-    public static void loadCollection() {
-        // load the stopwords into the preprocesser
-        Preprocesser.readStopwords();
-
-        removeFile(OUTPUT_PATH);
-
-        try(BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
-            DB db = DBMaker.fileDB(OUTPUT_PATH).fileChannelEnable().fileMmapEnable().make();
-            HTreeMap<String, ArrayList<String>> processedCollection = db.hashMap("processedCollection")
-                    .keySerializer(Serializer.STRING)
-                    .valueSerializer(Serializer.JAVA)
-                    .createOrOpen();){
-            String[] split;
-
-            for(String line; (line = br.readLine()) != null; ){
-
-                // if the line is empty we process the next line
-                if(line.isEmpty())
-                    continue;
-
-                // split of the line in the format <pid>\t<text>
-                split = line.split("\t");
-
-                // Creation of the text document for the line
-                TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
-
-                // Perform text preprocessing on the document
-                ProcessedDocument processedDocument = Preprocesser.processDocument(document);
-
-                if(processedDocument.getTokens().size() > 0)
-                    //Save it to the file if body is non empty
-                    processedCollection.put(processedDocument.getPid(), processedDocument.getTokens());
-                // Update the number of documents
-                CollectionStatistics.addDocument();
-            }
-
-        } catch(Exception e){
-            e.printStackTrace();
-        }
-
-    }
+//    public static ArrayList<TextDocument> loadCollection() {
+//        // load the stopwords into the preprocesser
+//        Preprocesser.readStopwords();
+//
+//        removeFile(OUTPUT_PATH);
+//
+//        try(BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
+//            DB db = DBMaker.fileDB(OUTPUT_PATH).fileChannelEnable().fileMmapEnable().make();
+//            HTreeMap<String, ArrayList<String>> processedCollection = db.hashMap("processedCollection")
+//                    .keySerializer(Serializer.STRING)
+//                    .valueSerializer(Serializer.JAVA)
+//                    .createOrOpen();){
+//            String[] split;
+//
+//            ArrayList<TextDocument> collection = new ArrayList<>();
+//            for(String line; (line = br.readLine()) != null; ){
+//
+//                // if the line is empty we process the next line
+//                if(line.isEmpty())
+//                    continue;
+//
+//                // split of the line in the format <pid>\t<text>
+//                split = line.split("\t");
+//
+//                // Creation of the text document for the line
+//                TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
+//
+//                // Perform text preprocessing on the document
+//                ProcessedDocument processedDocument = Preprocesser.processDocument(document);
+//
+//                if(processedDocument.getTokens().size() > 0)
+//                    //Save it to the file if body is non empty
+//                    processedCollection.put(processedDocument.getPid(), processedDocument.getTokens());
+//                // Update the number of documents
+//                CollectionStatistics.addDocument();
+//            }
+//
+//        } catch(Exception e){
+//            e.printStackTrace();
+//        }
+//
+//    }
 
 }

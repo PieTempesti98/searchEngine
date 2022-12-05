@@ -26,23 +26,36 @@ public class QueryProcesser {
         // ArrayList with all the posting lists
         ArrayList<PostingList> queryPostings = new ArrayList<>();
         for(String queryTerm: query.getTokens()){
-            //
+            if(vocabulary.get(queryTerm) == null){
+                continue;
+            }
+            //load the posting list and
             queryPostings.add(IndexLoader.loadTerm(vocabulary.get(queryTerm)));
-
         }
         return queryPostings;
+    }
+
+    private static String[] lookupPid(PriorityQueue<Map.Entry<Double, Integer>> priorityQueue, int k){
+        String[] output = new String[k];
+        int i = priorityQueue.size() - 1;
+        while(!priorityQueue.isEmpty()){
+            int docid = priorityQueue.poll().getValue();
+            output[i] = documentIndex.getPid(docid);
+            i--;
+        }
+        return output;
     }
 
     public static String[] processQuery(String query, int k, boolean isConjunctive){
         ProcessedDocument processedQuery = Preprocesser.processDocument(new TextDocument("query", query));
         // load the posting lists of the tokens
         ArrayList<PostingList> queryPostings = getQueryPostings(processedQuery);
-
+        if(queryPostings.isEmpty()){
+            return null;
+        }
         PriorityQueue<Map.Entry<Double, Integer>> priorityQueue = DAAT.scoreQuery(queryPostings, isConjunctive, k);
 
-        // TODO: lookup pids
-
-        return new String[k];
+        return lookupPid(priorityQueue, k);
     }
 
     /**
