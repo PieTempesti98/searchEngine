@@ -2,8 +2,6 @@ package it.unipi.aide.mircv.start;
 
 import queryProcessing.QueryProcesser;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.Scanner;
 
 public class Main {
