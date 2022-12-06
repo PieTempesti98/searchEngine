@@ -51,8 +51,14 @@ public class Merger {
      */
     private static Map<String, VocabularyEntry> vocabulary;
 
+    /**
+     * Path to the inverted index file
+     */
     private final static String PATH_TO_INVERTED_INDEX = ConfigurationParameters.getInvertedIndexPath();
 
+    /**
+     * Array used to point to the next postings to process for each partial index
+     */
     private static PostingList[] nextLists = null;
 
     /**
@@ -88,7 +94,7 @@ public class Merger {
         for (int i = 0; i < numIndexes; i++) {
 
             // check if there are still posting lists to be processed at intermediate index 'i'
-            if(nextLists[i] == null)
+            if (nextLists[i] == null)
                 continue;
 
 
@@ -141,9 +147,9 @@ public class Merger {
                     vocabularyEntry.updateStatistics(intermediatePostingList);
 
                     // Update the nextList array with the next term to process
-                    if(intermediateIndexes.get(i).hasNext())
+                    if (intermediateIndexes.get(i).hasNext())
                         nextLists[i] = intermediateIndexes.get(i).next();
-                    else{
+                    else {
                         // set index 'i' to null since it is empty
                         nextLists[i] = null;
                     }
@@ -162,6 +168,13 @@ public class Merger {
     }
 
 
+    /**
+     * Save to disk the posting list and update the vocabulary information about the memory offset
+     *
+     * @param list     the posting list to save
+     * @param vocEntry the vocabulary entry to update
+     * @return the memory offset reached in the inverted index file
+     */
     private static long saveToDisk(PostingList list, VocabularyEntry vocEntry) {
         // memory occupancy of the posting list:
         // - for each posting we have to store 2 integers (docid and freq)
@@ -170,7 +183,7 @@ public class Merger {
 
         // try to open a file channel to the file of the inverted index
         try (FileChannel fChan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_INVERTED_INDEX), StandardOpenOption.WRITE,
-                StandardOpenOption.READ, StandardOpenOption.CREATE)){
+                StandardOpenOption.READ, StandardOpenOption.CREATE)) {
 
             // instantiation of MappedByteBuffer for integer list of docids
             MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memOffset, numBytes);
@@ -192,6 +205,7 @@ public class Merger {
                     // encode frequency
                     buffer.putInt(posting.getValue());
                 }
+                // update the memory size
                 long memorySize = buffer.position();
                 memOffset += buffer.position();
                 vocEntry.setMemorySize(memorySize);
@@ -205,6 +219,7 @@ public class Merger {
         }
         return -1;
     }
+
     /**
      * The effective merging pipeline:
      * - finds the minimum term between the indexes
@@ -230,7 +245,7 @@ public class Merger {
                 String termToProcess = getMinTerm();
                 // System.out.println(termToProcess);
 
-                if(termToProcess == null)
+                if (termToProcess == null)
                     break;
                 VocabularyEntry vocabularyEntry = new VocabularyEntry(termToProcess);
                 // merge the posting lists for the term to be processed
