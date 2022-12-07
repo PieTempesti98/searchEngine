@@ -47,6 +47,15 @@ public class DocumentIndexEntry implements Serializable {
     private static final int ENTRY_SIZE = PID_SIZE + 4 + 4;
 
     /**
+     * Path to the documentIndex file
+     */
+    private static String DOCINDEX_PATH = ConfigurationParameters.getDocumentIndexPath();
+
+    /**
+     * Default constructor with 0 parameters
+     */
+    public DocumentIndexEntry(){}
+    /**
      * Constructor for the document index entry of a specific document
      * @param pid the pid of such document
      * @param docid the docid of such documents
@@ -109,12 +118,12 @@ public class DocumentIndexEntry implements Serializable {
 
     /**
      * Write the document index entry on disk
-     * @return true if the operation was successful
+     * @return the offset of the entry
      */
-    public boolean writeToDisk(){
+    public long writeToDisk(){
         // try to open a file channel to the file of the inverted index
         try (FileChannel fChan = (FileChannel) Files.newByteChannel(
-                Paths.get(ConfigurationParameters.getDocumentIndexPath()),
+                Paths.get(DOCINDEX_PATH),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE)) {
@@ -123,11 +132,12 @@ public class DocumentIndexEntry implements Serializable {
 
             // Buffer not created
             if(buffer == null)
-                return false;
+                return -1;
 
             // Create the CharBuffer with size = PID_SIZE
             CharBuffer charBuffer = CharBuffer.allocate(PID_SIZE);
-            charBuffer.put(this.pid);
+            for(int i = 0; i < this.pid.length(); i++)
+                charBuffer.put(i, this.pid.charAt(i));
             // Write the PID into file
             buffer.put(StandardCharsets.UTF_8.encode(charBuffer));
 
@@ -135,14 +145,18 @@ public class DocumentIndexEntry implements Serializable {
             buffer.putInt(this.docid);
             // Write the doclen into file
             buffer.putInt(this.docLen);
+
+            // save the start offset of the structure
+            long startOffset = memOffset;
             // update memory offset
             memOffset = memOffset + ENTRY_SIZE;
 
-            return true;
+
+            return startOffset;
 
         }catch(Exception e){
             e.printStackTrace();
-            return false;
+            return -1;
         }
 
     }
@@ -155,7 +169,7 @@ public class DocumentIndexEntry implements Serializable {
     public boolean readFromDisk(long memoryOffset){
         // try to open a file channel to the file of the inverted index
         try (FileChannel fChan = (FileChannel) Files.newByteChannel(
-                Paths.get(ConfigurationParameters.getDocumentIndexPath()),
+                Paths.get(DOCINDEX_PATH),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE)) {
@@ -169,7 +183,7 @@ public class DocumentIndexEntry implements Serializable {
 
             // Read from file into the charBuffer, then pass to the string
             CharBuffer charBuffer = StandardCharsets.UTF_8.decode(buffer);
-            this.pid = charBuffer.toString();
+            this.pid = charBuffer.toString().split("\0")[0];
 
             // Instantiate the buffer for reading other information
             buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset + PID_SIZE, ENTRY_SIZE - PID_SIZE);
@@ -189,5 +203,12 @@ public class DocumentIndexEntry implements Serializable {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * updates the document index path file (only for test purposes)
+     */
+    protected static void setTestPath(){
+        DocumentIndexEntry.DOCINDEX_PATH = "../data/test/testDocIndex";
     }
 }
