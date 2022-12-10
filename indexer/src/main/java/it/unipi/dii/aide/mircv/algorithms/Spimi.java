@@ -1,10 +1,8 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
-import it.unipi.dii.aide.mircv.common.beans.DocumentIndexEntry;
-import it.unipi.dii.aide.mircv.common.beans.PostingList;
-import it.unipi.dii.aide.mircv.common.beans.TextDocument;
+import it.unipi.dii.aide.mircv.common.beans.*;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 import org.mapdb.DB;
@@ -92,7 +90,6 @@ public class Spimi {
 
     }
 
-
     /**
      * Performs spimi algorithm
      *
@@ -103,15 +100,9 @@ public class Spimi {
         try (
                 BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
                 DB partialIndex = DBMaker.fileDB(PATH_PARTIAL_INDEX).fileChannelEnable().fileMmapEnable().make();
-                DB docIndexDb = DBMaker.fileDB(PATH_TO_DOCUMENT_INDEX).fileChannelEnable().fileMmapEnable().make(); //fileDB for document index
         ) {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
 
-            //list containing all documents indexes that must be written on file
-            Map<Integer, DocumentIndexEntry> docIndex = (Map<Integer, DocumentIndexEntry>) docIndexDb.hashMap("docIndex")
-                    .keySerializer(Serializer.INTEGER) //key-> docid
-                    .valueSerializer(Serializer.JAVA) //value -> document info
-                    .createOrOpen();
 
             int docid = 0; //assign docid in a incremental manner
 
@@ -150,7 +141,9 @@ public class Spimi {
                             docid++,
                             processedDocument.getTokens().size()
                     );
-                    docIndex.put(docid, entry);
+
+                    // write the docIndex entry to disk
+                    entry.writeToDisk();
 
                     //keeps track of number of processed documents,
                     // useful for calculating collection statistics later on
@@ -175,6 +168,9 @@ public class Spimi {
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
                 saveIndexToDisk(index, partialIndex);
             }
+            // update the size of the document index and save it to disk
+            if(!CollectionSize.updateCollectionSize(docid))
+                return 0;
             return numIndex;
 
         } catch (Exception e) {

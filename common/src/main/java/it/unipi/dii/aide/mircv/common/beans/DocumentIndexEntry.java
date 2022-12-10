@@ -206,6 +206,12 @@ public class DocumentIndexEntry implements Serializable {
     }
 
     /**
+     * @return the size of an entry
+     */
+    public static int getEntrySize(){return ENTRY_SIZE;}
+
+
+    /**
      * updates the document index path file (only for test purposes)
      */
     protected static void setTestPath(){

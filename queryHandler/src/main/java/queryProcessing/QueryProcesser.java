@@ -97,7 +97,11 @@ public class QueryProcesser {
         if(! new File(PATH_TO_INVERTED_INDEX).exists())
             return false;
 
+        // load the document index
+        if(!documentIndex.loadFromDisk())
+            return false;
 
+        System.out.println("The document Index counts " + documentIndex.size() + " documents");
         //check if vocabulary and document index were correctly created. If not the setup failed
        // if(vocabulary.isEmpty() || documentIndex.isEmpty())
            // return false;
