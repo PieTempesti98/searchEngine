@@ -99,8 +99,8 @@ public class QueryProcesser {
 
 
         //check if vocabulary and document index were correctly created. If not the setup failed
-       // if(vocabulary.isEmpty() || documentIndex.isEmpty())
-           // return false;
+        if(vocabulary.isEmpty() || documentIndex.isEmpty())
+            return false;
 
         //successful setup
         return true;

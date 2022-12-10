@@ -1,10 +1,7 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
-import it.unipi.dii.aide.mircv.common.beans.DocumentIndexEntry;
-import it.unipi.dii.aide.mircv.common.beans.PostingList;
-import it.unipi.dii.aide.mircv.common.beans.TextDocument;
+import it.unipi.dii.aide.mircv.common.beans.*;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 import org.mapdb.DB;
@@ -37,6 +34,11 @@ public class Spimi {
     private static final String PATH_TO_DOCUMENT_INDEX = ConfigurationParameters.getDocumentIndexPath();
 
     /*
+    path to the file on the disk storing the vocabulary
+    */
+    private static final String PATH_TO_VOCABULARY =  "data/partial_vocabulary/vocabulary";
+
+    /*
     counts the number of partial indexes created
      */
     private static int numIndex = 0;
@@ -45,7 +47,7 @@ public class Spimi {
     /**
      * @param index: partial index that must be saved onto file
      */
-    private static void saveIndexToDisk(HashMap<String, PostingList> index, DB db) {
+    private static void saveIndexToDisk(HashMap<String, PostingList> index, int numDocs) {
 
         if (index.isEmpty()) //if the index is empty there is nothing to write on disk
             return;
@@ -59,8 +61,32 @@ public class Spimi {
                         Map.Entry::getValue,
                         (e1, e2) -> e1, LinkedHashMap::new));
 
-        List<PostingList> partialIndex = (List<PostingList>) db.indexTreeList("index_" + numIndex, Serializer.JAVA).createOrOpen();
-        partialIndex.addAll(index.values());
+
+        long startPosition = 0;
+
+        System.out.println("********* START VOCABULARY **********");
+
+
+        for(PostingList postingList: index.values()) {
+            //postingList.write_to_disk();
+            long postingsSize = postingList.getNumBytes();
+            VocabularyEntry entry = new VocabularyEntry(postingList.getTerm());
+            //compute entry statistics
+            entry.updateStatistics(postingList);
+            entry.computeIDF(numDocs);
+
+            //set size of memory offset
+
+            //set size of frequency offset
+
+            //set size of posting list
+            entry.setMemorySize(postingsSize);
+            //create a new file for each partial vocabulary and update starting position for writing to disk
+            startPosition += entry.write_entry_to_disk(startPosition,PATH_TO_VOCABULARY+"_"+numIndex);
+
+
+        }
+
 
         //update number of partial inverted indexes
         numIndex++;
@@ -102,18 +128,11 @@ public class Spimi {
 
         try (
                 BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
-                DB partialIndex = DBMaker.fileDB(PATH_PARTIAL_INDEX).fileChannelEnable().fileMmapEnable().make();
-                DB docIndexDb = DBMaker.fileDB(PATH_TO_DOCUMENT_INDEX).fileChannelEnable().fileMmapEnable().make(); //fileDB for document index
         ) {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
 
-            //list containing all documents indexes that must be written on file
-            Map<Integer, DocumentIndexEntry> docIndex = (Map<Integer, DocumentIndexEntry>) docIndexDb.hashMap("docIndex")
-                    .keySerializer(Serializer.INTEGER) //key-> docid
-                    .valueSerializer(Serializer.JAVA) //value -> document info
-                    .createOrOpen();
-
             int docid = 0; //assign docid in a incremental manner
+            int partialNumDocs = 0;
 
             long MEMORY_THRESHOLD = Runtime.getRuntime().totalMemory() * 20 / 100; // leave 20% of memory free
             String[] split;
@@ -140,23 +159,29 @@ public class Spimi {
                     // Perform text preprocessing on the document
                     ProcessedDocument processedDocument = Preprocesser.processDocument(document);
 
-                    if (processedDocument.getTokens().size() == 0) {
+                    if (processedDocument.getTokens().isEmpty()) {
                         continue;
                     }
 
                     //create new document index entry and add it to file
-                    DocumentIndexEntry entry = new DocumentIndexEntry(
+                   DocumentIndexEntry entry = new DocumentIndexEntry(
                             processedDocument.getPid(),
                             docid++,
                             processedDocument.getTokens().size()
                     );
-                    docIndex.put(docid, entry);
+
+                   // entry.write_to_disk();
 
                     //keeps track of number of processed documents,
                     // useful for calculating collection statistics later on
                     CollectionStatistics.addDocument();
+                    partialNumDocs ++;
 
                     for (String term : processedDocument.getTokens()) {
+
+                        if(term.length() == 0)
+                            continue;
+
                         PostingList posting; //posting list of a given term
                         if (!index.containsKey(term)) {
                             // create new posting list if term wasn't present yet
@@ -169,17 +194,35 @@ public class Spimi {
 
                         //insert or update new posting
                         updateOrAddPosting(docid, posting);
+
                     }
+
+
 
                 }
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
-                saveIndexToDisk(index, partialIndex);
+                saveIndexToDisk(index,partialNumDocs);
+                partialNumDocs = 0;
+                System.out.println("salvo");
             }
             return numIndex;
 
         } catch (Exception e) {
             e.printStackTrace();
             return 0;
+        }
+    }
+
+
+    public static void main(String[] args){
+        Spimi.executeSpimi();
+
+        VocabularyEntry entry = new VocabularyEntry();
+        long iter = 0;
+
+        while(entry.readFromDisk(iter * entry.getENTRY_SIZE())) {
+            System.out.println(entry);
+            iter ++;
         }
     }
 

@@ -52,9 +52,7 @@ public class ConfigurationParameters {
         return loadedCollectionPath;
     }
 
-    public static String getStopwordsPath() {
-        return stopwordsPath;
-    }
+    public static String getStopwordsPath() {return stopwordsPath;}
 
     public static String getProcessedCollectionPath() {
         return processedCollectionPath;
