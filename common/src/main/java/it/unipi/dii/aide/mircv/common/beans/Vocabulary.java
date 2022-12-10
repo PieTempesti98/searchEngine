@@ -18,7 +18,7 @@ import java.util.Map;
 public class Vocabulary extends HashMap<String, VocabularyEntry>{
 
     private static Vocabulary instance = null;
-    private final String VOCABULARY_PATH = "../data/partial_vocabulary/vocabulary";
+    private final String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
 
 
     private Vocabulary(){
@@ -51,67 +51,111 @@ public class Vocabulary extends HashMap<String, VocabularyEntry>{
         return this.get(term).getIdf();
     }
 
-    public boolean write_to_disk() {
+    public boolean writeToDisk() {
 
-        //open file channel
+
+        long position = 0;
+
+        for (VocabularyEntry entry : this.values()) {
+
+            position = entry.writeEntryToDisk(0,this.VOCABULARY_PATH);
+            if(position == -1)
+                return false;
+
+        }
+
+        return true;
+
+
+    }
+
+    public boolean readFromDisk(){
+
+        long position = 0;
+
+        //read whole vocabulary from
+        while(position >= 0){
+            VocabularyEntry entry = new VocabularyEntry();
+
+            //read entry and update position
+            position = entry.readFromDisk(position,this.VOCABULARY_PATH);
+
+            //populate vocabulary
+            this.put(entry.getTerm(),entry);
+        }
+
+        //if position == -1 an error occurred during reading
+        return position != -1;
+
+    }
+
+    /*
+    *
+    * @param term: term of which we want vocabulary entry
+    * @returns: the vocabulary entry of given term
+    **/
+    public VocabularyEntry findEntry(String term){
+
+        VocabularyEntry entry = new VocabularyEntry();
+
+        //performs binary search for input term
+        int start = 0;
+        int end = 1000;
+        int mid;
+        String key;
+
+        long entrySize = entry.getENTRY_SIZE();
+
         try (FileChannel fChan = (FileChannel) Files.newByteChannel(
                 Paths.get(VOCABULARY_PATH),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
                 StandardOpenOption.CREATE)) {
 
-            //initial position
-            long position = 0;
+            while (start < end) {
 
-            for (VocabularyEntry entry : this.values()) {
+                mid = (start + end) / 2;
 
-                // instantiation of MappedByteBuffer
-                MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, position, entry.getENTRY_SIZE());
+                MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_ONLY, mid * entrySize, entrySize);
 
-                // Buffer not created
-                if (buffer == null)
-                    return false;
+                if(buffer == null)
+                    return null;
 
-                //allocate char buffer to write term
-                CharBuffer charBuffer = CharBuffer.allocate(entry.getTERM_SIZE());
-                String term = entry.getTerm();
+                // Read from file into the charBuffer, then pass to the string
+                CharBuffer charBuffer = StandardCharsets.UTF_8.decode(buffer);
 
-                //populate char buffer char by char
-                for (int i = 0; i < term.length(); i++)
-                    charBuffer.put(i, term.charAt(i));
-                // Write the term into file
-                buffer.put(StandardCharsets.UTF_8.encode(charBuffer));
+                if(charBuffer.length() == 0)
+                    return null;
 
-                // Write the document frequency into file
-                buffer.putInt(entry.getDf());
+                String[] encodedTerm = charBuffer.toString().split("\0");
+                if(encodedTerm.length == 0)
+                    return null;
 
-                // Write the term frequency into file
-                buffer.putInt(entry.getTf());
+                key = encodedTerm[0];
 
-                //wirte IDF into file
-                buffer.putDouble(entry.getIdf());
-
-                //write memory offset into file
-                buffer.putLong(entry.getMemoryOffset());
-
-                //write frequency offset into file
-                buffer.putLong(entry.getFrequencyOffset());
-
-                //write memory offset into file
-                buffer.putLong(entry.getMemorySize());
+                if(term.equals(key)){
+                    entry.readFromDisk(mid * entrySize,this.VOCABULARY_PATH);
+                    break;
+                }
 
 
-                // update position for which we have to start writing on file
-                position += entry.getENTRY_SIZE();
+                if(term.compareTo(key) > 0){
+
+                    start = mid + 1;
+                    continue;
+                }
+
+                end = mid - 1;
+
 
             }
-
-            return true;
-        } catch (Exception e) {
+        }catch (Exception e){
             e.printStackTrace();
-            return false;
+            return null;
         }
 
+
+        return entry;
     }
 
 

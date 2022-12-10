@@ -70,13 +70,16 @@ public class VocabularyEntry implements Serializable {
      size of the term
      */
 
-    private final int TERM_SIZE = 32;
+    private final int TERM_SIZE = 128; //TODO: decide term size
 
     /**
      * term size + 4 + 4 + 8 + 8 + 8 + 8
-     * we have to store 2 int, 1 double and 3 longs
+     * we have to store 2 ints, 1 double and 3 longs
      */
-    private final long ENTRY_SIZE = 32 + 4 + 4 + 8 + 8 + 8 + 8;
+    private final long ENTRY_SIZE = 65 + 4 + 4 + 8 + 8 + 8 + 8;
+
+
+    public VocabularyEntry(){}
 
     /**
      * Constructor for the vocabulary entry for the term passed as parameter
@@ -84,7 +87,6 @@ public class VocabularyEntry implements Serializable {
      * @param term the token of the entry
      */
 
-    public VocabularyEntry(){}
 
     public VocabularyEntry(String term){
 
@@ -97,7 +99,8 @@ public class VocabularyEntry implements Serializable {
     }
 
     /**
-     * Updates the statistics of the vocabulary:
+     *
+     * s the statistics of the vocabulary:
      * updates tf and df with the data of the partial posting list processed
      * @param list the posting list from which the method computes the statistics
      */
@@ -183,7 +186,12 @@ public class VocabularyEntry implements Serializable {
 
     }
 
-    public long write_entry_to_disk(long position, String PATH){
+    /**
+     * @param PATH : path of file to write entry on
+    * @param position : position to start writing from
+     * @return  offset representing the position of the last written byte
+     * */
+    public long writeEntryToDisk(long position, String PATH){
         try (FileChannel fChan = (FileChannel) Files.newByteChannel(
                 Paths.get(PATH),
                 StandardOpenOption.CREATE,
@@ -192,43 +200,50 @@ public class VocabularyEntry implements Serializable {
 
 
             // instantiation of MappedByteBuffer
-            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, position, ENTRY_SIZE);
+            try {
+                MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, position, ENTRY_SIZE);
 
-            // Buffer not created
-            if (buffer == null)
+                // Buffer not created
+                if (buffer == null)
+                    return -1;
+
+                //allocate char buffer to write term
+                CharBuffer charBuffer = CharBuffer.allocate(TERM_SIZE);
+
+                //populate char buffer char by char
+                for (int i = 0; i < term.length(); i++)
+                    charBuffer.put(i, term.charAt(i));
+
+                // Write the term into file
+                buffer.put(StandardCharsets.UTF_8.encode(charBuffer));
+
+                // Write the document frequency into file
+                buffer.putInt(this.getDf());
+
+                // Write the term frequency into file
+                buffer.putInt(this.getTf());
+
+                //wirte IDF into file
+                buffer.putDouble(this.getIdf());
+
+                //write memory offset into file
+                buffer.putLong(this.getMemoryOffset());
+
+                //write frequency offset into file
+                buffer.putLong(this.getFrequencyOffset());
+
+                //write memory offset into file
+                buffer.putLong(this.getMemorySize());
+
+
+                // update position for which we have to start writing on file
+                position += ENTRY_SIZE;
+                return position;
+            }
+            catch (Exception e){
+                e.printStackTrace();
                 return -1;
-
-            //allocate char buffer to write term
-            CharBuffer charBuffer = CharBuffer.allocate(TERM_SIZE);
-
-            //populate char buffer char by char
-            for (int i = 0; i < term.length(); i++)
-                charBuffer.put(i, term.charAt(i));
-            // Write the term into file
-            buffer.put(StandardCharsets.UTF_8.encode(charBuffer));
-
-            // Write the document frequency into file
-            buffer.putInt(this.getDf());
-
-            // Write the term frequency into file
-            buffer.putInt(this.getTf());
-
-            //wirte IDF into file
-            buffer.putDouble(this.getIdf());
-
-            //write memory offset into file
-            buffer.putLong(this.getMemoryOffset());
-
-            //write frequency offset into file
-            buffer.putLong(this.getFrequencyOffset());
-
-            //write memory offset into file
-            buffer.putLong(this.getMemorySize());
-
-
-            // update position for which we have to start writing on file
-            position += ENTRY_SIZE;
-            return position;
+            }
 
 
 
@@ -241,60 +256,65 @@ public class VocabularyEntry implements Serializable {
 /**
  * Read the document index entry from disk
  * @param memoryOffset the memory offset from which we start reading
- * @return true if the read is successful
+ * @param PATH path of the file on disk
+ * @return the position of the last byte read
 */
-public boolean readFromDisk(long memoryOffset){
+public long readFromDisk(long memoryOffset,String PATH){
 // try to open a file channel to the file of the inverted index
 try (FileChannel fChan = (FileChannel) Files.newByteChannel(
-    Paths.get("data/partial_vocabulary/vocabulary_0"),
+    Paths.get(PATH),
     StandardOpenOption.WRITE,
     StandardOpenOption.READ,
     StandardOpenOption.CREATE)) {
 
     // instantiation of MappedByteBuffer for the PID read
-    MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset, ENTRY_SIZE);
+    MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_ONLY, memoryOffset, ENTRY_SIZE);
 
     // Buffer not created
     if(buffer == null)
-        return false;
+        return -1;
 
     // Read from file into the charBuffer, then pass to the string
     CharBuffer charBuffer = StandardCharsets.UTF_8.decode(buffer);
 
-    if(charBuffer.length() == 0)
-        return false;
+    String[] encodedTerm = charBuffer.toString().split("\0");
+    if(encodedTerm.length == 0) //no more entries to read
+        return 0;
 
-    this.term = charBuffer.toString().split("\0")[0];
+    this.term = encodedTerm[0];
 
-    if(term == null)
-        return false;
 
     // Instantiate the buffer for reading other information
     buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset + TERM_SIZE, ENTRY_SIZE - TERM_SIZE);
 
     // Buffer not created
     if(buffer == null)
-        return false;
+        return -1;
 
-    // read the docid
+    // read document frequency
     this.df = buffer.getInt();
-    // read the doclen
+
+    // read term frequency
     this.tf = buffer.getInt();
 
+    // read term idf
     this.idf = buffer.getDouble();
 
+    // read memory offset
     this.memoryOffset = buffer.getLong();
 
+    // read frequency offset
     this.frequencyOffset = buffer.getLong();
 
+    // read memory size
     this.memorySize = buffer.getLong();
 
 
-    return true;
+    return memoryOffset + ENTRY_SIZE;
 
     }catch(Exception e){
         e.printStackTrace();
-        return false;
+        return -1;
     }
 }
 

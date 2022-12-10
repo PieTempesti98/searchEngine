@@ -4,9 +4,7 @@ import it.unipi.dii.aide.mircv.common.beans.*;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
-import org.mapdb.Serializer;
+import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -23,20 +21,23 @@ public class Spimi {
      */
     private static final String PATH_TO_COLLECTION = ConfigurationParameters.getRawCollectionPath();
 
-    /*
-    path to the file on the disk storing the partial indexes
-     */
-    private static final String PATH_PARTIAL_INDEX = ConfigurationParameters.getPartialIndexPath();
 
     /*
-    path to the file on the disk storing the document index
-     */
-    private static final String PATH_TO_DOCUMENT_INDEX = ConfigurationParameters.getDocumentIndexPath();
-
-    /*
-    path to the file on the disk storing the vocabulary
+    path to the file on the disk storing the partial vocabulary
     */
-    private static final String PATH_TO_VOCABULARY =  "data/partial_vocabulary/vocabulary";
+    private static final String PATH_TO_PARTIAL_VOCABULARY =  ConfigurationParameters.getPartialVocabularyDir() + ConfigurationParameters.getVocabularyFileName();
+
+    /*
+    path to the file on the disk storing the partial frequencies of the posting list
+    */
+    private static final String PATH_TO_PARTIAL_FREQUENCIES =  ConfigurationParameters.getFrequencyDir() + ConfigurationParameters.getFrequencyFileName();
+
+    /*
+    path to the file on the disk storing the partial docids of the posting list
+    */
+
+    private static final String PATH_TO_PARTIAL_DOCID =  ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
+
 
     /*
     counts the number of partial indexes created
@@ -46,6 +47,7 @@ public class Spimi {
 
     /**
      * @param index: partial index that must be saved onto file
+    * @param numDocs: number of documents processed
      */
     private static void saveIndexToDisk(HashMap<String, PostingList> index, int numDocs) {
 
@@ -62,33 +64,44 @@ public class Spimi {
                         (e1, e2) -> e1, LinkedHashMap::new));
 
 
-        long startPosition = 0;
-
-        System.out.println("********* START VOCABULARY **********");
+        long vocabularyOffset = 0; //position from which we start writing the partial vocabulary on the file
+        long frequencyOffset = 0; //position from which we start writing the partial frequencies on the file
+        long docidsOffset = 0; //position from which we start writing the partial docids on the file
 
 
         for(PostingList postingList: index.values()) {
-            //postingList.write_to_disk();
-            long postingsSize = postingList.getNumBytes();
+
+            //write posting lists to disk and update offset
+            long offset = postingList.writePostingListToDisk(frequencyOffset,docidsOffset,PATH_TO_PARTIAL_DOCID+"_"+numIndex,PATH_TO_PARTIAL_FREQUENCIES+"_"+numIndex);
+            frequencyOffset += offset/2;
+            docidsOffset += offset/2;
+
+            //create vocabulary entry
             VocabularyEntry entry = new VocabularyEntry(postingList.getTerm());
+
             //compute entry statistics
             entry.updateStatistics(postingList);
             entry.computeIDF(numDocs);
 
             //set size of memory offset
+            entry.setMemoryOffset(docidsOffset);
 
             //set size of frequency offset
+            entry.setFrequencyOffset(frequencyOffset);
 
             //set size of posting list
-            entry.setMemorySize(postingsSize);
-            //create a new file for each partial vocabulary and update starting position for writing to disk
-            startPosition += entry.write_entry_to_disk(startPosition,PATH_TO_VOCABULARY+"_"+numIndex);
+            entry.setMemorySize(postingList.getNumBytes());
 
+            //write entry to disk and update offset
+            vocabularyOffset = entry.writeEntryToDisk(vocabularyOffset,PATH_TO_PARTIAL_VOCABULARY+"_"+numIndex);
+
+            //writing failed
+            if(vocabularyOffset == -1)
+                break;
 
         }
 
-
-        //update number of partial inverted indexes
+        //update number of partial inverted indexes and vocabularies
         numIndex++;
 
     }
@@ -125,6 +138,11 @@ public class Spimi {
      * @return the number of partial indexes created
      */
     public static int executeSpimi() {
+
+        //create directories to store partial frequencies, docids and vocabularies
+        FileUtils.createDirectory(ConfigurationParameters.getDocidsDir());
+        FileUtils.createDirectory(ConfigurationParameters.getFrequencyDir());
+        FileUtils.createDirectory(ConfigurationParameters.getPartialVocabularyDir());
 
         try (
                 BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
@@ -170,7 +188,7 @@ public class Spimi {
                             processedDocument.getTokens().size()
                     );
 
-                   // entry.write_to_disk();
+                   // write entry to disk;
 
                     //keeps track of number of processed documents,
                     // useful for calculating collection statistics later on
@@ -203,7 +221,6 @@ public class Spimi {
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
                 saveIndexToDisk(index,partialNumDocs);
                 partialNumDocs = 0;
-                System.out.println("salvo");
             }
             return numIndex;
 
@@ -213,18 +230,6 @@ public class Spimi {
         }
     }
 
-
-    public static void main(String[] args){
-        Spimi.executeSpimi();
-
-        VocabularyEntry entry = new VocabularyEntry();
-        long iter = 0;
-
-        while(entry.readFromDisk(iter * entry.getENTRY_SIZE())) {
-            System.out.println(entry);
-            iter ++;
-        }
-    }
 
 
 }
