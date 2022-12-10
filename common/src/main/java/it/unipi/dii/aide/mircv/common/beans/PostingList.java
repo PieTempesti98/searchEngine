@@ -129,5 +129,57 @@ public class PostingList implements Serializable{
 
     }
 
+    /**
+     * Save to disk the posting list:
+     *  - write docids in docsPath
+     *  - write freqs in freqsPath
+     *  - update freqs and docs offsets (this generates side effects)
+     * @param docsMemOffset: offset in which to write in docids file
+     * @param freqsMemOffset: offset in which to write in freqs file
+     * @param docsPath: file path for file storing docids
+     * @param freqsPath: file path for file storing freqs
+     * @return number of bytes written
+     */
+    public long writePostingListToDisk(long docsMemOffset, long freqsMemOffset, String docsPath, String freqsPath) {
+        // memory occupancy of the posting list:
+        // - for each posting we have to store 2 integers (docid and freq)
+        // - each integer will occupy 4 bytes since we are storing integers in byte arrays
+        int numBytes = getNumBytes();
+
+        // try to open a file channel to the file of the inverted index
+        try (FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(docsPath), StandardOpenOption.WRITE,
+                StandardOpenOption.READ, StandardOpenOption.CREATE);
+             FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get(freqsPath), StandardOpenOption.WRITE,
+                     StandardOpenOption.READ, StandardOpenOption.CREATE)
+        ) {
+
+            // instantiation of MappedByteBuffer for integer list of docids
+            MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, docsMemOffset, numBytes/2);
+
+            // instantiation of MappedByteBuffer for integer list of freqs
+            MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, freqsMemOffset, numBytes/2);
+
+            // check if MappedByteBuffers are correctly instantiated
+            if (docsBuffer != null && freqsBuffer != null) {
+                // write postings to file
+                for (Map.Entry<Integer, Integer> posting : postings) {
+                    // encode docid
+                    docsBuffer.putInt(posting.getKey());
+                    // encode freq
+                    freqsBuffer.putInt(posting.getValue());
+                }
+                // update buffer positions
+                docsMemOffset += docsBuffer.position();
+                freqsMemOffset += freqsBuffer.position();
+
+                return numBytes;
+            }
+        } catch (InvalidPathException e) {
+            System.out.println("Path Error " + e);
+        } catch (IOException e) {
+            System.out.println("I/O Error " + e);
+        }
+        return -1;
+    }
 
 }

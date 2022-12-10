@@ -5,14 +5,6 @@ import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
-import java.io.IOException;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
-import java.util.*;
 
 /**
  * Class that implements the merge of the intermediate posting lists during the SPIMI-Indexing algorithm
@@ -213,54 +205,7 @@ public class Merger {
         }
     }
 
-    /**
-     * Save to disk the posting list
-     * @param list: the posting list to save
-     * @return number of bytes written
-     */
-    private static long saveToDisk(PostingList list) {
-        // memory occupancy of the posting list:
-        // - for each posting we have to store 2 integers (docid and freq)
-        // - each integer will occupy 4 bytes since we are storing integers in byte arrays
-        int numBytes = list.getNumBytes();
 
-        // try to open a file channel to the file of the inverted index
-        try (FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_INVERTED_INDEX_DOCS), StandardOpenOption.WRITE,
-                StandardOpenOption.READ, StandardOpenOption.CREATE);
-             FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_INVERTED_INDEX_FREQS), StandardOpenOption.WRITE,
-                     StandardOpenOption.READ, StandardOpenOption.CREATE)
-        ) {
-
-            // instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, docsMemOffset, numBytes/2);
-
-            // instantiation of MappedByteBuffer for integer list of freqs
-            MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, freqsMemOffset, numBytes/2);
-
-            // check if MappedByteBuffers are correctly instantiated
-            if (docsBuffer != null && freqsBuffer != null) {
-                ArrayList<Map.Entry<Integer, Integer>> postings = list.getPostings();
-
-                // write postings to file
-                for (Map.Entry<Integer, Integer> posting : postings) {
-                    // encode docid
-                    docsBuffer.putInt(posting.getKey());
-                    // encode freq
-                    freqsBuffer.putInt(posting.getValue());
-                }
-                // update buffer positions
-                docsMemOffset += docsBuffer.position();
-                freqsMemOffset += freqsBuffer.position();
-
-                return numBytes;
-            }
-        } catch (InvalidPathException e) {
-            System.out.println("Path Error " + e);
-        } catch (IOException e) {
-            System.out.println("I/O Error " + e);
-        }
-        return -1;
-    }
 
     /**
      * The effective merging pipeline:
@@ -295,7 +240,7 @@ public class Merger {
             PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
 
             // save posting list on disk
-            saveToDisk(mergedPostingList);
+            mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS);
 
             // save vocabulary entry on disk
             vocMemOffset += vocabularyEntry.write_entry_to_disk(vocMemOffset, PATH_TO_VOCABULARY);
