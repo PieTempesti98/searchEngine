@@ -15,6 +15,9 @@ public class ConfigurationParameters {
     private static String partialIndexPath;
     private static String vocabularyPath;
     private static String invertedIndexPath;
+    private static String partialVocabularyPath;
+    private static String invertedIndexDocsPath;
+    private static String invertedIndexFreqsPath;
 
     static {
         try{
@@ -38,6 +41,9 @@ public class ConfigurationParameters {
             partialIndexPath = doc.getElementsByTagName("partialIndexPath").item(0).getTextContent();
             vocabularyPath = doc.getElementsByTagName("vocabularyPath").item(0).getTextContent();
             invertedIndexPath = doc.getElementsByTagName("invertedIndexPath").item(0).getTextContent();
+            partialVocabularyPath = doc.getElementsByTagName("partialVocabularyPath").item(0).getTextContent();
+            invertedIndexDocsPath = doc.getElementsByTagName("invertedIndexDocsPath").item(0).getTextContent();
+            invertedIndexFreqsPath = doc.getElementsByTagName("invertedIndexFreqsPath").item(0).getTextContent();
 
         } catch(Exception e){
             e.printStackTrace();
@@ -68,5 +74,14 @@ public class ConfigurationParameters {
     public static String getVocabularyPath() {return vocabularyPath;}
 
     public static String getInvertedIndexPath() {return invertedIndexPath;
+    }
+
+    public static String getPartialVocabularyPath() { return partialVocabularyPath;
+    }
+
+    public static String getInvertedIndexDocsPath() { return invertedIndexDocsPath;
+    }
+
+    public static String getInvertedIndexFreqsPath() { return invertedIndexFreqsPath;
     }
 }

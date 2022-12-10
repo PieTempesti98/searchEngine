@@ -6,6 +6,9 @@
     <processedCollectionPath>data/processedCollection.db</processedCollectionPath>
     <documentIndexPath>data/documentIndex.db</documentIndexPath>
     <partialIndexPath>data/partialIndex.db</partialIndexPath>
-    <vocabularyPath>data/vocabulary.db</vocabularyPath>
+    <vocabularyPath>data/vocabulary.txt</vocabularyPath>
     <invertedIndexPath>data/invertedIndex.txt</invertedIndexPath>
+    <partialVocabularyPath>data/partialVocabularies/vocabulary_</partialVocabularyPath>
+    <invertedIndexDocsPath>data/inverted_index_docs</invertedIndexDocsPath>
+    <invertedIndexFreqssPath>data/inverted_index_freqs</invertedIndexFreqssPath>
 </it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
