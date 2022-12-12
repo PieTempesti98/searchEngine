@@ -39,12 +39,14 @@ public class Spimi {
     private static final String PATH_TO_PARTIAL_DOCID =  ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
 
 
+    //TODO: transform in HashMap
     /*
     counts the number of partial indexes created
      */
     private static int numIndex = 0;
 
 
+    //TODO: error handling
     /**
      * @param index: partial index that must be saved onto file
     * @param numDocs: number of documents processed
@@ -73,6 +75,7 @@ public class Spimi {
 
             //write posting lists to disk and update offset
             long offset = postingList.writePostingListToDisk(frequencyOffset,docidsOffset,PATH_TO_PARTIAL_DOCID+"_"+numIndex,PATH_TO_PARTIAL_FREQUENCIES+"_"+numIndex);
+            //TODO: how the method works?
             frequencyOffset += offset/2;
             docidsOffset += offset/2;
 
@@ -97,6 +100,7 @@ public class Spimi {
 
             //writing failed
             if(vocabularyOffset == -1)
+                //TODO: Error handling
                 break;
 
         }
@@ -107,13 +111,12 @@ public class Spimi {
     }
 
     /**
+     *  Function that searched for a given docid in a posting list.
+     * If the document is already present it updates the term frequency for that
+     * specific document, if that's not the case creates a new pair (docid,freq)
+     * in which frequency is set to 1 and adds this pair to the posting list
      * @param docid:       docid of a certain document
      * @param postingList: posting list of a given term
-     *                     <p>
-     *                     Function that searched for a given docid in a posting list.
-     *                     If the document is already present it updates the term frequency for that
-     *                     specific document, if that's not the case creates a new pair (docid,freq)
-     *                     in which frequency is set to 1 and adds this pair to the posting list
      **/
     private static void updateOrAddPosting(int docid, PostingList postingList) {
         if (postingList.getPostings().size() > 0) {
@@ -125,7 +128,7 @@ public class Spimi {
                 return;
             }
         }
-        //the document has not been processed (docIds are incremental):
+        // the document has not been processed (docIds are incremental):
         // create new pair and add it to the posting list
         postingList.getPostings().add(new AbstractMap.SimpleEntry<>(docid, 1));
 
@@ -134,7 +137,6 @@ public class Spimi {
 
     /**
      * Performs spimi algorithm
-     *
      * @return the number of partial indexes created
      */
     public static int executeSpimi() {
