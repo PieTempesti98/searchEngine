@@ -78,23 +78,17 @@ public class VocabularyEntry implements Serializable {
      */
     private final long ENTRY_SIZE = 65 + 4 + 4 + 8 + 8 + 8 + 8;
 
-
-    public VocabularyEntry(){}
-
     /**
      * Constructor for the vocabulary entry
      * create an empty class
      */
-    public VocabularyEntry(){
-
-    }
+    public VocabularyEntry(){}
 
     /**
      * Constructor for the vocabulary entry for the term passed as parameter
      * Assign the termid to the term and initializes all the statistics and memory information
      * @param term the token of the entry
      */
-
 
     public VocabularyEntry(String term){
 

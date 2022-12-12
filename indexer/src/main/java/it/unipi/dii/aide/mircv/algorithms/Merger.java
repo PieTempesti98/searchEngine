@@ -46,12 +46,12 @@ public class Merger {
     /**
      * Path to the inverted index docs file
      */
-    private final static String PATH_TO_INVERTED_INDEX_DOCS = ConfigurationParameters.getInvertedIndexDocsPath();
+    private final static String PATH_TO_INVERTED_INDEX_DOCS = ConfigurationParameters.getInvertedIndexDocs();
 
     /**
      * Path to the inverted index freqs file
      */
-    private final static String PATH_TO_INVERTED_INDEX_FREQS = ConfigurationParameters.getInvertedIndexFreqsPath();
+    private final static String PATH_TO_INVERTED_INDEX_FREQS = ConfigurationParameters.getInvertedIndexFreqs();
 
     /**
      * Path to vocabulary
@@ -88,9 +88,9 @@ public class Merger {
             vocEntryMemOffset[i] = 0;
 
             // read first entry of the vocabulary
-            boolean ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+i);
+            long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+i);
 
-            if(!ret){
+            if(ret == -1){
                 // error encountered during vocabulary entry reading operation
                 nextTerms[i] = null;
             }
@@ -195,10 +195,10 @@ public class Merger {
                 vocEntryMemOffset[i] += VOCENTRY_SIZE;
 
                 // read next vocabulary entry from the i-th vocabulary
-                boolean ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+i);
+                long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+i);
 
                 // check if errors occurred while reading the vocabulary entry
-                if(!ret){
+                if(ret == -1){
                     nextTerms[i] = null;
                 }
             }
@@ -257,18 +257,13 @@ public class Merger {
      * - remove partial vocabularies
      */
     private static void cleanUp() {
-        // TODO: eliminate partial indexes and partial vocabularies
-        for(int i=0; i<numIndexes; i++){
-            // remove i-th partial vocabulary
-            FileUtils.removeFile();
+        // remove partial index docids directory
+        FileUtils.deleteDirectory(ConfigurationParameters.getDocidsDir());
 
-            // remove i-th partial index's docs file
-            FileUtils.removeFile();
+        // remove partial index frequencies directory
+        FileUtils.deleteDirectory(ConfigurationParameters.getFrequencyDir());
 
-            // remove i-th partial index's freqs file
-            FileUtils.removeFile();
-
-            // remove directories ?
-        }
+        // remove partial vocabularies directory
+        FileUtils.deleteDirectory(ConfigurationParameters.getPartialVocabularyDir());
     }
 }

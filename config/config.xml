@@ -9,7 +9,8 @@
     <vocabularyFileName>/vocabulary</vocabularyFileName>
     <docidsFileName>/docids</docidsFileName>
     <vocabularyPath>data/vocabulary</vocabularyPath>
-    <invertedIndexPath>data/invertedIndex.txt</invertedIndexPath>
+    <invertedIndexDocs>data/invertedIndexDocs</invertedIndexDocs>
+    <invertedIndexFreqs>data/invertedIndexFreqs</invertedIndexFreqs>
     <partialVocabularyDir>data/partial_vocabulary</partialVocabularyDir>
     <frequencyDir>data/partial_frequencies</frequencyDir>
     <docidsDir>data/partial_docids</docidsDir>
