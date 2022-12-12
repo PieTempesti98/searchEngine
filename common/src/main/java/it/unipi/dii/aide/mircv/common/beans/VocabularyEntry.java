@@ -126,6 +126,7 @@ public class VocabularyEntry implements Serializable {
         this.idf = Math.log10(CollectionStatistics.getNumDocuments()/(double)this.df);
     }
 
+    // TODO: remove duplicate
     public void computeIDF(int numDocuments){
         this.idf = Math.log10(numDocuments/(double)this.df);
     }
@@ -154,6 +155,10 @@ public class VocabularyEntry implements Serializable {
 
     public void setFrequencyOffset(long freqOffset) {
         this.frequencyOffset = freqOffset;
+    }
+
+    public void setDf(int df) {
+        this.df = df;
     }
 
     public int getTERM_SIZE() {return TERM_SIZE;}

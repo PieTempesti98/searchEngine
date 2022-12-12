@@ -88,10 +88,11 @@ public class Merger {
             vocEntryMemOffset[i] = 0;
 
             // read first entry of the vocabulary
-            long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+i);
+            long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+"_"+i);
 
-            if(ret == -1){
+            if(ret == -1 || ret == 0){
                 // error encountered during vocabulary entry reading operation
+                // or read ended
                 nextTerms[i] = null;
             }
         }
@@ -144,6 +145,12 @@ public class Merger {
 
         // processing the term
         for (int i = 0; i < numIndexes; i++) {
+            /* DEBUG
+            System.out.println("processing partial inverted index: "+i);
+
+            System.out.println("voc entry: ");
+            System.out.println(nextTerms[i]);
+*/
             // Found the matching term
             if (nextTerms[i] != null && nextTerms[i].getTerm().equals(termToProcess)) {
                 // intermediate posting list for term 'termToProcess' in index 'i'
@@ -152,7 +159,12 @@ public class Merger {
                 String freqsPath = PATH_TO_PARTIAL_INDEXES_FREQS + "_" + i;
 
                 // retrieve posting list from partial inverted index file
-                PostingList intermediatePostingList = new PostingList(vocabularyEntry, docsPath, freqsPath);
+                PostingList intermediatePostingList = new PostingList(nextTerms[i], docsPath, freqsPath);
+
+                /* DEBUG
+                System.out.println("intermediate pl");
+                System.out.println(intermediatePostingList);
+                 */
 
                 // compute memory occupancy and add it to total space occupancy
                 numBytes += intermediatePostingList.getNumBytes();
@@ -198,7 +210,8 @@ public class Merger {
                 long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+ "_" +i);
 
                 // check if errors occurred while reading the vocabulary entry
-                if(ret == -1){
+                if(ret == -1 || ret == 0){
+                    // read ended or an error occurred
                     nextTerms[i] = null;
                 }
             }
@@ -233,12 +246,19 @@ public class Merger {
             if (termToProcess == null)
                 break;
 
+            System.out.println("processing term: "+termToProcess);
+
             // new vocabulary entry for the processed term
             VocabularyEntry vocabularyEntry = new VocabularyEntry(termToProcess);
 
             // merge the posting lists for the term to be processed
             PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
 
+            /*
+            DEBUG
+            System.out.println("merged posting list for current term: ");
+            System.out.println(mergedPostingList);
+*/
             // save posting list on disk and update offsets
             long[] offsets = mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS);
             docsMemOffset = offsets[0];
@@ -246,7 +266,14 @@ public class Merger {
             // save vocabulary entry on disk
             // TODO: check the return value. Should work
             vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, PATH_TO_VOCABULARY);
+
+            /* DEBUG
+            System.out.println("vocabulary entry for current term: ");
+            System.out.println(vocabularyEntry);
+
+             */
         }
+
         cleanUp();
         return true;
     }

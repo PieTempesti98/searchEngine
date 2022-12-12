@@ -35,6 +35,10 @@ public class PostingList implements Serializable{
      * @param freqsPath: file path for the file containing freqs of the posting list to be constructed
      */
     public PostingList(VocabularyEntry term, String docsPath, String freqsPath) {
+        /*
+        DEBUG
+        System.out.println("reading posting list for term:"+term.getTerm());
+*/
         try (FileChannel docsFChan = (FileChannel) Files.newByteChannel(
                 Paths.get(docsPath),
                 StandardOpenOption.WRITE,
@@ -46,26 +50,32 @@ public class PostingList implements Serializable{
                      StandardOpenOption.READ,
                      StandardOpenOption.CREATE)
         ) {
-
             // instantiation of MappedByteBuffer for integer list of docids
             MappedByteBuffer docBuffer = docsFChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     term.getMemoryOffset(),
-                    term.getMemorySize()
+                    term.getMemorySize()/2
             );
 
             // instantiation of MappedByteBuffer for integer list of frequencies
             MappedByteBuffer freqBuffer = freqsFChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     term.getFrequencyOffset(),
-                    term.getMemorySize()
+                    term.getMemorySize()/2
             );
 
             // create the posting list for the term
             this.term = term.getTerm();
 
             for (int i = 0; i < term.getDf(); i++) {
+                /*DEBUG
+                System.out.println("reading document: "+i);
+                System.out.println("at offsets:\tdocs:"+term.getMemoryOffset()+" freqs:"+term.getFrequencyOffset());
+                */
                 Map.Entry<Integer, Integer> posting = new AbstractMap.SimpleEntry<>(docBuffer.getInt(), freqBuffer.getInt());
+                /* DEBUG
+                System.out.println(posting);
+                 */
                 this.getPostings().add(posting);
             }
         } catch (Exception e) {
@@ -146,6 +156,13 @@ public class PostingList implements Serializable{
         // - each integer will occupy 4 bytes since we are storing integers in byte arrays
         int numBytes = getNumBytes();
 
+        /*
+        DEBUG
+        System.out.println("writing this posting list:");
+        System.out.println(this);
+        System.out.println("at offsets:\tdocs:"+docsMemOffset+" freqs:"+freqsMemOffset);
+        */
+
         // try to open a file channel to the file of the inverted index
         try (FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(docsPath), StandardOpenOption.WRITE,
                 StandardOpenOption.READ, StandardOpenOption.CREATE);
@@ -168,8 +185,13 @@ public class PostingList implements Serializable{
                     // encode freq
                     freqsBuffer.putInt(posting.getValue());
                 }
+
+                /* DEBUG
+                System.out.println("new offsets:\tdocs:"+(docsMemOffset + docsBuffer.position())+" freqs:"+(freqsMemOffset + freqsBuffer.position()));
+                */
+
                 //return updated buffer positions
-                return new long[]{docsMemOffset + docsBuffer.position(), freqsMemOffset + docsBuffer.position()};
+                return new long[]{docsMemOffset+ docsBuffer.position(), freqsMemOffset + freqsBuffer.position()};
             }
         } catch (InvalidPathException e) {
             System.out.println("Path Error " + e);

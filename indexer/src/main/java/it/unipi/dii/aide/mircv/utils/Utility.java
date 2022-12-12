@@ -12,7 +12,7 @@ public class Utility {
 
     private static final String PARTIAL_INDEX_PATH = ConfigurationParameters.getPartialIndexPath();
 
-    private static final String INVERTED_INDEX_PATH = ConfigurationParameters.getInvertedIndexPath();
+    //private static final String INVERTED_INDEX_PATH = ConfigurationParameters.getInvertedIndexPath();
 
     /**
      * Number of different intermediate indexes
@@ -31,7 +31,11 @@ public class Utility {
         removeFile(DOC_INDEX_PATH);
         removeFile(VOCABULARY_PATH);
         removeFile(PARTIAL_INDEX_PATH);
+
+        //TODO: update
+        /*
         removeFile(INVERTED_INDEX_PATH);
+        */
         Preprocesser.readStopwords();
     }
 

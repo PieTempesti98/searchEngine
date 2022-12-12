@@ -2,10 +2,12 @@ package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
-public class Vocabulary extends HashMap<String, VocabularyEntry>{
+public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
     private static Vocabulary instance = null;
+
     private final String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
 
     public static Vocabulary getInstance(){
@@ -48,8 +50,12 @@ public class Vocabulary extends HashMap<String, VocabularyEntry>{
             //read entry and update position
             position = entry.readFromDisk(position,this.VOCABULARY_PATH);
 
+            if(position == 0)
+                return  true;
+
             //populate vocabulary
             this.put(entry.getTerm(),entry);
+
         }
 
         //if position == -1 an error occurred during reading

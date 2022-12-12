@@ -76,8 +76,6 @@ public class Spimi {
 
             //write posting lists to disk and update offset
             long[] offsets = postingList.writePostingListToDisk(frequencyOffset,docidsOffset,PATH_TO_PARTIAL_DOCID+"_"+numIndex,PATH_TO_PARTIAL_FREQUENCIES+"_"+numIndex);
-            docidsOffset = offsets[0];
-            frequencyOffset = offsets[1];
 
             //create vocabulary entry
             VocabularyEntry entry = new VocabularyEntry(postingList.getTerm());
@@ -97,6 +95,10 @@ public class Spimi {
 
             //write entry to disk and update offset
             vocabularyOffset = entry.writeEntryToDisk(vocabularyOffset,PATH_TO_PARTIAL_VOCABULARY+"_"+numIndex);
+
+            // new offsets where to right the next posting list
+            docidsOffset = offsets[0];
+            frequencyOffset = offsets[1];
 
             //writing failed
             if(vocabularyOffset == -1)
