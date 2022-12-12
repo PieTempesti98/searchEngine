@@ -4,7 +4,7 @@
     <loadedCollectionPath>data/loadedData.tsv</loadedCollectionPath>
     <stopwordsPath>.config/stopwords.txt</stopwordsPath>
     <processedCollectionPath>data/processedCollection.db</processedCollectionPath>
-    <documentIndexPath>data/documentIndex.db</documentIndexPath>
+    <documentIndexPath>data/documentIndex</documentIndexPath>
     <frequencyFileName>/frequencies</frequencyFileName>
     <vocabularyFileName>/vocabulary</vocabularyFileName>
     <docidsFileName>/docids</docidsFileName>
@@ -13,4 +13,5 @@
     <partialVocabularyDir>data/partial_vocabulary</partialVocabularyDir>
     <frequencyDir>data/partial_frequencies</frequencyDir>
     <docidsDir>data/partial_docids</docidsDir>
+    <collectionStatisticsPath>config/collectionStatistics</collectionStatisticsPath>
 </it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>

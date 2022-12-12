@@ -21,7 +21,7 @@ public class ConfigurationParameters {
     private static String vocabularyFileName;
     private static String frequencyDir;
     private static String docidsDir;
-
+    private static String collectionStatisticsPath;
 
     static {
         try{
@@ -51,7 +51,7 @@ public class ConfigurationParameters {
             vocabularyFileName = doc.getElementsByTagName("vocabularyFileName").item(0).getTextContent();
             frequencyDir = doc.getElementsByTagName("frequencyDir").item(0).getTextContent();
             docidsDir = doc.getElementsByTagName("docidsDir").item(0).getTextContent();
-
+            collectionStatisticsPath = doc.getElementsByTagName("collectionStatisticsPath").item(0).getTextContent();
 
         } catch(Exception e){
             e.printStackTrace();
@@ -61,23 +61,19 @@ public class ConfigurationParameters {
     public static String getRawCollectionPath() {
         return rawCollectionPath;
     }
-
     public static String getLoadedCollectionPath() {
         return loadedCollectionPath;
     }
-
     public static String getStopwordsPath() {return stopwordsPath;}
 
     public static String getProcessedCollectionPath() {
         return processedCollectionPath;
     }
-
     public static String getDocumentIndexPath() {return documentIndexPath;}
-
     public static String getPartialIndexPath() {return partialIndexPath;}
-
     public static String getVocabularyPath() {return vocabularyPath;}
-
+    public static String getInvertedIndexPath() {return invertedIndexPath;}
+    public static String getCollectionStatisticsPath() {return collectionStatisticsPath;}
     public static String getInvertedIndexPath() {return invertedIndexPath;}
 
     public static String getPartialVocabularyDir() {return partialVocabularyDir;}
@@ -91,4 +87,5 @@ public class ConfigurationParameters {
     public static String getDocidsDir() {return docidsDir;}
 
     public static String getVocabularyFileName() {return vocabularyFileName;}
+
 }

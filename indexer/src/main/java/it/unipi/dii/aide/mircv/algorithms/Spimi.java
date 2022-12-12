@@ -1,6 +1,7 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
 import it.unipi.dii.aide.mircv.common.beans.*;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
@@ -134,7 +135,6 @@ public class Spimi {
 
     }
 
-
     /**
      * Performs spimi algorithm
      * @return the number of partial indexes created
@@ -148,6 +148,7 @@ public class Spimi {
 
         try (
                 BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
+
         ) {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
 
@@ -190,8 +191,9 @@ public class Spimi {
                             processedDocument.getTokens().size()
                     );
 
-                   // write entry to disk;
 
+                    // write the docIndex entry to disk
+                    entry.writeToDisk();
                     //keeps track of number of processed documents,
                     // useful for calculating collection statistics later on
                     CollectionStatistics.addDocument();
@@ -224,6 +226,9 @@ public class Spimi {
                 saveIndexToDisk(index,partialNumDocs);
                 partialNumDocs = 0;
             }
+            // update the size of the document index and save it to disk
+            if(!CollectionSize.updateCollectionSize(docid))
+                return 0;
             return numIndex;
 
         } catch (Exception e) {

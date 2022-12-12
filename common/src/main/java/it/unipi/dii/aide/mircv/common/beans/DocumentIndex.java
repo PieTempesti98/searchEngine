@@ -1,5 +1,6 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import org.mapdb.DB;
 import org.mapdb.DBMaker;
@@ -8,28 +9,20 @@ import org.mapdb.Serializer;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Class that represent a document index; it is a singleton hashmap with the docid as key
+ */
 public class DocumentIndex extends HashMap<Integer, DocumentIndexEntry> {
 
+    /**
+     * Instance of the singleton object
+     */
     private static DocumentIndex instance = null;
 
-    private DocumentIndex(){
-        //use DBMaker to create a DB object of HashMap stored on disk
-        //provide location
-        DB db = DBMaker.fileDB(ConfigurationParameters.getDocumentIndexPath()).fileMmapEnable().fileChannelEnable().make();
-
-        Map<Integer, DocumentIndexEntry> docIndex = (Map<Integer, DocumentIndexEntry>) db.hashMap("docIndex")
-                .keySerializer(Serializer.INTEGER)
-                .valueSerializer(Serializer.JAVA).createOrOpen();
-
-        //read from map
-        for(int docid: docIndex.keySet()){
-            this.put(docid, docIndex.get(docid));
-        }
-
-        //close to protect from data corruption
-        db.close();
-    }
-
+    /**
+     * Method used to instantiate the singleton object
+     * @return the singleton object
+     */
     public static DocumentIndex getInstance(){
         if(instance == null){
             instance = new DocumentIndex();
@@ -37,8 +30,39 @@ public class DocumentIndex extends HashMap<Integer, DocumentIndexEntry> {
         return instance;
     }
 
+    /**
+     * Lookup method on the document index
+     * @param docid the key
+     * @return the pid of the document
+     */
     public String getPid(int docid){
         return this.get(docid).getPid();
+    }
+
+    /**
+     * Loads the document index from disk
+     * @return true if the fetch is successful
+     */
+    public boolean loadFromDisk(){
+        // retrieve the number of documents
+        long numDocuments = CollectionSize.getCollectionSize();
+
+        // retrieve the size of a single entry
+        final int ENTRY_SIZE = DocumentIndexEntry.getEntrySize();
+
+        // for each document to be fetched
+        for(int i = 0; i < numDocuments; i++){
+
+            // load the document from disk and put it into the map
+            DocumentIndexEntry newEntry = new DocumentIndexEntry();
+            if(newEntry.readFromDisk((long) i * ENTRY_SIZE)){
+                this.put(newEntry.getDocid(), newEntry);
+            }
+            else{
+                return false;
+            }
+        }
+        return true;
     }
 
 }
