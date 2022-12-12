@@ -75,10 +75,9 @@ public class Spimi {
         for(PostingList postingList: index.values()) {
 
             //write posting lists to disk and update offset
-            long offset = postingList.writePostingListToDisk(frequencyOffset,docidsOffset,PATH_TO_PARTIAL_DOCID+"_"+numIndex,PATH_TO_PARTIAL_FREQUENCIES+"_"+numIndex);
-            //TODO: how the method works?
-            frequencyOffset += offset/2;
-            docidsOffset += offset/2;
+            long[] offsets = postingList.writePostingListToDisk(frequencyOffset,docidsOffset,PATH_TO_PARTIAL_DOCID+"_"+numIndex,PATH_TO_PARTIAL_FREQUENCIES+"_"+numIndex);
+            docidsOffset = offsets[0];
+            frequencyOffset = offsets[1];
 
             //create vocabulary entry
             VocabularyEntry entry = new VocabularyEntry(postingList.getTerm());

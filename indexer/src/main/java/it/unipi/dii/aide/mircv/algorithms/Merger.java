@@ -12,7 +12,7 @@ import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 public class Merger {
 
     /* TODO: take from config parameters; it should be the same value as the one in VocbularyEntry file */
-    private static final long VOCENTRY_SIZE = 72;
+    private static final long VOCENTRY_SIZE = 128 + 4 + 4 + 8 + 8 + 8 + 8;
     /**
      * Inverted index's next free memory offset in docids file
      */
@@ -31,17 +31,17 @@ public class Merger {
     /**
      * Standard pathname for partial index documents files
      */
-    private static final String PATH_TO_PARTIAL_INDEXES_DOCS = ConfigurationParameters.getPartialIndexPath();
+    private static final String PATH_TO_PARTIAL_INDEXES_DOCS = ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
 
     /**
      * Standard pathname for partial index frequencies files
      */
-    private static final String PATH_TO_PARTIAL_INDEXES_FREQS = ConfigurationParameters.getPartialIndexPath();
+    private static final String PATH_TO_PARTIAL_INDEXES_FREQS = ConfigurationParameters.getFrequencyDir() + ConfigurationParameters.getFrequencyFileName();
 
     /**
      * Standard pathname for partial vocabulary files
      */
-    private static final String PATH_TO_PARTIAL_VOCABULARIES = ConfigurationParameters.getPartialIndexPath();
+    private static final String PATH_TO_PARTIAL_VOCABULARIES = ConfigurationParameters.getPartialVocabularyDir() + ConfigurationParameters.getVocabularyFileName();
 
     /**
      * Path to the inverted index docs file
@@ -148,8 +148,8 @@ public class Merger {
             if (nextTerms[i] != null && nextTerms[i].getTerm().equals(termToProcess)) {
                 // intermediate posting list for term 'termToProcess' in index 'i'
 
-                String docsPath = PATH_TO_PARTIAL_INDEXES_DOCS + i;
-                String freqsPath = PATH_TO_PARTIAL_INDEXES_FREQS + i;
+                String docsPath = PATH_TO_PARTIAL_INDEXES_DOCS + "_" + i;
+                String freqsPath = PATH_TO_PARTIAL_INDEXES_FREQS + "_" + i;
 
                 // retrieve posting list from partial inverted index file
                 PostingList intermediatePostingList = new PostingList(vocabularyEntry, docsPath, freqsPath);
@@ -195,7 +195,7 @@ public class Merger {
                 vocEntryMemOffset[i] += VOCENTRY_SIZE;
 
                 // read next vocabulary entry from the i-th vocabulary
-                long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+i);
+                long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+ "_" +i);
 
                 // check if errors occurred while reading the vocabulary entry
                 if(ret == -1){
@@ -244,7 +244,7 @@ public class Merger {
             docsMemOffset = offsets[0];
             freqsMemOffset = offsets[1];
             // save vocabulary entry on disk
-            // TODO: check the return value
+            // TODO: check the return value. Should work
             vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, PATH_TO_VOCABULARY);
         }
         cleanUp();

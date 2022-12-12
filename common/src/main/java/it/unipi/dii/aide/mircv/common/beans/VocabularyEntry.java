@@ -76,7 +76,7 @@ public class VocabularyEntry implements Serializable {
      * term size + 4 + 4 + 8 + 8 + 8 + 8
      * we have to store 2 ints, 1 double and 3 longs
      */
-    private final long ENTRY_SIZE = 65 + 4 + 4 + 8 + 8 + 8 + 8;
+    private final long ENTRY_SIZE = 128 + 4 + 4 + 8 + 8 + 8 + 8;
 
     /**
      * Constructor for the vocabulary entry
@@ -238,9 +238,8 @@ public class VocabularyEntry implements Serializable {
                 buffer.putLong(this.getMemorySize());
 
 
-                // update position for which we have to start writing on file
-                position += ENTRY_SIZE;
-                return position;
+                // return position for which we have to start writing on file
+                return position + ENTRY_SIZE;
             }
             catch (Exception e){
                 e.printStackTrace();
@@ -280,7 +279,7 @@ try (FileChannel fChan = (FileChannel) Files.newByteChannel(
     CharBuffer charBuffer = StandardCharsets.UTF_8.decode(buffer);
 
     String[] encodedTerm = charBuffer.toString().split("\0");
-    if(encodedTerm.length == 0) //no more entries to read
+    if(encodedTerm.length == 0) // TODO: no more entries to read
         return 0;
 
     this.term = encodedTerm[0];
