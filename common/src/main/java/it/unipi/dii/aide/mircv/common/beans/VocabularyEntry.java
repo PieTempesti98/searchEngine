@@ -82,6 +82,14 @@ public class VocabularyEntry implements Serializable {
     public VocabularyEntry(){}
 
     /**
+     * Constructor for the vocabulary entry
+     * create an empty class
+     */
+    public VocabularyEntry(){
+
+    }
+
+    /**
      * Constructor for the vocabulary entry for the term passed as parameter
      * Assign the termid to the term and initializes all the statistics and memory information
      * @param term the token of the entry
