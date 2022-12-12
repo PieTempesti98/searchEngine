@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
-    <rawCollectionPath>data/collection.tsv</rawCollectionPath>
+    <rawCollectionPath>data/sampled_collection.tsv</rawCollectionPath>
     <loadedCollectionPath>data/loadedData.tsv</loadedCollectionPath>
-    <stopwordsPath>config/stopwords.txt</stopwordsPath>
+    <stopwordsPath>.config/stopwords.txt</stopwordsPath>
     <processedCollectionPath>data/processedCollection.db</processedCollectionPath>
-    <documentIndexPath>data/documentIndex.db</documentIndexPath>
-    <partialIndexPath>data/partialIndex.db</partialIndexPath>
-    <vocabularyPath>data/vocabulary.txt</vocabularyPath>
+    <documentIndexPath>data/documentIndex</documentIndexPath>
+    <frequencyFileName>/frequencies</frequencyFileName>
+    <vocabularyFileName>/vocabulary</vocabularyFileName>
+    <docidsFileName>/docids</docidsFileName>
+    <vocabularyPath>data/vocabulary</vocabularyPath>
     <invertedIndexPath>data/invertedIndex.txt</invertedIndexPath>
-    <partialVocabularyPath>data/partialVocabularies/vocabulary_</partialVocabularyPath>
-    <invertedIndexDocsPath>data/inverted_index_docs</invertedIndexDocsPath>
-    <invertedIndexFreqssPath>data/inverted_index_freqs</invertedIndexFreqssPath>
+    <partialVocabularyDir>data/partial_vocabulary</partialVocabularyDir>
+    <frequencyDir>data/partial_frequencies</frequencyDir>
+    <docidsDir>data/partial_docids</docidsDir>
+    <collectionStatisticsPath>config/collectionStatistics</collectionStatisticsPath>
 </it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>

@@ -1,15 +1,11 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
-import it.unipi.dii.aide.mircv.common.beans.DocumentIndexEntry;
-import it.unipi.dii.aide.mircv.common.beans.PostingList;
-import it.unipi.dii.aide.mircv.common.beans.TextDocument;
+import it.unipi.dii.aide.mircv.common.beans.*;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
-import org.mapdb.Serializer;
+import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -26,26 +22,37 @@ public class Spimi {
      */
     private static final String PATH_TO_COLLECTION = ConfigurationParameters.getRawCollectionPath();
 
-    /*
-    path to the file on the disk storing the partial indexes
-     */
-    private static final String PATH_PARTIAL_INDEX = ConfigurationParameters.getPartialIndexPath();
 
     /*
-    path to the file on the disk storing the document index
-     */
-    private static final String PATH_TO_DOCUMENT_INDEX = ConfigurationParameters.getDocumentIndexPath();
+    path to the file on the disk storing the partial vocabulary
+    */
+    private static final String PATH_TO_PARTIAL_VOCABULARY =  ConfigurationParameters.getPartialVocabularyDir() + ConfigurationParameters.getVocabularyFileName();
 
+    /*
+    path to the file on the disk storing the partial frequencies of the posting list
+    */
+    private static final String PATH_TO_PARTIAL_FREQUENCIES =  ConfigurationParameters.getFrequencyDir() + ConfigurationParameters.getFrequencyFileName();
+
+    /*
+    path to the file on the disk storing the partial docids of the posting list
+    */
+
+    private static final String PATH_TO_PARTIAL_DOCID =  ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
+
+
+    //TODO: transform in HashMap
     /*
     counts the number of partial indexes created
      */
     private static int numIndex = 0;
 
 
+    //TODO: error handling
     /**
      * @param index: partial index that must be saved onto file
+    * @param numDocs: number of documents processed
      */
-    private static void saveIndexToDisk(HashMap<String, PostingList> index, DB db) {
+    private static void saveIndexToDisk(HashMap<String, PostingList> index, int numDocs) {
 
         if (index.isEmpty()) //if the index is empty there is nothing to write on disk
             return;
@@ -59,22 +66,58 @@ public class Spimi {
                         Map.Entry::getValue,
                         (e1, e2) -> e1, LinkedHashMap::new));
 
-        List<PostingList> partialIndex = (List<PostingList>) db.indexTreeList("index_" + numIndex, Serializer.JAVA).createOrOpen();
-        partialIndex.addAll(index.values());
 
-        //update number of partial inverted indexes
+        long vocabularyOffset = 0; //position from which we start writing the partial vocabulary on the file
+        long frequencyOffset = 0; //position from which we start writing the partial frequencies on the file
+        long docidsOffset = 0; //position from which we start writing the partial docids on the file
+
+
+        for(PostingList postingList: index.values()) {
+
+            //write posting lists to disk and update offset
+            long offset = postingList.writePostingListToDisk(frequencyOffset,docidsOffset,PATH_TO_PARTIAL_DOCID+"_"+numIndex,PATH_TO_PARTIAL_FREQUENCIES+"_"+numIndex);
+            //TODO: how the method works?
+            frequencyOffset += offset/2;
+            docidsOffset += offset/2;
+
+            //create vocabulary entry
+            VocabularyEntry entry = new VocabularyEntry(postingList.getTerm());
+
+            //compute entry statistics
+            entry.updateStatistics(postingList);
+            entry.computeIDF(numDocs);
+
+            //set size of memory offset
+            entry.setMemoryOffset(docidsOffset);
+
+            //set size of frequency offset
+            entry.setFrequencyOffset(frequencyOffset);
+
+            //set size of posting list
+            entry.setMemorySize(postingList.getNumBytes());
+
+            //write entry to disk and update offset
+            vocabularyOffset = entry.writeEntryToDisk(vocabularyOffset,PATH_TO_PARTIAL_VOCABULARY+"_"+numIndex);
+
+            //writing failed
+            if(vocabularyOffset == -1)
+                //TODO: Error handling
+                break;
+
+        }
+
+        //update number of partial inverted indexes and vocabularies
         numIndex++;
 
     }
 
     /**
+     *  Function that searched for a given docid in a posting list.
+     * If the document is already present it updates the term frequency for that
+     * specific document, if that's not the case creates a new pair (docid,freq)
+     * in which frequency is set to 1 and adds this pair to the posting list
      * @param docid:       docid of a certain document
      * @param postingList: posting list of a given term
-     *                     <p>
-     *                     Function that searched for a given docid in a posting list.
-     *                     If the document is already present it updates the term frequency for that
-     *                     specific document, if that's not the case creates a new pair (docid,freq)
-     *                     in which frequency is set to 1 and adds this pair to the posting list
      **/
     private static void updateOrAddPosting(int docid, PostingList postingList) {
         if (postingList.getPostings().size() > 0) {
@@ -86,34 +129,31 @@ public class Spimi {
                 return;
             }
         }
-        //the document has not been processed (docIds are incremental):
+        // the document has not been processed (docIds are incremental):
         // create new pair and add it to the posting list
         postingList.getPostings().add(new AbstractMap.SimpleEntry<>(docid, 1));
 
     }
 
-
     /**
      * Performs spimi algorithm
-     *
      * @return the number of partial indexes created
      */
     public static int executeSpimi() {
 
+        //create directories to store partial frequencies, docids and vocabularies
+        FileUtils.createDirectory(ConfigurationParameters.getDocidsDir());
+        FileUtils.createDirectory(ConfigurationParameters.getFrequencyDir());
+        FileUtils.createDirectory(ConfigurationParameters.getPartialVocabularyDir());
+
         try (
                 BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
-                DB partialIndex = DBMaker.fileDB(PATH_PARTIAL_INDEX).fileChannelEnable().fileMmapEnable().make();
-                DB docIndexDb = DBMaker.fileDB(PATH_TO_DOCUMENT_INDEX).fileChannelEnable().fileMmapEnable().make(); //fileDB for document index
+
         ) {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
 
-            //list containing all documents indexes that must be written on file
-            Map<Integer, DocumentIndexEntry> docIndex = (Map<Integer, DocumentIndexEntry>) docIndexDb.hashMap("docIndex")
-                    .keySerializer(Serializer.INTEGER) //key-> docid
-                    .valueSerializer(Serializer.JAVA) //value -> document info
-                    .createOrOpen();
-
             int docid = 0; //assign docid in a incremental manner
+            int partialNumDocs = 0;
 
             long MEMORY_THRESHOLD = Runtime.getRuntime().totalMemory() * 20 / 100; // leave 20% of memory free
             String[] split;
@@ -140,23 +180,30 @@ public class Spimi {
                     // Perform text preprocessing on the document
                     ProcessedDocument processedDocument = Preprocesser.processDocument(document);
 
-                    if (processedDocument.getTokens().size() == 0) {
+                    if (processedDocument.getTokens().isEmpty()) {
                         continue;
                     }
 
                     //create new document index entry and add it to file
-                    DocumentIndexEntry entry = new DocumentIndexEntry(
+                   DocumentIndexEntry entry = new DocumentIndexEntry(
                             processedDocument.getPid(),
                             docid++,
                             processedDocument.getTokens().size()
                     );
-                    docIndex.put(docid, entry);
 
+
+                    // write the docIndex entry to disk
+                    entry.writeToDisk();
                     //keeps track of number of processed documents,
                     // useful for calculating collection statistics later on
                     CollectionStatistics.addDocument();
+                    partialNumDocs ++;
 
                     for (String term : processedDocument.getTokens()) {
+
+                        if(term.length() == 0)
+                            continue;
+
                         PostingList posting; //posting list of a given term
                         if (!index.containsKey(term)) {
                             // create new posting list if term wasn't present yet
@@ -169,12 +216,19 @@ public class Spimi {
 
                         //insert or update new posting
                         updateOrAddPosting(docid, posting);
+
                     }
+
+
 
                 }
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
-                saveIndexToDisk(index, partialIndex);
+                saveIndexToDisk(index,partialNumDocs);
+                partialNumDocs = 0;
             }
+            // update the size of the document index and save it to disk
+            if(!CollectionSize.updateCollectionSize(docid))
+                return 0;
             return numIndex;
 
         } catch (Exception e) {
@@ -182,6 +236,7 @@ public class Spimi {
             return 0;
         }
     }
+
 
 
 }

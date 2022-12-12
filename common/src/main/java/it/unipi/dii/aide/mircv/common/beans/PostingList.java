@@ -178,5 +178,4 @@ public class PostingList implements Serializable{
         }
         return null;
     }
-
 }
