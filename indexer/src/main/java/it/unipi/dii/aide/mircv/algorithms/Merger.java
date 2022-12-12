@@ -12,7 +12,7 @@ import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 public class Merger {
 
     /* TODO: take from config parameters; it should be the same value as the one in VocbularyEntry file */
-    private static final long VOCETRY_SIZE = 72;
+    private static final long VOCENTRY_SIZE = 72;
     /**
      * Inverted index's next free memory offset in docids file
      */
@@ -192,7 +192,7 @@ public class Merger {
                 // last processed term was present
 
                 // update next memory offset to be read from the i-th vocabulary
-                vocEntryMemOffset[i] += VOCETRY_SIZE;
+                vocEntryMemOffset[i] += VOCENTRY_SIZE;
 
                 // read next vocabulary entry from the i-th vocabulary
                 boolean ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+i);
@@ -239,14 +239,14 @@ public class Merger {
             // merge the posting lists for the term to be processed
             PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
 
-            // save posting list on disk
-            mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS);
-
+            // save posting list on disk and update offsets
+            long[] offsets = mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS);
+            docsMemOffset = offsets[0];
+            freqsMemOffset = offsets[1];
             // save vocabulary entry on disk
-            vocMemOffset += vocabularyEntry.write_entry_to_disk(vocMemOffset, PATH_TO_VOCABULARY);
-            // TODO: refactor the name of this function to CamelCase, remove side effects (param position is changed)
+            // TODO: check the return value
+            vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, PATH_TO_VOCABULARY);
         }
-
         cleanUp();
         return true;
     }

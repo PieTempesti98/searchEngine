@@ -140,7 +140,7 @@ public class PostingList implements Serializable{
      * @param freqsPath: file path for file storing freqs
      * @return number of bytes written
      */
-    public long writePostingListToDisk(long docsMemOffset, long freqsMemOffset, String docsPath, String freqsPath) {
+    public long[] writePostingListToDisk(long docsMemOffset, long freqsMemOffset, String docsPath, String freqsPath) {
         // memory occupancy of the posting list:
         // - for each posting we have to store 2 integers (docid and freq)
         // - each integer will occupy 4 bytes since we are storing integers in byte arrays
@@ -168,18 +168,15 @@ public class PostingList implements Serializable{
                     // encode freq
                     freqsBuffer.putInt(posting.getValue());
                 }
-                // update buffer positions
-                docsMemOffset += docsBuffer.position();
-                freqsMemOffset += freqsBuffer.position();
-
-                return numBytes;
+                //return updated buffer positions
+                return new long[]{docsMemOffset + docsBuffer.position(), freqsMemOffset + docsBuffer.position()};
             }
         } catch (InvalidPathException e) {
             System.out.println("Path Error " + e);
         } catch (IOException e) {
             System.out.println("I/O Error " + e);
         }
-        return -1;
+        return null;
     }
 
 }
