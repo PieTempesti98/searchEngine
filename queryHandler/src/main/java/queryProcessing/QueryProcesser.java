@@ -103,8 +103,8 @@ public class QueryProcesser {
 
         System.out.println("The document Index counts " + documentIndex.size() + " documents");
         //check if vocabulary and document index were correctly created. If not the setup failed
-       // if(vocabulary.isEmpty() || documentIndex.isEmpty())
-           // return false;
+        if(vocabulary.isEmpty() || documentIndex.isEmpty())
+            return false;
 
         //successful setup
         return true;

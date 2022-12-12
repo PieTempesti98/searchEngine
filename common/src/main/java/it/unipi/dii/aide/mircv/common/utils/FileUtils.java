@@ -1,7 +1,12 @@
 package it.unipi.dii.aide.mircv.common.utils;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Objects;
 
 public class FileUtils {
 
@@ -48,6 +53,41 @@ public class FileUtils {
         File file = new File(path);
         if(file.exists())
             file.delete();
+    }
+
+    /**
+     * @param path directory path
+     *  Creates a directory of given path
+     * **/
+    public static void createDirectory(String path) {
+        try {
+
+            Path dirPath = Paths.get(path);
+
+            Files.createDirectories(dirPath);
+
+        } catch (IOException e) {
+
+            e.printStackTrace();
+
+        }
+    }
+
+    /**
+     * @param path directory path
+     *  Deletes directory of given path
+     * **/
+    public static void deleteDirectory(String path){
+
+        File directory = new File(path);
+
+        //Before deleting the directory, delete all files inside
+        for (File file: Objects.requireNonNull(directory.listFiles()))
+           file.delete();
+
+        //delete directory
+        directory.delete();
+
     }
 
 }

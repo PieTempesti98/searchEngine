@@ -2,11 +2,16 @@
 <it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
     <rawCollectionPath>data/sampled_collection.tsv</rawCollectionPath>
     <loadedCollectionPath>data/loadedData.tsv</loadedCollectionPath>
-    <stopwordsPath>config/stopwords.txt</stopwordsPath>
+    <stopwordsPath>.config/stopwords.txt</stopwordsPath>
     <processedCollectionPath>data/processedCollection.db</processedCollectionPath>
     <documentIndexPath>data/documentIndex</documentIndexPath>
-    <partialIndexPath>data/partialIndex.db</partialIndexPath>
-    <vocabularyPath>data/vocabulary.db</vocabularyPath>
+    <frequencyFileName>/frequencies</frequencyFileName>
+    <vocabularyFileName>/vocabulary</vocabularyFileName>
+    <docidsFileName>/docids</docidsFileName>
+    <vocabularyPath>data/vocabulary</vocabularyPath>
     <invertedIndexPath>data/invertedIndex.txt</invertedIndexPath>
+    <partialVocabularyDir>data/partial_vocabulary</partialVocabularyDir>
+    <frequencyDir>data/partial_frequencies</frequencyDir>
+    <docidsDir>data/partial_docids</docidsDir>
     <collectionStatisticsPath>config/collectionStatistics</collectionStatisticsPath>
 </it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>

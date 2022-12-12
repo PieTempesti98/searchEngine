@@ -127,4 +127,8 @@ public class PostingList implements Serializable{
         postings = (ArrayList<Map.Entry<Integer, Integer>>) stream.readObject();
 
     }
+
+    public long writePostingListToDisk(long docsMemOffset, long freqsMemOffset, String docsPath, String freqsPath) {
+        return getNumBytes();
+    }
 }
