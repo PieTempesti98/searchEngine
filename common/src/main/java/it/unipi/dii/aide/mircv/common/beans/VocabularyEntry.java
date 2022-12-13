@@ -1,6 +1,6 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
-import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 
 import java.io.IOException;
 import java.io.Serial;
@@ -123,10 +123,9 @@ public class VocabularyEntry implements Serializable {
      * Compute the idf using the values computed during the merging of the indexes
      */
     public void computeIDF(){
-        this.idf = Math.log10(CollectionStatistics.getNumDocuments()/(double)this.df);
+        this.idf = Math.log10(CollectionSize.getCollectionSize()/(double)this.df);
     }
 
-    // TODO: remove duplicate
     public void computeIDF(int numDocuments){
         this.idf = Math.log10(numDocuments/(double)this.df);
     }

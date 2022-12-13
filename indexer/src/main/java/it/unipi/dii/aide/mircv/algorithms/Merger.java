@@ -145,12 +145,15 @@ public class Merger {
 
         // processing the term
         for (int i = 0; i < numIndexes; i++) {
-            /* DEBUG
+/*
             System.out.println("processing partial inverted index: "+i);
+
+
 
             System.out.println("voc entry: ");
             System.out.println(nextTerms[i]);
 */
+
             // Found the matching term
             if (nextTerms[i] != null && nextTerms[i].getTerm().equals(termToProcess)) {
                 // intermediate posting list for term 'termToProcess' in index 'i'
@@ -164,21 +167,23 @@ public class Merger {
                 /* DEBUG
                 System.out.println("intermediate pl");
                 System.out.println(intermediatePostingList);
-                 */
+*/
 
                 // compute memory occupancy and add it to total space occupancy
                 numBytes += intermediatePostingList.getNumBytes();
 
-                // Append the posting list to the final posting list of the term
-                finalList.appendPostings(intermediatePostingList.getPostings());
-
                 //update vocabulary statistics
                 vocabularyEntry.updateStatistics(intermediatePostingList);
 
-                // Update the nextList array with the next term to process
-                moveVocabulariesToNextTerm(termToProcess);
+                // Append the posting list to the final posting list of the term
+                finalList.appendPostings(intermediatePostingList.getPostings());
+
+
             }
         }
+
+        // Update the nextList array with the next term to process
+        moveVocabulariesToNextTerm(termToProcess);
 
         // writing to vocabulary the space occupancy and memory offset of the posting list into
         vocabularyEntry.setMemorySize(numBytes);
@@ -187,7 +192,12 @@ public class Merger {
 
         //compute the final idf
         vocabularyEntry.computeIDF();
+/*
+        System.out.println("final list:");
+        System.out.println(finalList);
 
+        System.out.println("df:"+vocabularyEntry.getDf()+"\tpostings.size(): "+finalList.getPostings().size());
+*/
         return finalList;
     }
 

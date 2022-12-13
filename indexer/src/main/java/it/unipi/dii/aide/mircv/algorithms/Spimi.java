@@ -4,7 +4,6 @@ import it.unipi.dii.aide.mircv.common.beans.*;
 import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
-import it.unipi.dii.aide.mircv.common.utils.CollectionStatistics;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
 import java.io.BufferedReader;
@@ -195,9 +194,6 @@ public class Spimi {
 
                     // write the docIndex entry to disk
                     entry.writeToDisk();
-                    //keeps track of number of processed documents,
-                    // useful for calculating collection statistics later on
-                    CollectionStatistics.addDocument();
                     partialNumDocs ++;
 
                     for (String term : processedDocument.getTokens()) {
