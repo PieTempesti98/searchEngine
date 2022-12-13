@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
-    <rawCollectionPath>data/small_collection.tsv</rawCollectionPath>
-    <loadedCollectionPath>data/loadedData.tsv</loadedCollectionPath>
-    <stopwordsPath>.config/stopwords.txt</stopwordsPath>
-    <processedCollectionPath>data/processedCollection.db</processedCollectionPath>
+    <rawCollectionPath>data/sampled_collection.tsv</rawCollectionPath>
+    <stopwordsPath>config/stopwords.txt</stopwordsPath>
     <documentIndexPath>data/documentIndex</documentIndexPath>
     <frequencyFileName>/frequencies</frequencyFileName>
     <vocabularyFileName>/vocabulary</vocabularyFileName>

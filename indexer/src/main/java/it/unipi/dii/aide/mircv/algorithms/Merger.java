@@ -210,7 +210,7 @@ public class Merger {
         // for each intermediate vocabulary
         for(int i=0; i<numIndexes; i++){
             // check if the last processed term was present in the i-th vocabulary
-            if(nextTerms[i].getTerm().equals(processedTerm)) {
+            if(nextTerms[i] != null && nextTerms[i].getTerm().equals(processedTerm)) {
                 // last processed term was present
 
                 // update next memory offset to be read from the i-th vocabulary

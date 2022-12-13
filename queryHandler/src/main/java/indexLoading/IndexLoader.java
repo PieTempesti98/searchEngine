@@ -24,21 +24,26 @@ public class IndexLoader {
      * @return the posting list of that term
      */
     public static PostingList loadTerm(VocabularyEntry term) {
-        try (FileChannel fChan = (FileChannel) Files.newByteChannel(
-                Paths.get(ConfigurationParameters.getInvertedIndexPath()),
+        try (FileChannel docidChan = (FileChannel) Files.newByteChannel(
+                Paths.get(ConfigurationParameters.getInvertedIndexDocs()),
                 StandardOpenOption.WRITE,
                 StandardOpenOption.READ,
-                StandardOpenOption.CREATE)) {
+                StandardOpenOption.CREATE);
+             FileChannel freqChan = (FileChannel) Files.newByteChannel(
+                     Paths.get(ConfigurationParameters.getInvertedIndexFreqs()),
+                     StandardOpenOption.WRITE,
+                     StandardOpenOption.READ,
+                     StandardOpenOption.CREATE)   ) {
 
             // instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer docBuffer = fChan.map(
+            MappedByteBuffer docBuffer = docidChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     term.getMemoryOffset(),
                     term.getMemorySize()
             );
 
             // instantiation of MappedByteBuffer for integer list of frequencies
-            MappedByteBuffer freqBuffer = fChan.map(
+            MappedByteBuffer freqBuffer = freqChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     term.getFrequencyOffset(),
                     term.getMemorySize()

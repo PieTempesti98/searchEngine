@@ -81,6 +81,9 @@ public class FileUtils {
 
         File directory = new File(path);
 
+        if(!directory.exists())
+            return;
+
         //Before deleting the directory, delete all files inside
         for (File file: Objects.requireNonNull(directory.listFiles()))
            file.delete();

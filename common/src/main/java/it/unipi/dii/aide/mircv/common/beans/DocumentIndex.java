@@ -1,18 +1,12 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.CollectionSize;
-import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import org.mapdb.DB;
-import org.mapdb.DBMaker;
-import org.mapdb.Serializer;
-
-import java.util.HashMap;
-import java.util.Map;
+import java.util.LinkedHashMap;
 
 /**
  * Class that represent a document index; it is a singleton hashmap with the docid as key
  */
-public class DocumentIndex extends HashMap<Integer, DocumentIndexEntry> {
+public class DocumentIndex extends LinkedHashMap<Integer, DocumentIndexEntry> {
 
     /**
      * Instance of the singleton object

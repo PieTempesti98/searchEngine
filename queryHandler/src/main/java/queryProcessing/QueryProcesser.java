@@ -27,9 +27,14 @@ public class QueryProcesser {
     private static final DocumentIndex documentIndex = DocumentIndex.getInstance();
 
     /**
-     * path to file storing inverted index
+     * path to file storing inverted index docids
      */
-    private static final String PATH_TO_INVERTED_INDEX = ConfigurationParameters.getInvertedIndexPath();
+    private static final String INVERTED_INDEX_DOCIDS_PATH = ConfigurationParameters.getInvertedIndexDocs();
+
+    /**
+     * path to file storing inverted index frequencies
+     */
+    private static final String INVERTED_INDEX_FREQS_PATH = ConfigurationParameters.getInvertedIndexFreqs();
 
     /**
      * load from disk the posting lists of the query tokens
@@ -94,14 +99,18 @@ public class QueryProcesser {
     public static boolean setupProcesser(){
 
         //check if document index exists. If not the setup failed
-        if(! new File(PATH_TO_INVERTED_INDEX).exists())
+        if(! new File(INVERTED_INDEX_DOCIDS_PATH).exists() || ! new File(INVERTED_INDEX_FREQS_PATH).exists())
             return false;
 
         // load the document index
         if(!documentIndex.loadFromDisk())
             return false;
 
+        if(!vocabulary.readFromDisk())
+            return false;
+
         System.out.println("The document Index counts " + documentIndex.size() + " documents");
+        System.out.println("The vocabulary counts " + vocabulary.size() + " tokens");
         //check if vocabulary and document index were correctly created. If not the setup failed
         if(vocabulary.isEmpty() || documentIndex.isEmpty())
             return false;
