@@ -12,7 +12,7 @@ import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 public class Merger {
 
     /* TODO: take from config parameters; it should be the same value as the one in VocbularyEntry file */
-    private static final long VOCENTRY_SIZE = 128 + 4 + 4 + 8 + 8 + 8 + 8;
+    private static final long VOCENTRY_SIZE = VocabularyEntry.getENTRY_SIZE();
     /**
      * Inverted index's next free memory offset in docids file
      */
@@ -255,8 +255,6 @@ public class Merger {
 
             if (termToProcess == null)
                 break;
-
-            System.out.println("processing term: "+termToProcess);
 
             // new vocabulary entry for the processed term
             VocabularyEntry vocabularyEntry = new VocabularyEntry(termToProcess);

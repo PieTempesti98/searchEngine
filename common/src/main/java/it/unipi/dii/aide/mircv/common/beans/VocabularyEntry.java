@@ -70,13 +70,13 @@ public class VocabularyEntry implements Serializable {
      size of the term
      */
 
-    private final int TERM_SIZE = 128; //TODO: decide term size
+    private static final int TERM_SIZE = 64; //TODO: decide term size
 
     /**
      * term size + 4 + 4 + 8 + 8 + 8 + 8
      * we have to store 2 ints, 1 double and 3 longs
      */
-    private final long ENTRY_SIZE = 128 + 4 + 4 + 8 + 8 + 8 + 8;
+    private static final long ENTRY_SIZE = TERM_SIZE + 4 + 4 + 8 + 8 + 8 + 8;
 
     /**
      * Constructor for the vocabulary entry
@@ -162,7 +162,7 @@ public class VocabularyEntry implements Serializable {
 
     public int getTERM_SIZE() {return TERM_SIZE;}
 
-    public long getENTRY_SIZE() {return ENTRY_SIZE;}
+    public static long getENTRY_SIZE() {return ENTRY_SIZE;}
 
     @Serial
     private void writeObject(java.io.ObjectOutputStream stream)

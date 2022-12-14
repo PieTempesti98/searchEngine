@@ -27,12 +27,12 @@ public class Preprocesser {
     /**
      * regEx to match a character that is not a letter
      */
-    private static final String NON_DIGIT_MATCHER = "[^a-zA-Z\s]";
+    private static final String NON_DIGIT_MATCHER = "[^a-zA-Z ]";
 
     /**
      * regEx to match sequential spaces
      */
-    private static final String MULTIPLE_SPACE_MATCHER = "\s+";
+    private static final String MULTIPLE_SPACE_MATCHER = " +";
 
     /**
      * path to file storing stopwords
@@ -97,16 +97,16 @@ public class Preprocesser {
 
 
         //remove urls, if any
-        text = text.replaceAll(URL_MATCHER, " ");
+        text = text.replaceAll(URL_MATCHER, "\s");
 
         //remove html tags, if any
-        text = text.replaceAll(HTML_TAGS_MATCHER, " ");
+        text = text.replaceAll(HTML_TAGS_MATCHER, "\s");
 
         //remove non-digit characters including punctuation
-        text = text.replaceAll(NON_DIGIT_MATCHER, " ");
+        text = text.replaceAll(NON_DIGIT_MATCHER, "\s");
 
         //remove consecutive multiple whitespaces with a single one
-        text = text.replaceAll(MULTIPLE_SPACE_MATCHER, " ");
+        text = text.replaceAll(MULTIPLE_SPACE_MATCHER, "\s");
 
         //remove extra spaces at the beginning and end of the text
         text = text.trim();
@@ -165,8 +165,16 @@ public class Preprocesser {
         // text cleaning
         text = cleanText(text);
 
+
         // tokenize
         String[] tokens = tokenize(text);
+
+        for(String token: tokens){
+            if(token.length() > 64){
+                System.out.println(text);
+                System.out.println(token);
+            }
+        }
 
         // remove stopwords
         tokens = removeStopwords(tokens);
