@@ -7,9 +7,15 @@ import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
 import java.io.BufferedReader;
+import java.io.IOException;
+import java.nio.CharBuffer;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,18 +31,18 @@ public class Spimi {
     /*
     path to the file on the disk storing the partial vocabulary
     */
-    private static final String PATH_TO_PARTIAL_VOCABULARY =  ConfigurationParameters.getPartialVocabularyDir() + ConfigurationParameters.getVocabularyFileName();
+    private static final String PATH_TO_PARTIAL_VOCABULARY = ConfigurationParameters.getPartialVocabularyDir() + ConfigurationParameters.getVocabularyFileName();
 
     /*
     path to the file on the disk storing the partial frequencies of the posting list
     */
-    private static final String PATH_TO_PARTIAL_FREQUENCIES =  ConfigurationParameters.getFrequencyDir() + ConfigurationParameters.getFrequencyFileName();
+    private static final String PATH_TO_PARTIAL_FREQUENCIES = ConfigurationParameters.getFrequencyDir() + ConfigurationParameters.getFrequencyFileName();
 
     /*
     path to the file on the disk storing the partial docids of the posting list
     */
 
-    private static final String PATH_TO_PARTIAL_DOCID =  ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
+    private static final String PATH_TO_PARTIAL_DOCID = ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
 
 
     //TODO: transform in HashMap
@@ -45,11 +51,14 @@ public class Spimi {
      */
     private static int numIndex = 0;
 
+    private static int numPostings = 0;
+
 
     //TODO: error handling
+
     /**
-     * @param index: partial index that must be saved onto file
-    * @param numDocs: number of documents processed
+     * @param index:   partial index that must be saved onto file
+     * @param numDocs: number of documents processed
      */
     private static void saveIndexToDisk(HashMap<String, PostingList> index, int numDocs) {
 
@@ -65,57 +74,107 @@ public class Spimi {
                         Map.Entry::getValue,
                         (e1, e2) -> e1, LinkedHashMap::new));
 
+        // try to open a file channel to the file of the inverted index
+        try (
+                FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_DOCID + "_" + numIndex),
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.READ,
+                        StandardOpenOption.CREATE
+                );
+                FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_FREQUENCIES + "_" + numIndex),
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.READ,
+                        StandardOpenOption.CREATE);
+                FileChannel vocabularyFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_VOCABULARY + "_" + numIndex),
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.READ,
+                        StandardOpenOption.CREATE)
+        ) {
 
-        long vocabularyOffset = 0; //position from which we start writing the partial vocabulary on the file
-        long frequencyOffset = 0; //position from which we start writing the partial frequencies on the file
-        long docidsOffset = 0; //position from which we start writing the partial docids on the file
+            // instantiation of MappedByteBuffer for integer list of docids
+            MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
 
+            // instantiation of MappedByteBuffer for integer list of freqs
+            MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
 
-        for(PostingList postingList: index.values()) {
+            MappedByteBuffer vocBuffer = vocabularyFchan.map(FileChannel.MapMode.READ_WRITE, 0, (long) numPostings * VocabularyEntry.getENTRY_SIZE());
+            // check if MappedByteBuffers are correctly instantiated
+            if (docsBuffer != null && freqsBuffer != null && vocBuffer != null) {
+                for (PostingList list : index.values()) {
+                    // write postings to file
+                    for (Map.Entry<Integer, Integer> posting : list.getPostings()) {
+                        // encode docid
+                        docsBuffer.putInt(posting.getKey());
+                        // encode freq
+                        freqsBuffer.putInt(posting.getValue());
+                    }
+                    //create vocabulary entry
+                    VocabularyEntry entry = new VocabularyEntry(list.getTerm());
 
-            //write posting lists to disk and update offset
-            long[] offsets = postingList.writePostingListToDisk(frequencyOffset,docidsOffset,PATH_TO_PARTIAL_DOCID+"_"+numIndex,PATH_TO_PARTIAL_FREQUENCIES+"_"+numIndex);
+                    //compute entry statistics
+                    entry.updateStatistics(list);
 
-            //create vocabulary entry
-            VocabularyEntry entry = new VocabularyEntry(postingList.getTerm());
+                    //set size of memory offset
+                    entry.setMemoryOffset(docsBuffer.position());
 
-            //compute entry statistics
-            entry.updateStatistics(postingList);
-            entry.computeIDF(numDocs);
+                    //set size of frequency offset
+                    entry.setFrequencyOffset(freqsBuffer.position());
 
-            //set size of memory offset
-            entry.setMemoryOffset(docidsOffset);
+                    //set size of posting list
+                    entry.setMemorySize(list.getNumBytes());
 
-            //set size of frequency offset
-            entry.setFrequencyOffset(frequencyOffset);
+                    //allocate char buffer to write term
+                    CharBuffer charBuffer = CharBuffer.allocate(VocabularyEntry.TERM_SIZE);
 
-            //set size of posting list
-            entry.setMemorySize(postingList.getNumBytes());
+                    String term = entry.getTerm();
 
-            //write entry to disk and update offset
-            vocabularyOffset = entry.writeEntryToDisk(vocabularyOffset,PATH_TO_PARTIAL_VOCABULARY+"_"+numIndex);
+                    //TODO: fix after preprocessing is fixed
+                    //populate char buffer char by char
+                    int len = term.length();
+                    if(term.length() > VocabularyEntry.TERM_SIZE)
+                        len = VocabularyEntry.TERM_SIZE;
+                    for (int i = 0; i < len; i++)
+                        charBuffer.put(i, term.charAt(i));
 
-            // new offsets where to right the next posting list
-            docidsOffset = offsets[0];
-            frequencyOffset = offsets[1];
+                    // Write the term into file
+                    vocBuffer.put(StandardCharsets.UTF_8.encode(charBuffer));
 
-            //writing failed
-            if(vocabularyOffset == -1)
-                //TODO: Error handling
-                break;
+                    // Write the document frequency into file
+                    vocBuffer.putInt(entry.getDf());
 
+                    // Write the term frequency into file
+                    vocBuffer.putInt(entry.getTf());
+
+                    //wirte IDF into file
+                    vocBuffer.putDouble(entry.getIdf());
+
+                    //write memory offset into file
+                    vocBuffer.putLong(entry.getMemoryOffset());
+
+                    //write frequency offset into file
+                    vocBuffer.putLong(entry.getFrequencyOffset());
+
+                    //write memory offset into file
+                    vocBuffer.putLong(entry.getMemorySize());
+                }
+            }
+            //update number of partial inverted indexes and vocabularies
+            numIndex++;
+            numPostings = 0;
+        } catch (InvalidPathException e) {
+            System.out.println("Path Error " + e);
+        } catch (IOException e) {
+            System.out.println("I/O Error " + e);
         }
-
-        //update number of partial inverted indexes and vocabularies
-        numIndex++;
-
     }
 
+
     /**
-     *  Function that searched for a given docid in a posting list.
+     * Function that searched for a given docid in a posting list.
      * If the document is already present it updates the term frequency for that
      * specific document, if that's not the case creates a new pair (docid,freq)
      * in which frequency is set to 1 and adds this pair to the posting list
+     *
      * @param docid:       docid of a certain document
      * @param postingList: posting list of a given term
      **/
@@ -133,10 +192,14 @@ public class Spimi {
         // create new pair and add it to the posting list
         postingList.getPostings().add(new AbstractMap.SimpleEntry<>(docid, 1));
 
+        //increment tne number of postings
+        numPostings++;
+
     }
 
     /**
      * Performs spimi algorithm
+     *
      * @return the number of partial indexes created
      */
     public static int executeSpimi() {
@@ -185,7 +248,7 @@ public class Spimi {
                     }
 
                     //create new document index entry and add it to file
-                   DocumentIndexEntry entry = new DocumentIndexEntry(
+                    DocumentIndexEntry entry = new DocumentIndexEntry(
                             processedDocument.getPid(),
                             docid++,
                             processedDocument.getTokens().size()
@@ -194,11 +257,11 @@ public class Spimi {
 
                     // write the docIndex entry to disk
                     entry.writeToDisk();
-                    partialNumDocs ++;
+                    partialNumDocs++;
 
                     for (String term : processedDocument.getTokens()) {
 
-                        if(term.length() == 0)
+                        if (term.length() == 0)
                             continue;
 
                         PostingList posting; //posting list of a given term
@@ -215,16 +278,16 @@ public class Spimi {
                         updateOrAddPosting(docid, posting);
 
                     }
-
-
-
+                    System.out.println(docid);
                 }
-                //either if there is no  memory available or all documents were read, flush partial index onto disk
-                saveIndexToDisk(index,partialNumDocs);
+                if (partialNumDocs > 0)
+                    //either if there is no  memory available or all documents were read, flush partial index onto disk
+                    saveIndexToDisk(index, partialNumDocs);
                 partialNumDocs = 0;
+                index.clear();
             }
             // update the size of the document index and save it to disk
-            if(!CollectionSize.updateCollectionSize(docid))
+            if (!CollectionSize.updateCollectionSize(docid))
                 return 0;
             return numIndex;
 
@@ -233,7 +296,6 @@ public class Spimi {
             return 0;
         }
     }
-
 
 
 }
