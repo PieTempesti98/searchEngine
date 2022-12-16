@@ -44,11 +44,14 @@ public class VariableByteCompressor {
     public static byte[] integerArrayCompression(int[] toBeCompressed){
         ArrayList<Byte> compressedArray = new ArrayList<>();
 
+        // for each element to be compressed
         for(int number: toBeCompressed){
+            // perform the compression and append the compressed output to the byte list
             for(byte elem: integerCompression(number))
                 compressedArray.add(elem);
         }
 
+        // transform the arraylist to an array
         byte[] output = new byte[compressedArray.size()];
         for(int i = 0; i < compressedArray.size(); i++)
             output[i] = compressedArray.get(i);

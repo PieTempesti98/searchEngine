@@ -42,3 +42,4 @@ data/
 
 /.idea/
 /data/collection.json
+/config/collectionStatistics

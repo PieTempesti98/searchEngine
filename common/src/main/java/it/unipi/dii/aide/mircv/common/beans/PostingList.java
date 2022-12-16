@@ -1,8 +1,6 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
 import java.io.IOException;
-import java.io.Serial;
-import java.io.Serializable;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -13,10 +11,10 @@ import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Map;
 
-public class PostingList implements Serializable{
+public class PostingList{
 
     private String term;
-    private ArrayList<Map.Entry<Integer, Integer>> postings = new ArrayList<>();
+    private final ArrayList<Map.Entry<Integer, Integer>> postings = new ArrayList<>();
 
     public PostingList(String toParse) {
         String[] termRow = toParse.split("\t");
@@ -123,22 +121,6 @@ public class PostingList implements Serializable{
                 '}';
     }
 
-    @Serial
-    private void writeObject(java.io.ObjectOutputStream stream)
-            throws IOException {
-
-        stream.writeUTF(term);
-        stream.writeObject(postings);
-    }
-
-    @Serial
-    private void readObject(java.io.ObjectInputStream stream)
-            throws IOException, ClassNotFoundException {
-        term = stream.readUTF();
-        postings = (ArrayList<Map.Entry<Integer, Integer>>) stream.readObject();
-
-    }
-
     /**
      * Save to disk the posting list:
      *  - write docids in docsPath
@@ -148,7 +130,7 @@ public class PostingList implements Serializable{
      * @param freqsMemOffset: offset in which to write in freqs file
      * @param docsPath: file path for file storing docids
      * @param freqsPath: file path for file storing freqs
-     * @return number of bytes written
+     * @return the new offsets for the docid and the frequencies inverted index files
      */
     public long[] writePostingListToDisk(long docsMemOffset, long freqsMemOffset, String docsPath, String freqsPath) {
         // memory occupancy of the posting list:

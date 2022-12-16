@@ -2,9 +2,6 @@ package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 
-import java.io.IOException;
-import java.io.Serial;
-import java.io.Serializable;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -14,7 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 
 
-public class DocumentIndexEntry implements Serializable {
+public class DocumentIndexEntry{
 
     /**
      * pid of a document
@@ -87,24 +84,6 @@ public class DocumentIndexEntry implements Serializable {
 
     public void setDocLen(int docLen) {
         this.docLen = docLen;
-    }
-
-    @Serial
-    private void writeObject(java.io.ObjectOutputStream stream)
-            throws IOException {
-
-        stream.writeInt(docid);
-        stream.writeUTF(pid);
-        stream.writeInt(docLen);
-    }
-
-    @Serial
-    private void readObject(java.io.ObjectInputStream stream)
-            throws IOException, ClassNotFoundException {
-        docid = stream.readInt();
-        pid = stream.readUTF();
-        docLen = stream.readInt();
-
     }
 
     @Override

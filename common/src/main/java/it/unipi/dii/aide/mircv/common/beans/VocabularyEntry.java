@@ -2,9 +2,6 @@ package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 
-import java.io.IOException;
-import java.io.Serial;
-import java.io.Serializable;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -18,7 +15,7 @@ import java.util.Map;
 /**
  * Entry of the vocabulary for a term
  */
-public class VocabularyEntry implements Serializable {
+public class VocabularyEntry{
 
 
     /**
@@ -66,11 +63,10 @@ public class VocabularyEntry implements Serializable {
      */
     private long memorySize = 0;
 
-    /*
-     size of the term
+    /**
+     size of the term; if a term is greater than this size it'll be truncated
      */
-
-    public static final int TERM_SIZE = 64; //TODO: decide term size
+    public static final int TERM_SIZE = 64;
 
     /**
      * term size + 4 + 4 + 8 + 8 + 8 + 8
@@ -126,10 +122,6 @@ public class VocabularyEntry implements Serializable {
         this.idf = Math.log10(CollectionSize.getCollectionSize()/(double)this.df);
     }
 
-    public void computeIDF(int numDocuments){
-        this.idf = Math.log10(numDocuments/(double)this.df);
-    }
-
     /**
      * Returns the vocabulary entry as a string formatted in the following way:
      * [termid]-[term]-[idf] [tf] [memoryOffset] [memorySize]\n
@@ -160,37 +152,7 @@ public class VocabularyEntry implements Serializable {
         this.df = df;
     }
 
-    public int getTERM_SIZE() {return TERM_SIZE;}
-
     public static long getENTRY_SIZE() {return ENTRY_SIZE;}
-
-    @Serial
-    private void writeObject(java.io.ObjectOutputStream stream)
-            throws IOException {
-
-        stream.writeInt(termid);
-        stream.writeUTF(term);
-        stream.writeInt(tf);
-        stream.writeInt(df);
-        stream.writeDouble(idf);
-        stream.writeLong(memoryOffset);
-        stream.writeLong(frequencyOffset);
-        stream.writeLong(memorySize);
-    }
-
-    @Serial
-    private void readObject(java.io.ObjectInputStream stream)
-            throws IOException, ClassNotFoundException {
-        termid = stream.readInt();
-        term = stream.readUTF();
-        tf = stream.readInt();
-        df = stream.readInt();
-        idf = stream.readDouble();
-        memoryOffset = stream.readLong();
-        frequencyOffset = stream.readLong();
-        memorySize = stream.readLong();
-
-    }
 
     /**
      * @param PATH : path of file to write entry on
