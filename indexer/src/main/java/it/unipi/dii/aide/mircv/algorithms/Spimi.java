@@ -128,7 +128,6 @@ public class Spimi {
 
                     String term = entry.getTerm();
 
-                    //TODO: fix after preprocessing is fixed
                     //populate char buffer char by char
                     int len = term.length();
                     if(term.length() > VocabularyEntry.TERM_SIZE)
@@ -278,7 +277,6 @@ public class Spimi {
                         updateOrAddPosting(docid, posting);
 
                     }
-                    System.out.println(docid);
                 }
                 if (partialNumDocs > 0)
                     //either if there is no  memory available or all documents were read, flush partial index onto disk

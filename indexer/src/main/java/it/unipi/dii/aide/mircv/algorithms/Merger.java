@@ -192,12 +192,6 @@ public class Merger {
 
         //compute the final idf
         vocabularyEntry.computeIDF();
-/*
-        System.out.println("final list:");
-        System.out.println(finalList);
-
-        System.out.println("df:"+vocabularyEntry.getDf()+"\tpostings.size(): "+finalList.getPostings().size());
-*/
         return finalList;
     }
 
@@ -262,24 +256,13 @@ public class Merger {
             // merge the posting lists for the term to be processed
             PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
 
-            /*
-            DEBUG
-            System.out.println("merged posting list for current term: ");
-            System.out.println(mergedPostingList);
-*/
             // save posting list on disk and update offsets
             long[] offsets = mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS);
             docsMemOffset = offsets[0];
             freqsMemOffset = offsets[1];
             // save vocabulary entry on disk
-            // TODO: check the return value. Should work
             vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, PATH_TO_VOCABULARY);
 
-            /* DEBUG
-            System.out.println("vocabulary entry for current term: ");
-            System.out.println(vocabularyEntry);
-
-             */
         }
 
         cleanUp();

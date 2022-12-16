@@ -21,12 +21,6 @@ public class Main {
 
         if(Merger.mergeIndexes(numIndexes)) {
             System.out.println("Inverted index correctly created.");
-
-            // TODO: remove, testing
-            Vocabulary v = new Vocabulary();
-            v.readFromDisk();
-            System.out.println(v);
-
             return;
         }
         System.out.println("An error occurred during merging.");
