@@ -238,7 +238,7 @@ public class Merger {
      *
      * @return true if the merging is complete, false otherwise
      */
-    public static boolean mergeIndexes(int numIndexes) {
+    public static boolean mergeIndexes(int numIndexes, boolean compressionMode) {
         Merger.numIndexes = numIndexes;
 
         // initialization operations
@@ -268,7 +268,7 @@ public class Merger {
             System.out.println(mergedPostingList);
 */
             // save posting list on disk and update offsets
-            long[] offsets = mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS);
+            long[] offsets = mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS, compressionMode);
             docsMemOffset = offsets[0];
             freqsMemOffset = offsets[1];
             // save vocabulary entry on disk
