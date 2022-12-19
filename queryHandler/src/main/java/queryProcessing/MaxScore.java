@@ -30,10 +30,11 @@ public class MaxScore {
 
         boolean currThresholdHasBeenUpdated = true;
 
+        int firstEssentialPLIndex = 0;
+
         while(true){
             double partialScore = 0;
             double documentUpperBound = 0;
-            int firstEssentialPLIndex = 0;
 
             // variable to store the sum of term upper bounds of non-essential posting lists
             double nonEssentialTUBs = 0;
@@ -91,10 +92,7 @@ public class MaxScore {
             }
 
             // check if current threshold has been updated or not
-            if(currThreshold != documentUpperBound)
-                currThresholdHasBeenUpdated = false;
-            else
-                currThresholdHasBeenUpdated = true;
+            currThresholdHasBeenUpdated = (currThreshold == documentUpperBound);
 
             moveToNextDocid(sortedLists, docToProcess);
         }
@@ -108,19 +106,22 @@ public class MaxScore {
      * @param sortedLists: array list of the posting lists sorted by increasing term upper bound
      * @param docToProcess: docid of the document to be processed
      * @param firstEssentialPLIndex: index of the first essential-posting list
-     * @return double value corresponnding to the partial score of docToProcess in the non-essential posting lists
+     * @return double value corresponding to the partial score of docToProcess in the non-essential posting lists
      */
     private static double processNonEssentialListsWithSkipping(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex,  int docToProcess) {
         double nonEssentialScore = 0;
         // TODO: implement
 
-        for(PostingList p: sortedLists){
-            nonEssentialScore += p.scoreDocument();
+        for(int i=0; i<firstEssentialPLIndex; i++){
+            Map.Entry<PostingList, Double> postingList = sortedLists.get(i);
+
+            Map.Entry<Integer, Integer> posting = postingList.skipToDocid(docToProcess);
+            // TODO: skip to docToProcess
+            nonEssentialScore += postingList.getKey().scoreDocument();
         }
 
         return nonEssentialScore;
     }
-
 
     /**
      * Given as input the array list of the posting lists sorted by increasing term upper bound and the docid of the processed document,
@@ -218,8 +219,7 @@ public class MaxScore {
 
             // check if the sum of the term upper bounds up to now is greater equal than the current threshold
 
-            // TODO: check if >= is fine or > is needed
-            if(sumScores>=currThreshold)
+            if(sumScores>currThreshold)
                 return i;
         }
         return -1;
@@ -230,7 +230,7 @@ public class MaxScore {
      * Notice that the search is performed only for posting lists having index >= firstEssentialPLIndex in the arrayList given as input.
      * @param sortedLists: sorted posting lists on which to perform the search
      * @param firstEssentialPLIndex: first index from which to search
-     * @return: integer corresponding to next docid to be processed, -1 if none
+     * @return integer corresponding to next docid to be processed, -1 if none
      */
     private static int nextDocToProcess(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex) {
         int nextDocid = -1;
@@ -240,7 +240,7 @@ public class MaxScore {
             ArrayList<Map.Entry<Integer, Integer>> postings = sortedLists.get(i).getKey().getPostings();
 
             // if current posting list is not empty
-            if(postings!=null && postings.get(0)!=null){
+            if(postings!=null && !postings.isEmpty() && postings.get(0)!=null){
                 // search for minimum
                 if(nextDocid==-1 || postings.get(0).getKey() < nextDocid)
                     nextDocid = postings.get(0).getKey();
@@ -269,8 +269,6 @@ public class MaxScore {
             sortedPostingLists.add(new AbstractMap.SimpleEntry<>(postingList, termUpperBound));
         }
 
-        ArrayList<Map.Entry<PostingList, Double>> sortedLists = new ArrayList<>(sortedPostingLists.stream().toList());
-
-        return sortedLists;
+        return new ArrayList<>(sortedPostingLists.stream().toList());
     }
 }
