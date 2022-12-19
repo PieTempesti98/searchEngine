@@ -10,6 +10,7 @@ import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Processor of a query: receives the query text and returns the top-k documents
@@ -46,15 +47,24 @@ public class QueryProcesser {
 
         // ArrayList with all the posting lists
         ArrayList<PostingList> queryPostings = new ArrayList<>();
-        for(String queryTerm: query.getTokens()){
-            if(vocabulary.get(queryTerm) == null){
+
+        ArrayList<String> queryTerms = query.getTokens();
+        //remove duplicates
+        queryTerms = (ArrayList<String>) queryTerms.stream()
+                .distinct()
+                .collect(Collectors.toList());
+
+        for(String queryTerm: queryTerms){
+            if(vocabulary.getEntry(queryTerm) == null){
                 continue;
             }
-            //load the posting list and
-            queryPostings.add(IndexLoader.loadTerm(vocabulary.get(queryTerm)));
+
+            //load the posting lists
+            queryPostings.add(IndexLoader.loadTerm(vocabulary.getEntry(queryTerm)));
         }
         return queryPostings;
     }
+
 
     /**
      * Lookups in the docuent index to retrieve pids of the top-k documents
@@ -78,16 +88,17 @@ public class QueryProcesser {
      * @param query The query string
      * @param k number of documents to retrieve
      * @param isConjunctive specifies if the query is conjunctive
+     * @param scoringFunction
      * @return an array with the top-k document pids
      */
-    public static String[] processQuery(String query, int k, boolean isConjunctive){
+    public static String[] processQuery(String query, int k, boolean isConjunctive, String scoringFunction){
         ProcessedDocument processedQuery = Preprocesser.processDocument(new TextDocument("query", query));
         // load the posting lists of the tokens
         ArrayList<PostingList> queryPostings = getQueryPostings(processedQuery);
         if(queryPostings.isEmpty()){
             return null;
         }
-        PriorityQueue<Map.Entry<Double, Integer>> priorityQueue = DAAT.scoreQuery(queryPostings, isConjunctive, k);
+        PriorityQueue<Map.Entry<Double, Integer>> priorityQueue = DAAT.scoreQuery(queryPostings, isConjunctive, k,scoringFunction);
 
         return lookupPid(priorityQueue, k);
     }
@@ -106,17 +117,11 @@ public class QueryProcesser {
         if(!documentIndex.loadFromDisk())
             return false;
 
-        if(!vocabulary.readFromDisk())
-            return false;
 
-        System.out.println("The document Index counts " + documentIndex.size() + " documents");
-        System.out.println("The vocabulary counts " + vocabulary.size() + " tokens");
-        //check if vocabulary and document index were correctly created. If not the setup failed
-        if(vocabulary.isEmpty() || documentIndex.isEmpty())
-            return false;
+        //check if document index contains entries. If not the setup failed
+        return !documentIndex.isEmpty();
 
-        //successful setup
-        return true;
+
     }
 
 

@@ -10,6 +10,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 
 public class Preprocesser {
@@ -35,6 +36,16 @@ public class Preprocesser {
     private static final String MULTIPLE_SPACE_MATCHER = "\s+";
 
     /**
+     * regEx to match at least 3 consecutive letters
+     */
+    private static final String CONSECUTIVE_LETTERS_MATCHER = "(.)\\1{3,}";
+
+    /**
+     * regEx to match strings in camel case
+     */
+    private static final String CAMEL_CASE_MATCHER = "(?<=[a-z])(?=[A-Z])";
+
+    /**
      * path to file storing stopwords
      */
     private static final String PATH_TO_STOPWORDS = ConfigurationParameters.getStopwordsPath();
@@ -50,9 +61,14 @@ public class Preprocesser {
     private static final PorterStemmer stemmer = new PorterStemmer();
 
     /**
+     * maximum length a term should have
+     */
+    private static final int TRESHOLD = 64;
+
+    /**
      * reads stopwords from a file and loads them in main memory
      */
-    public static void readStopwords() {
+    public static void readStopwords(){
 
         try (BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_STOPWORDS), StandardCharsets.UTF_8)) {
             for (String line; (line = br.readLine()) != null; ) {
@@ -77,16 +93,26 @@ public class Preprocesser {
      */
     public static String[] tokenize(String text) {
 
-        return text.split("\s");
+        //list of tokens
+        ArrayList<String> tokens = new ArrayList<>();
+
+        //tokenize splitting on whitespaces
+        String[] splittedText = text.split("\s");
+
+        for(String token: splittedText) {
+            //split words who are in CamelCase
+            String[] subtokens = token.split(CAMEL_CASE_MATCHER);
+            for (String subtoken : subtokens) {
+                //if a token has a length over a certain threshold, cut it at the threshold value
+                subtoken = subtoken.substring(0, Math.min(subtoken.length(), TRESHOLD));
+                //return token in lower case
+                tokens.add(subtoken.toLowerCase(Locale.ROOT));
+            }
+        }
+
+        return tokens.toArray(new String[0]);
     }
 
-    /**
-     * @param text: text to lower
-     * @return text in lower case
-     */
-    public static String lowerText(String text) {
-        return text.toLowerCase(Locale.ROOT);
-    }
 
     /**
      * @param text: text to clean
@@ -105,19 +131,20 @@ public class Preprocesser {
         //remove non-digit characters including punctuation
         text = text.replaceAll(NON_DIGIT_MATCHER, " ");
 
+        //collapse 3+ repeating characters in just 2
+        text = text.replaceAll(CONSECUTIVE_LETTERS_MATCHER,"$1$1");
+
         //remove consecutive multiple whitespaces with a single one
         text = text.replaceAll(MULTIPLE_SPACE_MATCHER, " ");
 
-        //remove extra spaces at the beginning and end of the text
+        //remove possible spaces and the beginning and the end of the document
         text = text.trim();
 
         return text;
     }
 
     /**
-     * @param tokens: tokens to check
-     *                Check whether there are stopwords in a set
-     *                of tokens and if that's the case, removes them
+     * @param tokens: set of tokens
      * @return tokens without stopwords
      */
     public static String[] removeStopwords(String[] tokens) {
@@ -126,7 +153,8 @@ public class Preprocesser {
         ArrayList<String> usefulTokens = new ArrayList<>();
 
         for (String token : tokens) {
-            if (!stopwords.contains(token)) //if token is not a stopword , keep it
+            //if token is not a stopword and its length does not exceed the trashold, keep it
+            if (!stopwords.contains(token) && token.length() <= TRESHOLD)
                 usefulTokens.add(token);
         }
 
@@ -158,9 +186,6 @@ public class Preprocesser {
     public static ProcessedDocument processDocument(TextDocument doc) {
 
         String text = doc.getText();
-
-        // case folding
-        text = lowerText(text);
 
         // text cleaning
         text = cleanText(text);

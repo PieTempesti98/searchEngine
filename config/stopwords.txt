@@ -241,9 +241,11 @@ isn't
 it
 itd
 it'll
+itll
 its
 itself
 i've
+ive
 j
 just
 k
@@ -511,8 +513,10 @@ thanks
 thanx
 that
 that'll
+thatll
 thats
 that've
+thatve
 the
 their
 theirs
@@ -527,6 +531,7 @@ thered
 therefore
 therein
 there'll
+therell
 thereof
 therere
 theres
@@ -537,6 +542,7 @@ these
 they
 theyd
 they'll
+theyll
 theyre
 they've
 think
@@ -608,6 +614,7 @@ we
 wed
 welcome
 we'll
+well
 went
 were
 werent
@@ -615,6 +622,7 @@ we've
 what
 whatever
 what'll
+whatll
 whats
 when
 whence
@@ -637,6 +645,7 @@ whod
 whoever
 whole
 who'll
+wholl
 whom
 whomever
 whos
@@ -661,12 +670,15 @@ yes
 yet
 you
 youd
+youve
 you'll
+youll
 your
 youre
 yours
 yourself
 yourselves
 you've
+youve
 z
 zero
