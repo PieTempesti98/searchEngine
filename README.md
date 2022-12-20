@@ -1,4 +1,4 @@
-# searchEngine
+# searchEngine 	🖥️  :page_with_curl:
 Search Engine based on an inverted index developed by Francesca Pezzuti, Pietro Tempesti and Benedetta Tessa for the Multimedia Information Retrieval course
 
 FLAGS:
