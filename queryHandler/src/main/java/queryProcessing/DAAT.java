@@ -67,6 +67,10 @@ public class DAAT {
         return idf * tf ;
     }
 
+     /** method to move the iterators of postingsToScore to the given docid
+     * @param docidToProcess: docid to which the iterators must be moved to
+     * @return -1 if there is at least a list for which there is no docid >= docidToProcess
+     */
     private static int nextGEQ(int docidToProcess, ArrayList<PostingList> postingsToScore){
         // move the iterators for posting lists pointing to docids < docidToProcess
 
