@@ -232,11 +232,11 @@ public class Merger {
      * - finds the minimum term between the indexes
      * - creates the whole posting list and the vocabulary entry for that term
      * - stores them in memory
-     * @param compressedWriting flag deciding whether to compress posting lists or not
+     * @param compressionMode flag deciding whether to compress posting lists or not
      * @param numIndexes number of partial vocabularies and partial indexes created
      * @return true if the merging is complete, false otherwise
      */
-    public static boolean mergeIndexes(int numIndexes, boolean compressedWriting) {
+    public static boolean mergeIndexes(int numIndexes, boolean compressionMode) {
         Merger.numIndexes = numIndexes;
 
         // initialization operations
@@ -266,7 +266,7 @@ public class Merger {
             System.out.println(mergedPostingList);
 */
             // save posting list on disk and update offsets
-            long[] offsets = mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS);
+            long[] offsets = mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS, compressionMode);
             docsMemOffset = offsets[0];
             freqsMemOffset = offsets[1];
 

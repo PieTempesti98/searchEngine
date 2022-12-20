@@ -70,8 +70,10 @@ public class DAAT {
     private static int nextGEQ(int docidToProcess, ArrayList<PostingList> postingsToScore){
         // move the iterators for posting lists pointing to docids < docidToProcess
 
-        //System.out.println("moving iterators towards docid: \t"+docidToProcess);
-        //System.out.println("iterators:\t"+postingsToScore);
+        System.out.println("moving iterators towards docid: \t"+docidToProcess);
+        System.out.println("iterators:\t"+postingsToScore);
+
+        int nextGEQ = docidToProcess;
 
         for(int i=0; i<postingsToScore.size(); i++){
             // i-th posting list
@@ -80,28 +82,33 @@ public class DAAT {
             // check if there are postings to iterate in the i-th posting list
             if(currPostingList != null){
                 // I should move the iterator until I find a docid >= docidToProcess
-                while(currPostingList.getPostings() != null && !currPostingList.getPostings().isEmpty() && currPostingList.getPostings().get(0).getKey() < docidToProcess)
+                while(currPostingList.getPostings() != null && !currPostingList.getPostings().isEmpty() && currPostingList.getPostings().get(0).getKey() < nextGEQ)
                     currPostingList.getPostings().remove(0);
 
                 // check if in the current posting list there is no docid >= docidToProcess to be processed
                 if(currPostingList.getPostings() == null || currPostingList.getPostings().isEmpty()){
-                   // System.out.println("conjunctive mode end");
+                    System.out.println("conjunctive mode end");
                     return -1;
                 }
 
                 // check if in the current posting list is not present docidToProcess but it is present a docid >=
-                if (currPostingList.getPostings().get(0).getKey()>docidToProcess) {
+                if (currPostingList.getPostings().get(0).getKey()>nextGEQ) {
                     // the current docid will be the candidate next docid to be processed
+
+                    // set nextGEQ to new value
+                    nextGEQ = currPostingList.getPostings().get(0).getKey();
+                    i=-1;
+                    System.out.println("nextGEQ updated to"+nextGEQ);
                     // move the iterators of other posting lists to new next docid to be processed
-                    return nextGEQ(currPostingList.getPostings().get(0).getKey(), postingsToScore);
+                    //return nextGEQ(currPostingList.getPostings().get(0).getKey(), postingsToScore);
 
                 }
             }
         }
 
-        //System.out.println("conjunctive mode, next docid to be processed:\t"+docidToProcess);
-       // System.out.println("moved iterators:\t"+postingsToScore);
-        return docidToProcess;
+        System.out.println("conjunctive mode, next docid to be processed:\t"+docidToProcess);
+        System.out.println("moved iterators:\t"+postingsToScore);
+        return nextGEQ;
     }
 
     /** method to find next document to be processed among all the postings to be scored
@@ -192,7 +199,7 @@ public class DAAT {
 
         // TODO: implement deep copy or iterators
 
-        //System.out.println("query postings:\t"+ queryPostings);
+        System.out.println("query postings:\t"+ queryPostings);
 
         ArrayList<PostingList> copyPostings = new ArrayList<>();
 
