@@ -1,29 +1,50 @@
 package queryProcessing;
 
+import it.unipi.dii.aide.mircv.common.beans.Posting;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
 
 import java.util.*;
 
 public class MaxScore {
+
+    private static void initialize(ArrayList<PostingList> queryPostings){
+
+        for(PostingList postingList: queryPostings) {
+            postingList.openList();
+            postingList.next();
+        }
+
+    }
+
+    private static void cleanUp(ArrayList<PostingList> queryPostings) {
+
+        for(PostingList postingList: queryPostings)
+            postingList.closeList();
+
+    }
+
+
     /** method to process with MaxScore algorithm a list of posting list of the query terms
      * @param queryPostings: list of postings of query terms
      * @param vocEntries: list of vocabulary entries corresponding to posting lists of query terms
      * @param k: number of top k documents to be returned
      * @return returns a priority queue (of at most K elements) in the format <SCORE (Double), DOCID (Integer)> ordered by increasing score value
      */
-    public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, ArrayList<VocabularyEntry> vocEntries, int k){
+    public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, ArrayList<VocabularyEntry> vocEntries, int k,String scoringFunction){
 
         System.out.println("query postings:\t"+ queryPostings);
 
+        initialize(queryPostings);
+
         // deep copy of the posting lists to be scored (avoid side effects and modification of queryPostings
-        ArrayList<PostingList> copyPostings = deepCopy(queryPostings);
+        //ArrayList<PostingList> copyPostings = deepCopy(queryPostings);
 
         // initialization of the MinHeap for the results
         PriorityQueue<Map.Entry<Double, Integer>> topKDocuments = new PriorityQueue<>(k, Map.Entry.comparingByKey());
 
         // sort by increasing term upper bound posting lists to be scored
-        ArrayList<Map.Entry<PostingList, Double>> sortedLists = sortPostingListsByTermUpperBound(copyPostings, vocEntries);
+        ArrayList<Map.Entry<PostingList, Double>> sortedLists = sortPostingListsByTermUpperBound(queryPostings, vocEntries);
 
         // initialization of current threshold to enter the MinHeap of the results
         double currThreshold = -1;
@@ -53,7 +74,7 @@ public class MaxScore {
                 break;
 
             // process DAAT the essential posting lists for docToProcess
-            partialScore = processEssentialListsDAAT(sortedLists, firstEssentialPLIndex, docToProcess);
+            partialScore = processEssentialListsDAAT(sortedLists, firstEssentialPLIndex, docToProcess,scoringFunction);
 
 
             // sum the term upper bounds for all non-essential posting lists and save them in nonEssentialTUBs
@@ -68,7 +89,7 @@ public class MaxScore {
             // check if non-essential posting lists must be processed or not
             if(documentUpperBound > currThreshold){
                 // process non-essential posting list skipping all documents up to docToProcess
-                double nonEssentialScores = processNonEssentialListsWithSkipping(sortedLists, firstEssentialPLIndex, docToProcess);
+                double nonEssentialScores = processNonEssentialListsWithSkipping(sortedLists, firstEssentialPLIndex, docToProcess,scoringFunction);
 
                 // update document upper bound
                 documentUpperBound = documentUpperBound -nonEssentialTUBs + nonEssentialScores;
@@ -94,80 +115,39 @@ public class MaxScore {
             // check if current threshold has been updated or not
             currThresholdHasBeenUpdated = (currThreshold == documentUpperBound);
 
-            moveToNextDocid(sortedLists, docToProcess);
         }
 
         System.out.println("top K:\t"+topKDocuments);
+        cleanUp(queryPostings);
         return topKDocuments;
     }
 
     /**
      * get the scores for the input document, given by the non-essential posting list in the array list of the sorted lists
-     * @param sortedLists: array list of the posting lists sorted by increasing term upper bound
-     * @param docToProcess: docid of the document to be processed
-     * @param firstEssentialPLIndex: index of the first essential-posting list
+     * @param sortedLists : array list of the posting lists sorted by increasing term upper bound
+     * @param firstEssentialPLIndex : index of the first essential-posting list
+     * @param docToProcess : docid of the document to be processed
+     * @param scoringFunction
      * @return double value corresponding to the partial score of docToProcess in the non-essential posting lists
      */
-    private static double processNonEssentialListsWithSkipping(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex,  int docToProcess) {
+    private static double processNonEssentialListsWithSkipping(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex, int docToProcess, String scoringFunction) {
         double nonEssentialScore = 0;
-        // TODO: implement
 
         for(int i=0; i<firstEssentialPLIndex; i++){
             Map.Entry<PostingList, Double> postingList = sortedLists.get(i);
 
-            Map.Entry<Integer, Integer> posting = postingList.skipToDocid(docToProcess);
-            // TODO: skip to docToProcess
-            nonEssentialScore += postingList.getKey().scoreDocument();
+            Posting posting = postingList.getKey().nextGEQ(docToProcess);
+            if(posting != null && posting.getDocid() == docToProcess) {
+                // TODO: how to pass vocabulary entry
+                nonEssentialScore += posting.scoreDocument(null, scoringFunction);
+                postingList.getKey().next();
+            }
         }
 
         return nonEssentialScore;
     }
 
-    /**
-     * Given as input the array list of the posting lists sorted by increasing term upper bound and the docid of the processed document,
-     * update the sorted lists in such a way that they will be pointing to nextGEQ(lastProcessedDocid)
-     * @param sortedLists: array list of the posting lists sorted by increasing term upper bound
-     * @param lastProcessedDocid: last processed docid
-     */
-    private static void moveToNextDocid(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int lastProcessedDocid) {
 
-        // TODO: next operation on posting lists
-
-        for(Map.Entry<PostingList, Double> sortedEntry : sortedLists){
-            PostingList postingList = sortedEntry.getKey();
-
-            if(postingList!=null){
-                ArrayList<Map.Entry<Integer, Integer>> postings = postingList.getPostings();
-
-                // check if in the current posting list there is the processed docid
-                if(postings != null && postings.get(0)!=null && postings.get(0).getKey() == lastProcessedDocid){
-                    // move to next posting the current posting list
-                    postings.remove(0);
-                }
-            }
-        }
-    }
-
-    /**
-     * perform the deep copy of the given arraylist of posting lists
-     * @param queryPostings: posting lists to be copied
-     * @return an arraylist of posting lists equal to the one given as input
-     */
-    private static ArrayList<PostingList> deepCopy(ArrayList<PostingList> queryPostings) {
-        ArrayList<PostingList> copyPostings = new ArrayList<>();
-
-        for (PostingList pl : queryPostings) {
-            PostingList copy = new PostingList();
-            ArrayList<Map.Entry<Integer, Integer>> postings = new ArrayList<>();
-            for (Map.Entry<Integer, Integer> posting : pl.getPostings()) {
-                postings.add(new AbstractMap.SimpleEntry<>(posting.getKey(), posting.getValue()));
-            }
-            copy.appendPostings(postings);
-            copy.setTerm(pl.getTerm());
-            copyPostings.add(copy);
-        }
-        return copyPostings;
-    }
 
     /**
      * given as input the posting lists sorted by term upper bound, the index of the first essential posting list,
@@ -177,7 +157,7 @@ public class MaxScore {
      * @param docToProcess: docid of doc to be processed DAAT in the essential posting lists
      * @return partial score given by essential posting lists for doc with docid equal to docToProcess
      */
-    private static double processEssentialListsDAAT(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex, int docToProcess) {
+    private static double processEssentialListsDAAT(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex, int docToProcess,String scoringFunction) {
         double partialScore = 0;
 
         // process essential lists
@@ -187,14 +167,14 @@ public class MaxScore {
             if(postingList == null)
                 continue;
 
-            ArrayList<Map.Entry<Integer, Integer>> postings = postingList.getPostings();
+            Posting pointedPosting = postingList.getCurrentPosting();;
 
-            if(postings != null && postings.get(0)!=null){
+            if(pointedPosting != null){
                 // check if minimum docid to be scored in current posting list is the one to be processed
-                if(postings.get(0).getKey() == docToProcess){
+                if(pointedPosting.getDocid() == docToProcess){
 
                     // process the current document
-                    partialScore += scoreDocument();
+                    partialScore += pointedPosting.scoreDocument(null,scoringFunction);
                 }
             }
         }
@@ -237,13 +217,12 @@ public class MaxScore {
 
         // go through all posting list and search for minimum docid
         for(int i=firstEssentialPLIndex; i< sortedLists.size(); i++){
-            ArrayList<Map.Entry<Integer, Integer>> postings = sortedLists.get(i).getKey().getPostings();
 
-            // if current posting list is not empty
-            if(postings!=null && !postings.isEmpty() && postings.get(0)!=null){
-                // search for minimum
-                if(nextDocid==-1 || postings.get(0).getKey() < nextDocid)
-                    nextDocid = postings.get(0).getKey();
+            Posting pointedPosting = sortedLists.get(i).getKey().getCurrentPosting();
+
+            // if current posting  is not null and next docid is the curremt minimum
+            if(pointedPosting!=null && (nextDocid==-1 || pointedPosting.getDocid() < nextDocid)){
+                    nextDocid = pointedPosting.getDocid();
             }
         }
         return nextDocid;

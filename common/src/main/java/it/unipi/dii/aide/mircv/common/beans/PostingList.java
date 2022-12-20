@@ -42,6 +42,7 @@ public class PostingList{
         DEBUG
         System.out.println("reading posting list for term:"+term.getTerm());
 */
+        //TODO: must be block based
         try (FileChannel docsFChan = (FileChannel) Files.newByteChannel(
                 Paths.get(docsPath),
                 StandardOpenOption.WRITE,
@@ -145,9 +146,9 @@ public class PostingList{
 
             int nextPosting = 0;
             // initialize docids and freqs arrays
-            for(Map.Entry<Integer, Integer> posting: postings){
-                docids[nextPosting] = posting.getKey();
-                freqs[nextPosting] = posting.getValue();
+            for(Posting posting: postings){
+                docids[nextPosting] = posting.getDocid();
+                freqs[nextPosting] = posting.getFrequency();
             }
 
             compressedDocs = UnaryCompressor.integerArrayCompression(docids);
@@ -187,11 +188,11 @@ public class PostingList{
                         freqsBuffer.put(compressedFreqs);
                 }
                 else {
-                    for (Map.Entry<Integer, Integer> posting : postings) {
+                    for (Posting posting : postings) {
                         // encode docid
-                        docsBuffer.putInt(posting.getKey());
+                        docsBuffer.putInt(posting.getDocid());
                         // encode freq
-                        freqsBuffer.putInt(posting.getValue());
+                        freqsBuffer.putInt(posting.getFrequency());
                     }
                 }
 
@@ -228,6 +229,17 @@ public class PostingList{
                 createNewIterator
             return iterator(postings).next
          */
+
+        return new Posting();
+    }
+
+
+    /**
+     * Returns last accessed posting
+     * @return posting or null if there are no more postings.
+     */
+    public Posting getCurrentPosting(){
+        //TODO: implement method (Pietro)
 
         return new Posting();
     }

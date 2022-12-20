@@ -96,6 +96,8 @@ public class CollectionSize{
         }
     }
 
+    //TODO: save to disk only at the end??? [Pietro]
+
     /**
      * update the collection size and save the value on disk
      * @param size the new size

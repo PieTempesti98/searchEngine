@@ -17,6 +17,8 @@ import java.util.stream.Collectors;
  */
 public class QueryProcesser {
 
+    //TODO: add flags for query processing
+
     /**
      * Vocabulary (already loaded in memory)
      */
@@ -43,7 +45,6 @@ public class QueryProcesser {
      * @return the list of the query terms' posting lists
      */
     private static ArrayList<PostingList> getQueryPostings(ProcessedDocument query){
-        //TODO: scan each query term only once
 
         // ArrayList with all the posting lists
         ArrayList<PostingList> queryPostings = new ArrayList<>();
@@ -58,6 +59,7 @@ public class QueryProcesser {
             if(vocabulary.getEntry(queryTerm) == null){
                 continue;
             }
+            //TODO: add vocabulary entry
 
             //load the posting lists
             queryPostings.add(IndexLoader.loadTerm(vocabulary.getEntry(queryTerm)));
@@ -94,11 +96,12 @@ public class QueryProcesser {
     public static String[] processQuery(String query, int k, boolean isConjunctive, String scoringFunction){
         ProcessedDocument processedQuery = Preprocesser.processDocument(new TextDocument("query", query));
         // load the posting lists of the tokens
+        //TODO: modify get query postings
         ArrayList<PostingList> queryPostings = getQueryPostings(processedQuery);
         if(queryPostings.isEmpty()){
             return null;
         }
-        PriorityQueue<Map.Entry<Double, Integer>> priorityQueue = DAAT.scoreQuery(queryPostings, isConjunctive, k,scoringFunction);
+        PriorityQueue<Map.Entry<Double, Integer>> priorityQueue = DAAT.scoreQuery(queryPostings, isConjunctive, k,scoringFunction,null);
 
         return lookupPid(priorityQueue, k);
     }
@@ -109,6 +112,7 @@ public class QueryProcesser {
      */
     public static boolean setupProcesser(){
 
+        //TODO: READ FLAGS from file
         //check if document index exists. If not the setup failed
         if(! new File(INVERTED_INDEX_DOCIDS_PATH).exists() || ! new File(INVERTED_INDEX_FREQS_PATH).exists())
             return false;

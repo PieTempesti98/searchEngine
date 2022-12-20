@@ -41,7 +41,7 @@ public class VariableByteCompressor {
      * Method to compress an array of integers into an array of bytes using Unary compression algorithm
      * @param toBeCompressed: array of integers to be compressed
      * @return an array containing the compressed bytes
-     */ /*
+     */
     public static byte[] integerArrayCompression(int[] toBeCompressed){
         ArrayList<Byte> compressedArray = new ArrayList<>();
 

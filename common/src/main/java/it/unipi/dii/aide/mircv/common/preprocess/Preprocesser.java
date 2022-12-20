@@ -10,7 +10,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Locale;
 
 public class Preprocesser {
@@ -63,7 +62,7 @@ public class Preprocesser {
     /**
      * maximum length a term should have
      */
-    private static final int TRESHOLD = 64;
+    private static final int THRESHOLD = 64;
 
     /**
      * reads stopwords from a file and loads them in main memory
@@ -86,10 +85,9 @@ public class Preprocesser {
     }
 
     /**
-     * @param text:text to tokenize
-*                  performs tokenization
-* @return array of tokens
-*
+     * performs tokenization
+     * @param text text to tokenize
+     * @return tokenized text
      */
     public static String[] tokenize(String text) {
 
@@ -104,7 +102,7 @@ public class Preprocesser {
             String[] subtokens = token.split(CAMEL_CASE_MATCHER);
             for (String subtoken : subtokens) {
                 //if a token has a length over a certain threshold, cut it at the threshold value
-                subtoken = subtoken.substring(0, Math.min(subtoken.length(), TRESHOLD));
+                subtoken = subtoken.substring(0, Math.min(subtoken.length(), THRESHOLD));
                 //return token in lower case
                 tokens.add(subtoken.toLowerCase(Locale.ROOT));
             }
@@ -115,8 +113,8 @@ public class Preprocesser {
 
 
     /**
+     * performs text cleaning
      * @param text: text to clean
-     *              performs text cleaning
      * @return cleaned text
      */
     public static String cleanText(String text) {
@@ -143,6 +141,8 @@ public class Preprocesser {
         return text;
     }
 
+    //TODO: enable or disable stemming according to flags. Add boolean
+
     /**
      * @param tokens: set of tokens
      * @return tokens without stopwords
@@ -154,7 +154,7 @@ public class Preprocesser {
 
         for (String token : tokens) {
             //if token is not a stopword and its length does not exceed the trashold, keep it
-            if (!stopwords.contains(token) && token.length() <= TRESHOLD)
+            if (!stopwords.contains(token) && token.length() <= THRESHOLD)
                 usefulTokens.add(token);
         }
 

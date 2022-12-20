@@ -4,6 +4,7 @@ import it.unipi.dii.aide.mircv.common.beans.BlockDescriptor;
 import it.unipi.dii.aide.mircv.common.beans.Posting;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
@@ -238,6 +239,7 @@ public class Merger {
      * @return true if the merging is complete, false otherwise
      */
     public static boolean mergeIndexes(int numIndexes, boolean compressionMode) {
+
         Merger.numIndexes = numIndexes;
 
         // initialization operations
@@ -299,6 +301,7 @@ public class Merger {
                     int currentBlock = 1;
                     int postingsInBlock = 0;
                     // write postings to file
+                    //TODO: use iterators instead,make it block based ???
                     for (Posting posting : mergedPostingList.getPostings()) {
                         // encode docid
                         docsBuffer.putInt(posting.getDocid());
@@ -336,10 +339,12 @@ public class Merger {
                     freqsMemOffset += freqsBuffer.position();
                     // save vocabulary entry on disk
                     vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
+
                 }
             }
 
             cleanUp();
+            //TODO: update vocabulary size
             return true;
         }catch(Exception e){
             e.printStackTrace();

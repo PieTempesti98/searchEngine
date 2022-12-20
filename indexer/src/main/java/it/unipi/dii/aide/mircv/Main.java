@@ -31,6 +31,7 @@ public class Main {
 
         }
 
+        //TODO: SAVE FLAGS TO FILE
 
         initializeFiles();
 
