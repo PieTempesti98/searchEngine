@@ -244,7 +244,7 @@ public class MaxScore {
 
         for(int i=0; i< queryPostings.size(); i++){
             PostingList postingList = queryPostings.get(i);
-            Double termUpperBound = vocabularyEntries.get(i).getTermUpperBound();
+            Double termUpperBound = vocabularyEntries.get(i).getMaxTFIDF();
             sortedPostingLists.add(new AbstractMap.SimpleEntry<>(postingList, termUpperBound));
         }
 

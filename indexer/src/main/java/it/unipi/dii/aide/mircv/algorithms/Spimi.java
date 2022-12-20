@@ -5,12 +5,8 @@ import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
-
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
-import org.junit.platform.commons.util.LruCache;
-
 import java.io.*;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -63,7 +59,7 @@ public class Spimi {
     /*
     counts the number of partial indexes to write
      */
-    private static int numPostings = 0;
+    private static long numPostings = 0;
 
     /**
      * @param compressed  flag for compressed reading
@@ -96,10 +92,6 @@ public class Spimi {
 
     /**
      * @param index: partial index that must be saved onto file
-    private static int numPostings = 0;
-    //TODO: error handling
-    /**
-     * @param index:   partial index that must be saved onto file
      */
     private static boolean saveIndexToDisk(HashMap<String, PostingList> index) {
 
@@ -139,9 +131,10 @@ public class Spimi {
             // instantiation of MappedByteBuffer for integer list of freqs
             MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
 
-            MappedByteBuffer vocBuffer = vocabularyFchan.map(FileChannel.MapMode.READ_WRITE, 0, (long) numPostings * VocabularyEntry.ENTRY_SIZE);
+
+            long vocOffset = 0;
             // check if MappedByteBuffers are correctly instantiated
-            if (docsBuffer != null && freqsBuffer != null && vocBuffer != null) {
+            if (docsBuffer != null && freqsBuffer != null) {
                 for (PostingList list : index.values()) {
                     // write postings to file
                     for (Posting posting : list.getPostings()) {
@@ -152,43 +145,10 @@ public class Spimi {
                     }
                     //create vocabulary entry
                     VocabularyEntry entry = new VocabularyEntry(list.getTerm());
-
-                    //allocate char buffer to write term
-                    CharBuffer charBuffer = CharBuffer.allocate(VocabularyEntry.TERM_SIZE);
-
-                    String term = entry.getTerm();
-
-                    //populate char buffer char by char
-                    int len = term.length();
-                    if(term.length() > VocabularyEntry.TERM_SIZE)
-                        len = VocabularyEntry.TERM_SIZE;
-                    for (int i = 0; i < len; i++)
-                        charBuffer.put(i, term.charAt(i));
-
-                    // Write the term into file
-                    vocBuffer.put(StandardCharsets.UTF_8.encode(charBuffer));
-
-                    // write statistics
-                    vocBuffer.putInt(entry.getDf());
-                    vocBuffer.putDouble(entry.getIdf());
-
-                    // write term upper bound information
-                    vocBuffer.putInt(entry.getMaxTf());
-                    vocBuffer.putInt(entry.getMaxDl());
-                    vocBuffer.putDouble(entry.getMaxTFIDF());
-                    vocBuffer.putDouble(entry.getMaxBM25());
-
-                    // write memory information
-                    vocBuffer.putLong(entry.getDocidOffset());
-                    vocBuffer.putLong(entry.getFrequencyOffset());
-                    vocBuffer.putInt(entry.getDocidSize());
-                    vocBuffer.putInt(entry.getFrequencySize());
-
-                    // write block information
-                    vocBuffer.putInt(entry.getNumBlocks());
-                    vocBuffer.putLong(entry.getBlockOffset());
+                    vocOffset = entry.writeEntryToDisk(vocOffset, vocabularyFchan);
                 }
             }
+
             //update number of partial inverted indexes and vocabularies
             numIndex++;
             numPostings = 0;
@@ -320,7 +280,6 @@ public class Spimi {
                         posting.updateMaxDocumentLength(documentLength);
 
                     }
-                    //System.out.println(docid);
                 }
 
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
@@ -334,9 +293,7 @@ public class Spimi {
                 index.clear();
 
             }
-
             // update the size of the document index and save it to disk
-
             if(!CollectionSize.updateCollectionSize(docid) || !CollectionSize.updateDocumentsLenght(docsLen))
                 return 0;
 
