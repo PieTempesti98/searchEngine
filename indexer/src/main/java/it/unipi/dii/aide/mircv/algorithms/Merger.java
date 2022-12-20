@@ -196,7 +196,6 @@ public class Merger {
 
         // compute the term upper bounds
         vocabularyEntry.computeUpperBounds();
-
         return finalList;
     }
 
@@ -234,10 +233,11 @@ public class Merger {
      * - finds the minimum term between the indexes
      * - creates the whole posting list and the vocabulary entry for that term
      * - stores them in memory
-     *
+     * @param compressionMode flag deciding whether to compress posting lists or not
+     * @param numIndexes number of partial vocabularies and partial indexes created
      * @return true if the merging is complete, false otherwise
      */
-    public static boolean mergeIndexes(int numIndexes) {
+    public static boolean mergeIndexes(int numIndexes, boolean compressionMode) {
         Merger.numIndexes = numIndexes;
 
         // initialization operations
@@ -327,6 +327,7 @@ public class Merger {
                         }
                     }
 
+
                 /* DEBUG
                 System.out.println("new offsets:\tdocs:"+(docsMemOffset + docsBuffer.position())+" freqs:"+(freqsMemOffset + freqsBuffer.position()));
                 */
@@ -361,4 +362,5 @@ public class Merger {
         // remove partial vocabularies directory
         FileUtils.deleteDirectory(ConfigurationParameters.getPartialVocabularyDir());
     }
+
 }

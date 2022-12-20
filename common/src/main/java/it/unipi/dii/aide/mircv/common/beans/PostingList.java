@@ -1,6 +1,10 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
 import java.io.IOException;
+import it.unipi.dii.aide.mircv.common.compression.UnaryCompressor;
+import it.unipi.dii.aide.mircv.common.compression.VariableByteCompressor;
+
+import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -99,7 +103,6 @@ public class PostingList{
         postings.addAll(newPostings);
     }
 
-
     /**
      * method to return the numbers of bytes occupied by this posting list when stored in memory
      * @return posting list's space occupancy in bytes
@@ -124,13 +127,43 @@ public class PostingList{
      * @param freqsMemOffset: offset in which to write in freqs file
      * @param docsPath: file path for file storing docids
      * @param freqsPath: file path for file storing freqs
-     * @return the new offsets for the docid and the frequencies inverted index files
+     * @param compressionMode: if true compression of docids and freqs is activated, else not
+     * @return updated buffers positions of docids buffer and freqs buffers
      */
-    public long[] writePostingListToDisk(long docsMemOffset, long freqsMemOffset, String docsPath, String freqsPath) {
+    public long[] writePostingListToDisk(long docsMemOffset, long freqsMemOffset, String docsPath, String freqsPath, boolean compressionMode) {
         // memory occupancy of the posting list:
         // - for each posting we have to store 2 integers (docid and freq)
         // - each integer will occupy 4 bytes since we are storing integers in byte arrays
-        int numBytes = getNumBytes();
+        int[] numBytes = new int[2];
+        byte[] compressedDocs = null;
+        byte[] compressedFreqs = null;
+
+        if(compressionMode){
+            // compression is required
+            int[] docids= new int[postings.size()];
+            int[] freqs= new int[postings.size()];
+
+            int nextPosting = 0;
+            // initialize docids and freqs arrays
+            for(Map.Entry<Integer, Integer> posting: postings){
+                docids[nextPosting] = posting.getKey();
+                freqs[nextPosting] = posting.getValue();
+            }
+
+            compressedDocs = UnaryCompressor.integerArrayCompression(docids);
+            compressedFreqs = VariableByteCompressor.integerArrayCompression(freqs);
+
+            numBytes[0] = compressedDocs.length;
+            numBytes[1] = compressedFreqs.length;
+
+        }
+        else{
+            // compression not required
+            // set docs num bytes as (number of postings)*4
+            numBytes[0] = getNumBytes()/2;
+            // set freqs num bytes as (number of postings)*4
+            numBytes[1] = getNumBytes()/2;
+        }
 
         // try to open a file channel to the file of the inverted index
         try (FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(docsPath), StandardOpenOption.WRITE,
@@ -140,19 +173,26 @@ public class PostingList{
         ) {
 
             // instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, docsMemOffset, numBytes/2);
+            MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, docsMemOffset, numBytes[0]);
 
             // instantiation of MappedByteBuffer for integer list of freqs
-            MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, freqsMemOffset, numBytes/2);
+            MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, freqsMemOffset, numBytes[1]);
 
             // check if MappedByteBuffers are correctly instantiated
             if (docsBuffer != null && freqsBuffer != null) {
                 // write postings to file
-                for (Posting posting : postings) {
-                    // encode docid
-                    docsBuffer.putInt(posting.getDocid());
-                    // encode freq
-                    freqsBuffer.putInt(posting.getFrequency());
+
+                if(compressionMode){
+                        docsBuffer.put(compressedDocs);
+                        freqsBuffer.put(compressedFreqs);
+                }
+                else {
+                    for (Map.Entry<Integer, Integer> posting : postings) {
+                        // encode docid
+                        docsBuffer.putInt(posting.getKey());
+                        // encode freq
+                        freqsBuffer.putInt(posting.getValue());
+                    }
                 }
 
                 /* DEBUG

@@ -6,8 +6,15 @@ import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.junit.platform.commons.util.LruCache;
+
+import java.io.*;
 import java.io.BufferedReader;
 import java.io.IOException;
+
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -26,6 +33,10 @@ public class Spimi {
      */
     private static final String PATH_TO_COLLECTION = ConfigurationParameters.getRawCollectionPath();
 
+    /**
+     * path to the file on the disk storing the compressed collection
+     */
+    private static final String PATH_COMPRESSED_COLLECTION = ConfigurationParameters.getCompressedCollectionPath();
 
     /*
     path to the file on the disk storing the partial vocabulary
@@ -44,25 +55,56 @@ public class Spimi {
     private static final String PATH_TO_PARTIAL_DOCID = ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
 
 
-    //TODO: transform in HashMap
     /*
     counts the number of partial indexes created
      */
     private static int numIndex = 0;
 
+    /*
+    counts the number of partial indexes to write
+     */
     private static int numPostings = 0;
 
+    /**
+     * @param compressed  flag for compressed reading
+     * @return buffer reader
+     * initializes the buffer from which the entries are read
+     * */
+    public static BufferedReader initBuffer(boolean compressed) throws IOException {
 
-    //TODO: error handling
+        if(compressed) { //read from compressed collection
+            TarArchiveInputStream tarInput = new TarArchiveInputStream(new GzipCompressorInputStream(new FileInputStream(PATH_COMPRESSED_COLLECTION)));
+            tarInput.getNextTarEntry();
+            return new BufferedReader(new InputStreamReader(tarInput, StandardCharsets.UTF_8));
+        }
+
+        return Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
+
+    }
+
 
     /**
-     * @param index:   partial index that must be saved onto file
-     * @param numDocs: number of documents processed
+     * deletes directories containing partial data structures and document Index file
      */
-    private static void saveIndexToDisk(HashMap<String, PostingList> index, int numDocs) {
+    private static void rollback(){
+
+        FileUtils.deleteDirectory(ConfigurationParameters.getDocidsDir());
+        FileUtils.deleteDirectory(ConfigurationParameters.getFrequencyDir());
+        FileUtils.deleteDirectory(ConfigurationParameters.getPartialVocabularyDir());
+        FileUtils.removeFile(ConfigurationParameters.getDocumentIndexPath());
+    }
+
+    /**
+     * @param index: partial index that must be saved onto file
+    private static int numPostings = 0;
+    //TODO: error handling
+    /**
+     * @param index:   partial index that must be saved onto file
+     */
+    private static boolean saveIndexToDisk(HashMap<String, PostingList> index) {
 
         if (index.isEmpty()) //if the index is empty there is nothing to write on disk
-            return;
+            return true;
 
         //sort index in lexicographic order
         index = index.entrySet()
@@ -92,6 +134,7 @@ public class Spimi {
 
             // instantiation of MappedByteBuffer for integer list of docids
             MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
+
 
             // instantiation of MappedByteBuffer for integer list of freqs
             MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
@@ -149,10 +192,13 @@ public class Spimi {
             //update number of partial inverted indexes and vocabularies
             numIndex++;
             numPostings = 0;
+            return true;
         } catch (InvalidPathException e) {
             System.out.println("Path Error " + e);
+            return false;
         } catch (IOException e) {
             System.out.println("I/O Error " + e);
+            return false;
         }
     }
 
@@ -180,7 +226,7 @@ public class Spimi {
         // create new pair and add it to the posting list
         postingList.getPostings().add(new Posting(docid, 1));
 
-        //increment tne number of postings
+        //increment the number of postings
         numPostings++;
 
     }
@@ -189,28 +235,31 @@ public class Spimi {
      * Performs spimi algorithm
      *
      * @return the number of partial indexes created
+     * @param compress flag deciding whether to read from compressed file or not
      */
-    public static int executeSpimi() {
+    public static int executeSpimi(boolean compress) {
 
         //create directories to store partial frequencies, docids and vocabularies
         FileUtils.createDirectory(ConfigurationParameters.getDocidsDir());
         FileUtils.createDirectory(ConfigurationParameters.getFrequencyDir());
         FileUtils.createDirectory(ConfigurationParameters.getPartialVocabularyDir());
+        Preprocesser.readStopwords();
 
         try (
-                BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8)
+                BufferedReader br = initBuffer(compress)
 
         ) {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
 
             int docid = 0; //assign docid in a incremental manner
-            int partialNumDocs = 0;
+            int docsLen = 0; // total sum of lengths of documents
+            boolean writeSuccess; //checks whether the writing of the partial data structures was successful or not
 
             long MEMORY_THRESHOLD = Runtime.getRuntime().totalMemory() * 20 / 100; // leave 20% of memory free
             String[] split;
-            while (!allDocumentsProcessed) {
+            while (!allDocumentsProcessed ) {
                 HashMap<String, PostingList> index = new HashMap<>(); //hashmap containing partial index
-                while (Runtime.getRuntime().freeMemory() > MEMORY_THRESHOLD) { //build index until 80% of total memory is used
+                while (Runtime.getRuntime().freeMemory() > MEMORY_THRESHOLD ) { //build index until 80% of total memory is used
 
                     String line;
                     // if we reach the end of file (br.readline() -> null)
@@ -229,11 +278,12 @@ public class Spimi {
                     // Creation of the text document for the line
                     TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
                     // Perform text preprocessing on the document
+
                     ProcessedDocument processedDocument = Preprocesser.processDocument(document);
 
-                    if (processedDocument.getTokens().isEmpty()) {
+                    if (processedDocument.getTokens().isEmpty())
                         continue;
-                    }
+
 
                     int documentLength = processedDocument.getTokens().size();
                     //create new document index entry and add it to file
@@ -243,14 +293,16 @@ public class Spimi {
                             documentLength
                     );
 
+                    //update with length of new documents
+                    docsLen += entry.getDocLen();
 
                     // write the docIndex entry to disk
                     entry.writeToDisk();
-                    partialNumDocs++;
+
 
                     for (String term : processedDocument.getTokens()) {
 
-                        if (term.length() == 0)
+                        if(term.isBlank())
                             continue;
 
                         PostingList posting; //posting list of a given term
@@ -268,16 +320,26 @@ public class Spimi {
                         posting.updateMaxDocumentLength(documentLength);
 
                     }
+                    //System.out.println(docid);
                 }
-                if (partialNumDocs > 0)
-                    //either if there is no  memory available or all documents were read, flush partial index onto disk
-                    saveIndexToDisk(index, partialNumDocs);
-                partialNumDocs = 0;
+
+                //either if there is no  memory available or all documents were read, flush partial index onto disk
+                writeSuccess = saveIndexToDisk(index);
+
+                //error during data structures creation. Rollback previous operations and end algorithm
+                if(!writeSuccess){
+                    rollback();
+                    return -1;
+                }
                 index.clear();
+
             }
+
             // update the size of the document index and save it to disk
-            if (!CollectionSize.updateCollectionSize(docid))
+
+            if(!CollectionSize.updateCollectionSize(docid) || !CollectionSize.updateDocumentsLenght(docsLen))
                 return 0;
+
             return numIndex;
 
         } catch (Exception e) {

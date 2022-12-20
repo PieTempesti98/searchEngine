@@ -1,7 +1,9 @@
 package queryProcessing;
 
+import it.unipi.dii.aide.mircv.common.beans.DocumentIndex;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.Vocabulary;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 
 import java.util.*;
 
@@ -9,16 +11,73 @@ import java.util.*;
 public class DAAT {
 
     private static final Vocabulary vocabulary = Vocabulary.getInstance();
+    private static final DocumentIndex docIndex = DocumentIndex.getInstance();
     /** method to move the iterators of postingsToScore to the given docid
      * @param docidToProcess: docid to which the iterators must be moved to
      * @return -1 if there is at least a list for which there is no docid >= docidToProcess
      */
 
+    /**
+     * parameters for BM25 scoring
+     */
+    private static final double k1 = 1.5;
+    private static final double b = 0.75;
+
+    /**
+     * number of documents in the collection
+     */
+    private static final long N = CollectionSize.getCollectionSize();
+
+    /**
+     * @param postingToScore contains posting list of term we want to score
+     * @return score computed according to BM25
+     */
+    private static double computeBM25(PostingList postingToScore){
+
+
+        //get idf of term
+        double idf = vocabulary.getIdf(postingToScore.getTerm());
+        //get frequency of term occurring in document we are scoring
+        double tf = (1 + Math.log10(postingToScore.getPostings().get(0).getValue()));
+        //get document length
+        int docLen = docIndex.getLength(postingToScore.getPostings().get(0).getKey());
+        //get average document length
+        double avgDocLen = (double) CollectionSize.getTotalDocLen()/N;
+
+        //return score
+        return idf * tf  / ( tf + k1 * (1 - b + b * docLen/avgDocLen));
+
+    }
+
+    /**
+     * @param postingToScore contains posting list of term we want to score
+     * @return score computed according to tfidf
+     */
+    private static double computeTFIDF(PostingList postingToScore){
+
+        //get idf of term
+        double idf = vocabulary.getIdf(postingToScore.getTerm());
+        //get frequency of term occurring in document we are scoring
+        double tf = (1 + Math.log10(postingToScore.getPostings().get(0).getValue()));
+
+        System.out.println(postingToScore);
+        System.out.println("tf-> " + tf);
+
+        //return score
+        return idf * tf ;
+    }
+
+     /** method to move the iterators of postingsToScore to the given docid
+     * @param docidToProcess: docid to which the iterators must be moved to
+     * @return -1 if there is at least a list for which there is no docid >= docidToProcess
+     */
     private static int nextGEQ(int docidToProcess, ArrayList<PostingList> postingsToScore){
         // move the iterators for posting lists pointing to docids < docidToProcess
 
-        //System.out.println("moving iterators towards docid: \t"+docidToProcess);
-        //System.out.println("iterators:\t"+postingsToScore);
+        System.out.println("moving iterators towards docid: \t"+docidToProcess);
+        System.out.println("iterators:\t"+postingsToScore);
+
+        int nextGEQ = docidToProcess;
 
         for(int i=0; i<postingsToScore.size(); i++){
             // i-th posting list
@@ -27,28 +86,33 @@ public class DAAT {
             // check if there are postings to iterate in the i-th posting list
             if(currPostingList != null){
                 // I should move the iterator until I find a docid >= docidToProcess
-                while(currPostingList.getPostings() != null && !currPostingList.getPostings().isEmpty() && currPostingList.getPostings().get(0).getKey() < docidToProcess)
+                while(currPostingList.getPostings() != null && !currPostingList.getPostings().isEmpty() && currPostingList.getPostings().get(0).getKey() < nextGEQ)
                     currPostingList.getPostings().remove(0);
 
                 // check if in the current posting list there is no docid >= docidToProcess to be processed
                 if(currPostingList.getPostings() == null || currPostingList.getPostings().isEmpty()){
-                   // System.out.println("conjunctive mode end");
+                    System.out.println("conjunctive mode end");
                     return -1;
                 }
 
                 // check if in the current posting list is not present docidToProcess but it is present a docid >=
-                if (currPostingList.getPostings().get(0).getKey()>docidToProcess) {
+                if (currPostingList.getPostings().get(0).getKey()>nextGEQ) {
                     // the current docid will be the candidate next docid to be processed
+
+                    // set nextGEQ to new value
+                    nextGEQ = currPostingList.getPostings().get(0).getKey();
+                    i=-1;
+                    System.out.println("nextGEQ updated to"+nextGEQ);
                     // move the iterators of other posting lists to new next docid to be processed
-                    return nextGEQ(currPostingList.getPostings().get(0).getKey(), postingsToScore);
+                    //return nextGEQ(currPostingList.getPostings().get(0).getKey(), postingsToScore);
 
                 }
             }
         }
 
-        //System.out.println("conjunctive mode, next docid to be processed:\t"+docidToProcess);
-       // System.out.println("moved iterators:\t"+postingsToScore);
-        return docidToProcess;
+        System.out.println("conjunctive mode, next docid to be processed:\t"+docidToProcess);
+        System.out.println("moved iterators:\t"+postingsToScore);
+        return nextGEQ;
     }
 
     /** method to find next document to be processed among all the postings to be scored
@@ -101,10 +165,11 @@ public class DAAT {
 
     /**
      * method to compute the IDF score of a particular document identified by docid
-     * @param docid: docid of the document to be scored
+     * @param docid : docid of the document to be scored
+     * @param scoringFunction
      * @return score of the document
      */
-    private static double scoreDocument(int docid, ArrayList<PostingList> postingsToScore){
+    private static double scoreDocument(int docid, ArrayList<PostingList> postingsToScore, String scoringFunction){
         // initialization of document's score
         double docScore = 0;
 
@@ -115,11 +180,10 @@ public class DAAT {
             if (postingList.getPostings() != null && !postingList.getPostings().isEmpty() && postingList.getPostings().get(0).getKey() == docid) {
                 // process the posting
 
-                double tf = (1 + Math.log10(postingList.getPostings().get(0).getValue()));
-                double idf = vocabulary.getIdf(postingList.getTerm());
-
-                // adding tfidf to doc score
-                docScore += (tf * idf);
+                if(scoringFunction.equals("tfidf"))
+                    docScore += computeTFIDF(postingList);
+                else
+                    docScore += computeBM25(postingList);
 
                 // posting scored, it can be removed by the postings to be scored
                 postingList.getPostings().remove(0);
@@ -129,16 +193,17 @@ public class DAAT {
     }
 
     /** method to process DAAT a list of posting list of the query terms using TFIDF as scoring function
-     * @param queryPostings: list of postings of query terms
-     * @param isConjuctive: if true, the query must be processed in CONJUNCTIVE way, else in DISJUNCTIVE way
-     * @param k: number of top k documents to be returned
+     * @param queryPostings : list of postings of query terms
+     * @param isConjuctive : if true, the query must be processed in CONJUNCTIVE way, else in DISJUNCTIVE way
+     * @param k : number of top k documents to be returned
+     * @param scoringFunction
      * @return returns a priority queue (of at most K elements) in the format <SCORE (Double), DOCID (Integer)> ordered by increasing score value
      */
-    public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, boolean isConjuctive, int k){
+    public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, boolean isConjuctive, int k, String scoringFunction){
 
         // TODO: implement deep copy or iterators
 
-        //System.out.println("query postings:\t"+ queryPostings);
+        System.out.println("query postings:\t"+ queryPostings);
 
         ArrayList<PostingList> copyPostings = new ArrayList<>();
 
@@ -160,10 +225,9 @@ public class DAAT {
 
         // until there are documents to be processed
         while(docToProcess!= -1){
-            //System.out.println("processing document:\t"+ docToProcess);
-            double docScore = scoreDocument(docToProcess, copyPostings);
 
-            //System.out.println("score document:\t"+ docScore);
+            double docScore = scoreDocument(docToProcess, copyPostings,scoringFunction);
+
             // check if the MinHeap is full
             if(topKDocuments.size()==k){
                 // MinHeap is full

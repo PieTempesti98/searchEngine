@@ -1,13 +1,17 @@
 package it.unipi.aide.mircv.start;
 
+import it.unipi.dii.aide.mircv.common.beans.Vocabulary;
+import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
+import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import queryProcessing.QueryProcesser;
 
+import java.util.Locale;
 import java.util.Scanner;
 
 public class Main {
 
      /**
-      * integer defining the top documents to take into account
+      * integer defining the top documents to return
       * */
     private static final int k = 10;
 
@@ -17,7 +21,6 @@ public class Main {
         System.out.println("Starting...");
         //check is setup of data structures was successful
         boolean setupSuccess = QueryProcesser.setupProcesser();
-
 
         if(!setupSuccess){
             System.out.println("Error in setup of this service. Shutting down...");
@@ -79,9 +82,16 @@ public class Main {
                 continue;
             }
 
+            System.out.println("Which scoring function would you like to apply?\nType tfidf or bm25");
+            String scoringFunction = sc.nextLine().toLowerCase(Locale.ROOT);
+            while(!scoringFunction.equals("bm25") && !scoringFunction.equals("tfidf")) {
+                System.out.println("Please insert a valid scoring function. tfidf or bm25");
+                scoringFunction = sc.nextLine();
+            }
+
             //third parameter is true if query mode is conjunctive
             long start = System.currentTimeMillis();
-            String[] documents = QueryProcesser.processQuery(queryInfo[0],k,queryInfo[1].equals("c"));
+            String[] documents = QueryProcesser.processQuery(queryInfo[0],k,queryInfo[1].equals("c"),scoringFunction);
             long stop = System.currentTimeMillis();
             if(documents == null){
                 System.out.println("Unfortunately, no documents satisfy your request.");
