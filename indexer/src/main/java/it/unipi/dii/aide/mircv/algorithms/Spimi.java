@@ -5,12 +5,16 @@ import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
+
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.junit.platform.commons.util.LruCache;
 
 import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -38,18 +42,18 @@ public class Spimi {
     /*
     path to the file on the disk storing the partial vocabulary
     */
-    private static final String PATH_TO_PARTIAL_VOCABULARY =  ConfigurationParameters.getPartialVocabularyDir() + ConfigurationParameters.getVocabularyFileName();
+    private static final String PATH_TO_PARTIAL_VOCABULARY = ConfigurationParameters.getPartialVocabularyDir() + ConfigurationParameters.getVocabularyFileName();
 
     /*
     path to the file on the disk storing the partial frequencies of the posting list
     */
-    private static final String PATH_TO_PARTIAL_FREQUENCIES =  ConfigurationParameters.getFrequencyDir() + ConfigurationParameters.getFrequencyFileName();
+    private static final String PATH_TO_PARTIAL_FREQUENCIES = ConfigurationParameters.getFrequencyDir() + ConfigurationParameters.getFrequencyFileName();
 
     /*
     path to the file on the disk storing the partial docids of the posting list
     */
 
-    private static final String PATH_TO_PARTIAL_DOCID =  ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
+    private static final String PATH_TO_PARTIAL_DOCID = ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
 
 
     /*
@@ -60,7 +64,7 @@ public class Spimi {
     /*
     counts the number of partial indexes to write
      */
-    private static long numPostings = 0;
+
 
     /**
      * @param compressed  flag for compressed reading
@@ -93,6 +97,16 @@ public class Spimi {
 
     /**
      * @param index: partial index that must be saved onto file
+
+    private static int numPostings = 0;
+
+
+    //TODO: error handling
+
+    /**
+     * @param index:   partial index that must be saved onto file
+     * @param numDocs: number of documents processed
+
      */
     private static boolean saveIndexToDisk(HashMap<String, PostingList> index) {
 
@@ -128,18 +142,16 @@ public class Spimi {
             // instantiation of MappedByteBuffer for integer list of docids
             MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
 
+
             // instantiation of MappedByteBuffer for integer list of freqs
             MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
 
-            MappedByteBuffer vocBuffer = vocabularyFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * VocabularyEntry.getENTRY_SIZE());
+            MappedByteBuffer vocBuffer = vocabularyFchan.map(FileChannel.MapMode.READ_WRITE, 0, (long) numPostings * VocabularyEntry.getENTRY_SIZE());
             // check if MappedByteBuffers are correctly instantiated
-
-
             if (docsBuffer != null && freqsBuffer != null && vocBuffer != null) {
                 for (PostingList list : index.values()) {
                     // write postings to file
                     for (Map.Entry<Integer, Integer> posting : list.getPostings()) {
-
                         // encode docid
                         docsBuffer.putInt(posting.getKey());
                         // encode freq
@@ -160,15 +172,16 @@ public class Spimi {
                     //set size of posting list
                     entry.setMemorySize(list.getNumBytes());
 
-                    System.out.println(entry);
                     //allocate char buffer to write term
                     CharBuffer charBuffer = CharBuffer.allocate(VocabularyEntry.TERM_SIZE);
 
                     String term = entry.getTerm();
 
+                    //TODO: fix after preprocessing is fixed
                     //populate char buffer char by char
                     int len = term.length();
-
+                    if(term.length() > VocabularyEntry.TERM_SIZE)
+                        len = VocabularyEntry.TERM_SIZE;
                     for (int i = 0; i < len; i++)
                         charBuffer.put(i, term.charAt(i));
 
@@ -181,7 +194,7 @@ public class Spimi {
                     // Write the term frequency into file
                     vocBuffer.putInt(entry.getTf());
 
-                    //write IDF into file
+                    //wirte IDF into file
                     vocBuffer.putDouble(entry.getIdf());
 
                     //write memory offset into file
@@ -192,30 +205,26 @@ public class Spimi {
 
                     //write memory offset into file
                     vocBuffer.putLong(entry.getMemorySize());
-
                 }
-
-                //update number of partial inverted indexes and vocabularies
-                numIndex++;
-                numPostings = 0;
-                return true;
             }
-            return false;
+            //update number of partial inverted indexes and vocabularies
+            numIndex++;
+            numPostings = 0;
         } catch (InvalidPathException e) {
             System.out.println("Path Error " + e);
-            return false;
         } catch (IOException e) {
             System.out.println("I/O Error " + e);
-            return false;
+
         }
     }
 
 
     /**
-     *  Function that searched for a given docid in a posting list.
+     * Function that searched for a given docid in a posting list.
      * If the document is already present it updates the term frequency for that
      * specific document, if that's not the case creates a new pair (docid,freq)
      * in which frequency is set to 1 and adds this pair to the posting list
+     *
      * @param docid:       docid of a certain document
      * @param postingList: posting list of a given term
      **/
@@ -240,6 +249,7 @@ public class Spimi {
 
     /**
      * Performs spimi algorithm
+     *
      * @return the number of partial indexes created
      * @param compress flag deciding whether to read from compressed file or not
      */
@@ -292,7 +302,7 @@ public class Spimi {
 
 
                     //create new document index entry and add it to file
-                   DocumentIndexEntry entry = new DocumentIndexEntry(
+                    DocumentIndexEntry entry = new DocumentIndexEntry(
                             processedDocument.getPid(),
                             docid++,
                             processedDocument.getTokens().size()
@@ -303,6 +313,7 @@ public class Spimi {
 
                     // write the docIndex entry to disk
                     entry.writeToDisk();
+
 
                     for (String term : processedDocument.getTokens()) {
 
@@ -324,10 +335,9 @@ public class Spimi {
                         updateOrAddPosting(docid, posting);
 
                     }
-
-
-
+                    System.out.println(docid);
                 }
+
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
                 writeSuccess = saveIndexToDisk(index);
 
@@ -336,11 +346,14 @@ public class Spimi {
                     rollback();
                     return -1;
                 }
+                index.clear();
 
             }
 
             // update the size of the document index and save it to disk
+
             if(!CollectionSize.updateCollectionSize(docid) || !CollectionSize.updateDocumentsLenght(docsLen))
+
                 return 0;
             return numIndex;
 
@@ -348,10 +361,6 @@ public class Spimi {
             e.printStackTrace();
             return 0;
         }
-    }
-
-    public static void main(String[] args){
-        executeSpimi(false);
     }
 
 

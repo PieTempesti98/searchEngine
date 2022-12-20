@@ -11,7 +11,9 @@ import it.unipi.dii.aide.mircv.common.utils.FileUtils;
  */
 public class Merger {
 
+
     private static final long VOCENTRY_SIZE = VocabularyEntry.ENTRY_SIZE;
+
     /**
      * Inverted index's next free memory offset in docids file
      */
