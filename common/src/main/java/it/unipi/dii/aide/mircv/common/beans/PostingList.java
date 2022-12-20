@@ -16,6 +16,9 @@ public class PostingList{
     private String term;
     private final ArrayList<Map.Entry<Integer, Integer>> postings = new ArrayList<>();
 
+    // variable used for computing the max dl to insert in the vocabulary
+    private int maxDl = 0;
+
     public PostingList(String toParse) {
         String[] termRow = toParse.split("\t");
         this.term = termRow[0];
@@ -52,14 +55,14 @@ public class PostingList{
             MappedByteBuffer docBuffer = docsFChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     term.getMemoryOffset(),
-                    term.getMemorySize()/2
+                    term.getDocidSize()
             );
 
             // instantiation of MappedByteBuffer for integer list of frequencies
             MappedByteBuffer freqBuffer = freqsFChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     term.getFrequencyOffset(),
-                    term.getMemorySize()/2
+                    term.getFrequencySize()
             );
 
             // create the posting list for the term
@@ -138,13 +141,6 @@ public class PostingList{
         // - each integer will occupy 4 bytes since we are storing integers in byte arrays
         int numBytes = getNumBytes();
 
-        /*
-        DEBUG
-        System.out.println("writing this posting list:");
-        System.out.println(this);
-        System.out.println("at offsets:\tdocs:"+docsMemOffset+" freqs:"+freqsMemOffset);
-        */
-
         // try to open a file channel to the file of the inverted index
         try (FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(docsPath), StandardOpenOption.WRITE,
                 StandardOpenOption.READ, StandardOpenOption.CREATE);
@@ -181,5 +177,10 @@ public class PostingList{
             System.out.println("I/O Error " + e);
         }
         return null;
+    }
+
+    public void updateMaxDocumentLength(int length){
+        if(length > this.maxDl)
+            this.maxDl = length;
     }
 }

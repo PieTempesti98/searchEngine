@@ -15,9 +15,9 @@ import java.util.Map;
 /**
  * Entry of the vocabulary for a term
  */
-public class VocabularyEntry{
+public class VocabularyEntry {
 
-
+    /* --- TERM INFORMATION --- */
     /**
      * incremental counter of the terms, used to assign the termid
      */
@@ -33,21 +33,57 @@ public class VocabularyEntry{
      */
     private String term;
 
+    /* --- TFIDF PARAMETERS --- */
     /**
      * Document frequency of the term
      */
     private int df = 0;
 
     /**
-     * term frequency of the term in the whole collection
-     */
-    private int tf = 0;
-
-    /**
      * inverse of document frequency of the term
      */
     private double idf = 0;
 
+    /* --- INFORMATION NEEDED TO IMPLEMENT MAX_SCORE --- */
+    /**
+     * maximum term frequency of the term
+     */
+    private int maxTf = 0;
+
+    /**
+     * maximum document length across the documents in which the term is present
+     */
+    private int maxDl = 0;
+
+    /**
+     * maximum value of TFIDF for the term
+     */
+    private double maxTFIDF = 0;
+
+    /**
+     * maximum value of BM25 for the term
+     */
+    private double maxBM25 = 0;
+
+    public int getMaxDl() {
+        return maxDl;
+    }
+
+    public void setMaxDl(int maxDl) {
+        this.maxDl = maxDl;
+    }
+
+    /**
+     * method to update the max document length for the term
+     *
+     * @param dl the new document length to process
+     */
+    public void updateMaxDl(int dl) {
+        if (dl > maxDl)
+            maxDl = dl;
+    }
+
+    /* --- MEMORY INFORMATION --- */
     /**
      * starting point of the term's posting list in the inverted index in bytes
      */
@@ -58,13 +94,29 @@ public class VocabularyEntry{
      */
     private long frequencyOffset = 0;
 
-    /**
-     * size of the term's posting list in the inverted index in bytes
-     */
-    private long memorySize = 0;
 
     /**
-     size of the term; if a term is greater than this size it'll be truncated
+     * size of the term's posting list in the docid file of the inverted index in bytes
+     */
+    private int docidSize = 0;
+
+    /**
+     * size of the term's posting list in the frequency file of the inverted index in bytes
+     */
+    private int frequencySize = 0;
+
+    /**
+     * number of blocks in which the posting list is divided
+     */
+    private int numBlocks = 0;
+
+    /**
+     * start offset of the block descriptors in the block descriptor file
+     */
+    private long blockOffset = 0;
+
+    /**
+     * size of the term; if a term is greater than this size it'll be truncated
      */
     public static final int TERM_SIZE = 64;
 
@@ -78,37 +130,39 @@ public class VocabularyEntry{
      * Constructor for the vocabulary entry
      * create an empty class
      */
-    public VocabularyEntry(){}
+    public VocabularyEntry() {
+    }
 
     /**
      * Constructor for the vocabulary entry for the term passed as parameter
      * Assign the termid to the term and initializes all the statistics and memory information
+     *
      * @param term the token of the entry
      */
-
-    public VocabularyEntry(String term){
+    public VocabularyEntry(String term) {
 
         // Assign the term
         this.term = term;
 
         // Assign the termid and increase the counter
         this.termid = termCount;
-        termCount ++;
+        termCount++;
     }
 
     /**
-     *
      * s the statistics of the vocabulary:
      * updates tf and df with the data of the partial posting list processed
+     *
      * @param list the posting list from which the method computes the statistics
      */
-    public void updateStatistics(PostingList list){
+    public void updateStatistics(PostingList list) {
 
         //for each element of the intermediate posting list
-        for(Map.Entry<Integer, Integer> posting: list.getPostings()){
+        for (Map.Entry<Integer, Integer> posting : list.getPostings()) {
 
-            // update the term frequency
-            this.tf += posting.getValue();
+            // update the max term frequency
+            if (posting.getValue() > this.maxTf)
+                this.maxTf = posting.getValue();
 
             // update the raw document frequency
             this.df++;
@@ -118,30 +172,27 @@ public class VocabularyEntry{
     /**
      * Compute the idf using the values computed during the merging of the indexes
      */
-    public void computeIDF(){
-        this.idf = Math.log10(CollectionSize.getCollectionSize()/(double)this.df);
+    public void computeIDF() {
+        this.idf = Math.log10(CollectionSize.getCollectionSize() / (double) this.df);
     }
 
     /**
      * Returns the vocabulary entry as a string formatted in the following way:
      * [termid]-[term]-[idf] [tf] [memoryOffset] [memorySize]\n
+     *
      * @return the formatted string
      */
-    public String toString(){
-        //format the string for the vocabulary entry
-        return term + "->" +
-                        tf + " " + df + " "+
-                        idf + " " +
-                        memoryOffset + " " + frequencyOffset + " " +
-                        memorySize +
-                        '\n';
+
+    public void setDocidSize(int docidSize) {
+        this.docidSize = docidSize;
     }
 
-    public void setMemorySize(long memorySize) {
-        this.memorySize = memorySize;
+    public void setFrequencySize(int frequencySize) {
+        this.frequencySize = frequencySize;
     }
 
-    public void setMemoryOffset(long memoryOffset) {this.memoryOffset = memoryOffset;
+    public void setMemoryOffset(long memoryOffset) {
+        this.memoryOffset = memoryOffset;
     }
 
     public void setFrequencyOffset(long freqOffset) {
@@ -152,67 +203,84 @@ public class VocabularyEntry{
         this.df = df;
     }
 
-    public static long getENTRY_SIZE() {return ENTRY_SIZE;}
+    /**
+     * @param fChan    : fileChannel of the vocabulary file
+     * @param position : position to start writing from
+     * @return offset representing the position of the last written byte
+     */
+    public long writeEntryToDisk(long position, FileChannel fChan) {
+        // instantiation of MappedByteBuffer
+        try {
+            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, position, ENTRY_SIZE);
+
+            // Buffer not created
+            if (buffer == null)
+                return -1;
+
+            //allocate char buffer to write term
+            CharBuffer charBuffer = CharBuffer.allocate(TERM_SIZE);
+
+            //populate char buffer char by char
+            for (int i = 0; i < term.length(); i++)
+                charBuffer.put(i, term.charAt(i));
+
+            // Write the term into file
+            buffer.put(StandardCharsets.UTF_8.encode(charBuffer));
+
+            // TODO: refactor of the read/write method with the new parameters
+
+
+            // return position for which we have to start writing on file
+            return position + ENTRY_SIZE;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1;
+        }
+    }
 
     /**
-     * @param PATH : path of file to write entry on
-    * @param position : position to start writing from
-     * @return  offset representing the position of the last written byte
-     * */
-    public long writeEntryToDisk(long position, String PATH){
+     * Read the document index entry from disk
+     *
+     * @param memoryOffset the memory offset from which we start reading
+     * @param PATH         path of the file on disk
+     * @return the position of the last byte read
+     */
+    public long readFromDisk(long memoryOffset, String PATH) {
+        // try to open a file channel to the file of the inverted index
         try (FileChannel fChan = (FileChannel) Files.newByteChannel(
                 Paths.get(PATH),
-                StandardOpenOption.CREATE,
                 StandardOpenOption.WRITE,
-                StandardOpenOption.READ)) {
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE)) {
 
+            // instantiation of MappedByteBuffer for the PID read
+            MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_ONLY, memoryOffset, ENTRY_SIZE);
 
-            // instantiation of MappedByteBuffer
-            try {
-                MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, position, ENTRY_SIZE);
-
-                // Buffer not created
-                if (buffer == null)
-                    return -1;
-
-                //allocate char buffer to write term
-                CharBuffer charBuffer = CharBuffer.allocate(TERM_SIZE);
-
-                //populate char buffer char by char
-                for (int i = 0; i < term.length(); i++)
-                    charBuffer.put(i, term.charAt(i));
-
-                // Write the term into file
-                buffer.put(StandardCharsets.UTF_8.encode(charBuffer));
-
-                // Write the document frequency into file
-                buffer.putInt(this.getDf());
-
-                // Write the term frequency into file
-                buffer.putInt(this.getTf());
-
-                //wirte IDF into file
-                buffer.putDouble(this.getIdf());
-
-                //write memory offset into file
-                buffer.putLong(this.getMemoryOffset());
-
-                //write frequency offset into file
-                buffer.putLong(this.getFrequencyOffset());
-
-                //write memory offset into file
-                buffer.putLong(this.getMemorySize());
-
-
-                // return position for which we have to start writing on file
-                return position + ENTRY_SIZE;
-            }
-            catch (Exception e){
-                e.printStackTrace();
+            // Buffer not created
+            if (buffer == null)
                 return -1;
-            }
+
+            // Read from file into the charBuffer, then pass to the string
+            CharBuffer charBuffer = StandardCharsets.UTF_8.decode(buffer);
+
+            String[] encodedTerm = charBuffer.toString().split("\0");
+            if (encodedTerm.length == 0) // TODO: no more entries to read
+                return 0;
+
+            this.term = encodedTerm[0];
 
 
+            // Instantiate the buffer for reading other information
+            buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset + TERM_SIZE, ENTRY_SIZE - TERM_SIZE);
+
+            // Buffer not created
+            if (buffer == null)
+                return -1;
+
+            // TODO: refactor of the read/write method with the new parameters
+
+
+            return memoryOffset + ENTRY_SIZE;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -220,70 +288,27 @@ public class VocabularyEntry{
         }
     }
 
-/**
- * Read the document index entry from disk
- * @param memoryOffset the memory offset from which we start reading
- * @param PATH path of the file on disk
- * @return the position of the last byte read
-*/
-public long readFromDisk(long memoryOffset,String PATH){
-// try to open a file channel to the file of the inverted index
-try (FileChannel fChan = (FileChannel) Files.newByteChannel(
-    Paths.get(PATH),
-    StandardOpenOption.WRITE,
-    StandardOpenOption.READ,
-    StandardOpenOption.CREATE)) {
+    /**
+     * method used to compute the max TFIDF and BM25 used as term upper bounds
+     */
+    public void computeUpperBounds(){
 
-    // instantiation of MappedByteBuffer for the PID read
-    MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_ONLY, memoryOffset, ENTRY_SIZE);
+        // compute term upper bound for TFIDF
+        this.maxTFIDF = (1 + Math.log10(this.maxTf)) * this.idf;
 
-    // Buffer not created
-    if(buffer == null)
-        return -1;
-
-    // Read from file into the charBuffer, then pass to the string
-    CharBuffer charBuffer = StandardCharsets.UTF_8.decode(buffer);
-
-    String[] encodedTerm = charBuffer.toString().split("\0");
-    if(encodedTerm.length == 0) // TODO: no more entries to read
-        return 0;
-
-    this.term = encodedTerm[0];
-
-
-    // Instantiate the buffer for reading other information
-    buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset + TERM_SIZE, ENTRY_SIZE - TERM_SIZE);
-
-    // Buffer not created
-    if(buffer == null)
-        return -1;
-
-    // read document frequency
-    this.df = buffer.getInt();
-
-    // read term frequency
-    this.tf = buffer.getInt();
-
-    // read term idf
-    this.idf = buffer.getDouble();
-
-    // read memory offset
-    this.memoryOffset = buffer.getLong();
-
-    // read frequency offset
-    this.frequencyOffset = buffer.getLong();
-
-    // read memory size
-    this.memorySize = buffer.getLong();
-
-
-    return memoryOffset + ENTRY_SIZE;
-
-    }catch(Exception e){
-        e.printStackTrace();
-        return -1;
+        // compute term upper bound for BM25
+        //TODO: implement after merge with BM25
     }
-}
+
+    /**
+     * method that computes the number of blocks of postings in which the posting list will be divided
+     * @return the number of blocks
+     */
+    public int computeBlocksInformation(){
+        this.blockOffset = BlockDescriptor.getMemoryOffset();
+        this.numBlocks = (int)Math.ceil(Math.sqrt(df));
+        return numBlocks;
+    }
 
     public String getTerm() {
         return term;
@@ -293,8 +318,8 @@ try (FileChannel fChan = (FileChannel) Files.newByteChannel(
         return df;
     }
 
-    public int getTf() {
-        return tf;
+    public int getMaxTf() {
+        return maxTf;
     }
 
     public double getIdf() {
@@ -305,12 +330,75 @@ try (FileChannel fChan = (FileChannel) Files.newByteChannel(
         return memoryOffset;
     }
 
-    public long getMemorySize() {
-        return memorySize;
-    }
-
     public long getFrequencyOffset() {
         return frequencyOffset;
     }
 
+    public int getDocidSize() {
+        return docidSize;
+    }
+
+    public int getFrequencySize() {
+        return frequencySize;
+    }
+
+    public static int getTermCount() {
+        return termCount;
+    }
+
+    public static void setTermCount(int termCount) {
+        VocabularyEntry.termCount = termCount;
+    }
+
+    public int getTermid() {
+        return termid;
+    }
+
+    public void setTermid(int termid) {
+        this.termid = termid;
+    }
+
+    public void setTerm(String term) {
+        this.term = term;
+    }
+
+    public void setIdf(double idf) {
+        this.idf = idf;
+    }
+
+    public void setMaxTf(int maxTf) {
+        this.maxTf = maxTf;
+    }
+
+    public double getMaxTFIDF() {
+        return maxTFIDF;
+    }
+
+    public void setMaxTFIDF(double maxTFIDF) {
+        this.maxTFIDF = maxTFIDF;
+    }
+
+    public double getMaxBM25() {
+        return maxBM25;
+    }
+
+    public void setMaxBM25(double maxBM25) {
+        this.maxBM25 = maxBM25;
+    }
+
+    public int getNumBlocks() {
+        return numBlocks;
+    }
+
+    public void setNumBlocks(int numBlocks) {
+        this.numBlocks = numBlocks;
+    }
+
+    public long getBlockOffset() {
+        return blockOffset;
+    }
+
+    public void setBlockOffset(long blockOffset) {
+        this.blockOffset = blockOffset;
+    }
 }

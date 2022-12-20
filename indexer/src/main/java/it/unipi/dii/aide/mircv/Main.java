@@ -2,7 +2,6 @@ package it.unipi.dii.aide.mircv;
 
 import it.unipi.dii.aide.mircv.algorithms.Merger;
 import it.unipi.dii.aide.mircv.algorithms.Spimi;
-import it.unipi.dii.aide.mircv.common.beans.Vocabulary;
 
 import static it.unipi.dii.aide.mircv.utils.Utility.initializeFiles;
 

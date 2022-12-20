@@ -39,14 +39,14 @@ public class IndexLoader {
             MappedByteBuffer docBuffer = docidChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     term.getMemoryOffset(),
-                    term.getMemorySize()
+                    term.getDocidSize()
             );
 
             // instantiation of MappedByteBuffer for integer list of frequencies
             MappedByteBuffer freqBuffer = freqChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     term.getFrequencyOffset(),
-                    term.getMemorySize()
+                    term.getFrequencySize()
             );
 
             // create the posting list for the term

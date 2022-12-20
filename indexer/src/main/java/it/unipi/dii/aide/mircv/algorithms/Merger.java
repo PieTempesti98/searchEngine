@@ -1,9 +1,17 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
+import it.unipi.dii.aide.mircv.common.beans.BlockDescriptor;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
+
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Map;
 
 
 /**
@@ -11,8 +19,7 @@ import it.unipi.dii.aide.mircv.common.utils.FileUtils;
  */
 public class Merger {
 
-    /* TODO: take from config parameters; it should be the same value as the one in VocbularyEntry file */
-    private static final long VOCENTRY_SIZE = VocabularyEntry.getENTRY_SIZE();
+    private static final long VOCENTRY_SIZE = VocabularyEntry.ENTRY_SIZE;
     /**
      * Inverted index's next free memory offset in docids file
      */
@@ -57,6 +64,11 @@ public class Merger {
      * Path to vocabulary
      */
     private static final String PATH_TO_VOCABULARY = ConfigurationParameters.getVocabularyPath();
+
+    /**
+     * path to block descriptors file
+     */
+    private static final String PATH_TO_BLOCK_DESCRIPTORS = ConfigurationParameters.getBlockDescriptorsPath();
 
     /**
      * Array used to point to the next vocabulary entry to process for each partial index
@@ -141,18 +153,10 @@ public class Merger {
         finalList.setTerm(termToProcess);
 
         // total space occupancy in bytes of the final posting list
-        long numBytes = 0;
+        int numBytes = 0;
 
         // processing the term
         for (int i = 0; i < numIndexes; i++) {
-/*
-            System.out.println("processing partial inverted index: "+i);
-
-
-
-            System.out.println("voc entry: ");
-            System.out.println(nextTerms[i]);
-*/
 
             // Found the matching term
             if (nextTerms[i] != null && nextTerms[i].getTerm().equals(termToProcess)) {
@@ -164,10 +168,8 @@ public class Merger {
                 // retrieve posting list from partial inverted index file
                 PostingList intermediatePostingList = new PostingList(nextTerms[i], docsPath, freqsPath);
 
-                /* DEBUG
-                System.out.println("intermediate pl");
-                System.out.println(intermediatePostingList);
-*/
+                // update max docLen
+                vocabularyEntry.updateMaxDl(nextTerms[i].getMaxDl());
 
                 // compute memory occupancy and add it to total space occupancy
                 numBytes += intermediatePostingList.getNumBytes();
@@ -186,12 +188,17 @@ public class Merger {
         moveVocabulariesToNextTerm(termToProcess);
 
         // writing to vocabulary the space occupancy and memory offset of the posting list into
-        vocabularyEntry.setMemorySize(numBytes);
+        vocabularyEntry.setDocidSize(numBytes);
+        vocabularyEntry.setFrequencySize(numBytes);
         vocabularyEntry.setMemoryOffset(docsMemOffset);
         vocabularyEntry.setFrequencyOffset(freqsMemOffset);
 
-        //compute the final idf
+        // compute the final idf
         vocabularyEntry.computeIDF();
+
+        // compute the term upper bounds
+        vocabularyEntry.computeUpperBounds();
+
         return finalList;
     }
 
@@ -240,33 +247,104 @@ public class Merger {
 
         // next memory offset where to write the next vocabulary entry
         long vocMemOffset = 0;
+        try(FileChannel vocabularyChan = (FileChannel) Files.newByteChannel(
+                Paths.get(PATH_TO_VOCABULARY),
+                StandardOpenOption.WRITE,
+                StandardOpenOption.READ,
+                StandardOpenOption.CREATE);
+            FileChannel docidChan = (FileChannel) Files.newByteChannel(
+                    Paths.get(PATH_TO_INVERTED_INDEX_DOCS),
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.READ,
+                    StandardOpenOption.CREATE);
+            FileChannel frequencyChan = (FileChannel) Files.newByteChannel(
+                    Paths.get(PATH_TO_INVERTED_INDEX_FREQS),
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.READ,
+                    StandardOpenOption.CREATE);
+            FileChannel descriptorChan = (FileChannel) Files.newByteChannel(
+                    Paths.get(PATH_TO_BLOCK_DESCRIPTORS),
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.READ,
+                    StandardOpenOption.CREATE)
+        ) {
+            // open all the indexes in parallel and start merging their posting lists
+            while (true) {
 
-        // open all the indexes in parallel and start merging their posting lists
-        while(true){
+                // find next term to be processed (the minimum in lexicographical order)
+                String termToProcess = getMinTerm();
 
-            // find next term to be processed (the minimum in lexicographical order)
-            String termToProcess = getMinTerm();
+                if (termToProcess == null)
+                    break;
 
-            if (termToProcess == null)
-                break;
+                // new vocabulary entry for the processed term
+                VocabularyEntry vocabularyEntry = new VocabularyEntry(termToProcess);
 
-            // new vocabulary entry for the processed term
-            VocabularyEntry vocabularyEntry = new VocabularyEntry(termToProcess);
+                // merge the posting lists for the term to be processed
+                PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
 
-            // merge the posting lists for the term to be processed
-            PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
+                // save posting list on disk and update offsets
+                // instantiation of MappedByteBuffer for integer list of docids
+                MappedByteBuffer docsBuffer = docidChan.map(FileChannel.MapMode.READ_WRITE, docsMemOffset, vocabularyEntry.getDocidSize());
 
-            // save posting list on disk and update offsets
-            long[] offsets = mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS);
-            docsMemOffset = offsets[0];
-            freqsMemOffset = offsets[1];
-            // save vocabulary entry on disk
-            vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, PATH_TO_VOCABULARY);
+                // instantiation of MappedByteBuffer for integer list of freqs
+                MappedByteBuffer freqsBuffer = frequencyChan.map(FileChannel.MapMode.READ_WRITE, freqsMemOffset, vocabularyEntry.getFrequencySize());
 
+                // check if MappedByteBuffers are correctly instantiated
+                if (docsBuffer != null && freqsBuffer != null) {
+                    // create and initialize the first block descriptor for the posting list
+                    BlockDescriptor blockDescriptor = new BlockDescriptor();
+                    blockDescriptor.setDocidOffset(docsMemOffset);
+                    blockDescriptor.setFreqOffset(freqsMemOffset);
+                    int maxNumPostings = (int)Math.ceil(vocabularyEntry.getDf() / (double)vocabularyEntry.getNumBlocks());
+                    int currentBlock = 1;
+                    int postingsInBlock = 0;
+                    // write postings to file
+                    for (Map.Entry<Integer, Integer> posting : mergedPostingList.getPostings()) {
+                        // encode docid
+                        docsBuffer.putInt(posting.getKey());
+                        // encode freq
+                        freqsBuffer.putInt(posting.getValue());
+                        postingsInBlock ++;
+                        if(postingsInBlock == maxNumPostings && currentBlock < vocabularyEntry.getNumBlocks()){
+                            // update the size of the block
+                            blockDescriptor.setDocidSize((int) (docsMemOffset + docsBuffer.position() - blockDescriptor.getDocidOffset()));
+                            blockDescriptor.setFreqSize((int) (freqsMemOffset + freqsBuffer.position() - blockDescriptor.getFreqOffset()));
+
+                            // update the max docid of the block
+                            blockDescriptor.setMaxDocid(posting.getKey());
+
+                            // update the number of postings in the block
+                            blockDescriptor.setNumPostings(postingsInBlock);
+
+                            // write the block descriptor on disk
+                            blockDescriptor.saveDescriptorOnDisk(descriptorChan);
+
+                            // create the new block descriptor
+                            blockDescriptor = new BlockDescriptor();
+                            currentBlock ++;
+                            blockDescriptor.setDocidOffset(docsMemOffset + docsBuffer.position());
+                            blockDescriptor.setFreqOffset(freqsMemOffset + freqsBuffer.position());
+                        }
+                    }
+
+                /* DEBUG
+                System.out.println("new offsets:\tdocs:"+(docsMemOffset + docsBuffer.position())+" freqs:"+(freqsMemOffset + freqsBuffer.position()));
+                */
+
+                    docsMemOffset += docsBuffer.position();
+                    freqsMemOffset += freqsBuffer.position();
+                    // save vocabulary entry on disk
+                    vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
+                }
+            }
+
+            cleanUp();
+            return true;
+        }catch(Exception e){
+            e.printStackTrace();
+            return false;
         }
-
-        cleanUp();
-        return true;
     }
 
     /**

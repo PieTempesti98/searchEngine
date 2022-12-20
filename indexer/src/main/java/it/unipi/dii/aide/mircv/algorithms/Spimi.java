@@ -97,7 +97,7 @@ public class Spimi {
             // instantiation of MappedByteBuffer for integer list of freqs
             MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
 
-            MappedByteBuffer vocBuffer = vocabularyFchan.map(FileChannel.MapMode.READ_WRITE, 0, (long) numPostings * VocabularyEntry.getENTRY_SIZE());
+            MappedByteBuffer vocBuffer = vocabularyFchan.map(FileChannel.MapMode.READ_WRITE, 0, (long) numPostings * VocabularyEntry.ENTRY_SIZE);
             // check if MappedByteBuffers are correctly instantiated
             if (docsBuffer != null && freqsBuffer != null && vocBuffer != null) {
                 for (PostingList list : index.values()) {
@@ -111,17 +111,7 @@ public class Spimi {
                     //create vocabulary entry
                     VocabularyEntry entry = new VocabularyEntry(list.getTerm());
 
-                    //compute entry statistics
-                    entry.updateStatistics(list);
-
-                    //set size of memory offset
-                    entry.setMemoryOffset(docsBuffer.position());
-
-                    //set size of frequency offset
-                    entry.setFrequencyOffset(freqsBuffer.position());
-
-                    //set size of posting list
-                    entry.setMemorySize(list.getNumBytes());
+                    // TODO: fix set and get of this vocabulary
 
                     //allocate char buffer to write term
                     CharBuffer charBuffer = CharBuffer.allocate(VocabularyEntry.TERM_SIZE);
@@ -138,23 +128,7 @@ public class Spimi {
                     // Write the term into file
                     vocBuffer.put(StandardCharsets.UTF_8.encode(charBuffer));
 
-                    // Write the document frequency into file
-                    vocBuffer.putInt(entry.getDf());
-
-                    // Write the term frequency into file
-                    vocBuffer.putInt(entry.getTf());
-
-                    //wirte IDF into file
-                    vocBuffer.putDouble(entry.getIdf());
-
-                    //write memory offset into file
-                    vocBuffer.putLong(entry.getMemoryOffset());
-
-                    //write frequency offset into file
-                    vocBuffer.putLong(entry.getFrequencyOffset());
-
-                    //write memory offset into file
-                    vocBuffer.putLong(entry.getMemorySize());
+                    //TODO: fix set and get of this vocabulary
                 }
             }
             //update number of partial inverted indexes and vocabularies
@@ -209,7 +183,7 @@ public class Spimi {
         FileUtils.createDirectory(ConfigurationParameters.getPartialVocabularyDir());
 
         try (
-                BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8);
+                BufferedReader br = Files.newBufferedReader(Paths.get(PATH_TO_COLLECTION), StandardCharsets.UTF_8)
 
         ) {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
@@ -246,11 +220,12 @@ public class Spimi {
                         continue;
                     }
 
+                    int documentLength = processedDocument.getTokens().size();
                     //create new document index entry and add it to file
                     DocumentIndexEntry entry = new DocumentIndexEntry(
                             processedDocument.getPid(),
                             docid++,
-                            processedDocument.getTokens().size()
+                            documentLength
                     );
 
 
@@ -275,6 +250,7 @@ public class Spimi {
 
                         //insert or update new posting
                         updateOrAddPosting(docid, posting);
+                        posting.updateMaxDocumentLength(documentLength);
 
                     }
                 }
