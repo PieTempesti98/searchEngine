@@ -1,5 +1,6 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
+import java.io.IOException;
 import it.unipi.dii.aide.mircv.common.compression.UnaryCompressor;
 import it.unipi.dii.aide.mircv.common.compression.VariableByteCompressor;
 
@@ -10,14 +11,15 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Map;
 
-public class PostingList implements Serializable{
+public class PostingList{
 
     private String term;
-    private ArrayList<Map.Entry<Integer, Integer>> postings = new ArrayList<>();
+    private final ArrayList<Posting> postings = new ArrayList<>();
+
+    // variable used for computing the max dl to insert in the vocabulary
+    private int maxDl = 0;
 
     public PostingList(String toParse) {
         String[] termRow = toParse.split("\t");
@@ -54,29 +56,22 @@ public class PostingList implements Serializable{
             // instantiation of MappedByteBuffer for integer list of docids
             MappedByteBuffer docBuffer = docsFChan.map(
                     FileChannel.MapMode.READ_ONLY,
-                    term.getMemoryOffset(),
-                    term.getMemorySize()/2
+                    term.getDocidOffset(),
+                    term.getDocidSize()
             );
 
             // instantiation of MappedByteBuffer for integer list of frequencies
             MappedByteBuffer freqBuffer = freqsFChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     term.getFrequencyOffset(),
-                    term.getMemorySize()/2
+                    term.getFrequencySize()
             );
 
             // create the posting list for the term
             this.term = term.getTerm();
 
             for (int i = 0; i < term.getDf(); i++) {
-                /*DEBUG
-                System.out.println("reading document: "+i);
-                System.out.println("at offsets:\tdocs:"+term.getMemoryOffset()+" freqs:"+term.getFrequencyOffset());
-                */
-                Map.Entry<Integer, Integer> posting = new AbstractMap.SimpleEntry<>(docBuffer.getInt(), freqBuffer.getInt());
-                /* DEBUG
-                System.out.println(posting);
-                 */
+                Posting posting = new Posting(docBuffer.getInt(), freqBuffer.getInt());
                 this.getPostings().add(posting);
             }
         } catch (Exception e) {
@@ -88,7 +83,7 @@ public class PostingList implements Serializable{
         String[] documents = rawPostings.split(" ");
         for(String elem: documents){
             String[] posting = elem.split(":");
-            postings.add(new AbstractMap.SimpleEntry<>(Integer.parseInt(posting[0]), Integer.parseInt(posting[1])));
+            postings.add(new Posting(Integer.parseInt(posting[0]), Integer.parseInt(posting[1])));
         }
     }
 
@@ -96,7 +91,7 @@ public class PostingList implements Serializable{
         return term;
     }
 
-    public ArrayList<Map.Entry<Integer, Integer>> getPostings() {
+    public ArrayList<Posting> getPostings() {
         return postings;
     }
 
@@ -104,7 +99,7 @@ public class PostingList implements Serializable{
         this.term = term;
     }
 
-    public void appendPostings(ArrayList<Map.Entry<Integer, Integer>> newPostings){
+    public void appendPostings(ArrayList<Posting> newPostings){
         postings.addAll(newPostings);
     }
 
@@ -121,22 +116,6 @@ public class PostingList implements Serializable{
                 "term='" + term + '\'' +
                 ", postings=" + postings +
                 '}';
-    }
-
-    @Serial
-    private void writeObject(java.io.ObjectOutputStream stream)
-            throws IOException {
-
-        stream.writeUTF(term);
-        stream.writeObject(postings);
-    }
-
-    @Serial
-    private void readObject(java.io.ObjectInputStream stream)
-            throws IOException, ClassNotFoundException {
-        term = stream.readUTF();
-        postings = (ArrayList<Map.Entry<Integer, Integer>>) stream.readObject();
-
     }
 
     /**
@@ -186,13 +165,6 @@ public class PostingList implements Serializable{
             numBytes[1] = getNumBytes()/2;
         }
 
-        /*
-        DEBUG
-        System.out.println("writing this posting list:");
-        System.out.println(this);
-        System.out.println("at offsets:\tdocs:"+docsMemOffset+" freqs:"+freqsMemOffset);
-        */
-
         // try to open a file channel to the file of the inverted index
         try (FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(docsPath), StandardOpenOption.WRITE,
                 StandardOpenOption.READ, StandardOpenOption.CREATE);
@@ -236,5 +208,47 @@ public class PostingList implements Serializable{
             System.out.println("I/O Error " + e);
         }
         return null;
+    }
+
+    public void updateMaxDocumentLength(int length){
+        if(length > this.maxDl)
+            this.maxDl = length;
+    }
+
+    public void openList(){
+        // TODO: implement method (Pietro)
+        // load the block descriptors
+    }
+
+    public Posting next(){
+        // TODO: implement method (Pietro)
+        /*
+            if !iterator(postings).hasNext
+                loadBlock
+                createNewIterator
+            return iterator(postings).next
+         */
+
+        return new Posting();
+    }
+
+    public Posting nextGEQ(int docid){
+        // TODO: implement method (Pietro)
+        /*
+        while currentBlock.maxDocid < docid
+            if !iterator(blocks).hasNext
+                return null
+            currentBlock = iterator(blocks).next
+        while iterator(postings).hasNext
+            currentPosting = iterator(posting).next
+            if currentPosting.docid >= docid
+                return currentPosting
+         */
+        return new Posting();
+    }
+
+    public void closeList(){
+        //TODO: implement method (Pietro)
+
     }
 }

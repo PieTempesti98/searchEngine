@@ -3,7 +3,6 @@ package it.unipi.dii.aide.mircv.common.beans;
 import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import org.junit.platform.commons.util.LruCache;
-
 import java.util.LinkedHashMap;
 
 public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
@@ -60,24 +59,6 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
     }
 
-    public boolean writeToDisk() { //TODO: is useful?
-
-
-        long position = 0;
-
-        for (VocabularyEntry entry : this.values()) {
-
-            position = entry.writeEntryToDisk(0,this.VOCABULARY_PATH);
-            if(position == -1)
-                return false;
-
-        }
-
-        return true;
-
-
-    }
-
     public boolean readFromDisk(){
 
         long position = 0;
@@ -116,7 +97,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
         long end = CollectionSize.getVocabularySize(); //index of last element of vocabulary portion on which search is performed
         long mid; //index of element of the vocabulary to be read
         String key; //term read from vocabulary
-        long entrySize = VocabularyEntry.getENTRY_SIZE(); //size of a vocabulary entry
+        long entrySize = VocabularyEntry.ENTRY_SIZE; //size of a vocabulary entry
 
         //performing binary search to get vocabulary entry
         while (start < end) {

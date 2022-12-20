@@ -2,7 +2,6 @@ package it.unipi.dii.aide.mircv;
 
 import it.unipi.dii.aide.mircv.algorithms.Merger;
 import it.unipi.dii.aide.mircv.algorithms.Spimi;
-import it.unipi.dii.aide.mircv.common.beans.Vocabulary;
 
 
 import static it.unipi.dii.aide.mircv.utils.Utility.initializeFiles;
@@ -45,12 +44,6 @@ public class Main {
 
         if(Merger.mergeIndexes(numIndexes,compress)) {
             System.out.println("Inverted index correctly created.");
-
-            // TODO: remove, testing
-            Vocabulary v = new Vocabulary();
-            v.readFromDisk();
-            System.out.println(v);
-
             return;
         }
         System.out.println("An error occurred during merging.");

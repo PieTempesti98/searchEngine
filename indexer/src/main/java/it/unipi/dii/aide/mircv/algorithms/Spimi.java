@@ -26,7 +26,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
 public class Spimi {
 
     /**
@@ -140,38 +139,25 @@ public class Spimi {
             // instantiation of MappedByteBuffer for integer list of freqs
             MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
 
-            MappedByteBuffer vocBuffer = vocabularyFchan.map(FileChannel.MapMode.READ_WRITE, 0, (long) numPostings * VocabularyEntry.getENTRY_SIZE());
+            MappedByteBuffer vocBuffer = vocabularyFchan.map(FileChannel.MapMode.READ_WRITE, 0, (long) numPostings * VocabularyEntry.ENTRY_SIZE);
             // check if MappedByteBuffers are correctly instantiated
             if (docsBuffer != null && freqsBuffer != null && vocBuffer != null) {
                 for (PostingList list : index.values()) {
                     // write postings to file
-                    for (Map.Entry<Integer, Integer> posting : list.getPostings()) {
+                    for (Posting posting : list.getPostings()) {
                         // encode docid
-                        docsBuffer.putInt(posting.getKey());
+                        docsBuffer.putInt(posting.getDocid());
                         // encode freq
-                        freqsBuffer.putInt(posting.getValue());
+                        freqsBuffer.putInt(posting.getFrequency());
                     }
                     //create vocabulary entry
                     VocabularyEntry entry = new VocabularyEntry(list.getTerm());
-
-                    //compute entry statistics
-                    entry.updateStatistics(list);
-
-                    //set size of memory offset
-                    entry.setMemoryOffset(docsBuffer.position());
-
-                    //set size of frequency offset
-                    entry.setFrequencyOffset(freqsBuffer.position());
-
-                    //set size of posting list
-                    entry.setMemorySize(list.getNumBytes());
 
                     //allocate char buffer to write term
                     CharBuffer charBuffer = CharBuffer.allocate(VocabularyEntry.TERM_SIZE);
 
                     String term = entry.getTerm();
 
-                    //TODO: fix after preprocessing is fixed
                     //populate char buffer char by char
                     int len = term.length();
                     if(term.length() > VocabularyEntry.TERM_SIZE)
@@ -182,23 +168,25 @@ public class Spimi {
                     // Write the term into file
                     vocBuffer.put(StandardCharsets.UTF_8.encode(charBuffer));
 
-                    // Write the document frequency into file
+                    // write statistics
                     vocBuffer.putInt(entry.getDf());
-
-                    // Write the term frequency into file
-                    vocBuffer.putInt(entry.getTf());
-
-                    //wirte IDF into file
                     vocBuffer.putDouble(entry.getIdf());
 
-                    //write memory offset into file
-                    vocBuffer.putLong(entry.getMemoryOffset());
+                    // write term upper bound information
+                    vocBuffer.putInt(entry.getMaxTf());
+                    vocBuffer.putInt(entry.getMaxDl());
+                    vocBuffer.putDouble(entry.getMaxTFIDF());
+                    vocBuffer.putDouble(entry.getMaxBM25());
 
-                    //write frequency offset into file
+                    // write memory information
+                    vocBuffer.putLong(entry.getDocidOffset());
                     vocBuffer.putLong(entry.getFrequencyOffset());
+                    vocBuffer.putInt(entry.getDocidSize());
+                    vocBuffer.putInt(entry.getFrequencySize());
 
-                    //write memory offset into file
-                    vocBuffer.putLong(entry.getMemorySize());
+                    // write block information
+                    vocBuffer.putInt(entry.getNumBlocks());
+                    vocBuffer.putLong(entry.getBlockOffset());
                 }
             }
             //update number of partial inverted indexes and vocabularies
@@ -227,16 +215,16 @@ public class Spimi {
     private static void updateOrAddPosting(int docid, PostingList postingList) {
         if (postingList.getPostings().size() > 0) {
             // last document inserted:
-            Map.Entry<Integer, Integer> posting = postingList.getPostings().get(postingList.getPostings().size() - 1);
+            Posting posting = postingList.getPostings().get(postingList.getPostings().size() - 1);
             //If the docId is the same I update the posting
-            if (docid == posting.getKey()) {
-                posting.setValue(posting.getValue() + 1);
+            if (docid == posting.getDocid()) {
+                posting.setFrequency(posting.getFrequency() + 1);
                 return;
             }
         }
         // the document has not been processed (docIds are incremental):
         // create new pair and add it to the posting list
-        postingList.getPostings().add(new AbstractMap.SimpleEntry<>(docid, 1));
+        postingList.getPostings().add(new Posting(docid, 1));
 
         //increment the number of postings
         numPostings++;
@@ -297,11 +285,12 @@ public class Spimi {
                         continue;
 
 
+                    int documentLength = processedDocument.getTokens().size();
                     //create new document index entry and add it to file
                     DocumentIndexEntry entry = new DocumentIndexEntry(
                             processedDocument.getPid(),
                             docid++,
-                            processedDocument.getTokens().size()
+                            documentLength
                     );
 
                     //update with length of new documents
@@ -328,6 +317,7 @@ public class Spimi {
 
                         //insert or update new posting
                         updateOrAddPosting(docid, posting);
+                        posting.updateMaxDocumentLength(documentLength);
 
                     }
                     //System.out.println(docid);
