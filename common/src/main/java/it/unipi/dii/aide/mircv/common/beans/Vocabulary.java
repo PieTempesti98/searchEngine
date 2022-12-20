@@ -1,15 +1,27 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import java.util.HashMap;
+import org.junit.platform.commons.util.LruCache;
+
 import java.util.LinkedHashMap;
 
 public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
     private static Vocabulary instance = null;
+    /**
+     * cache used for most recently used vocabulary entries
+     */
+    private LruCache entries = new LruCache(10);
 
+    /**
+     * path to file storing the vocabulary
+     */
     private final String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
 
+    /**
+     * singleton pattern
+     */
     public static Vocabulary getInstance(){
         if(instance == null){
             instance = new Vocabulary();
@@ -17,8 +29,35 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
         return instance;
     }
 
+    /**
+     * get idf of a term
+     * @param term term of which we wnat to get the idf
+     * @return idf of such term
+     */
     public double getIdf(String term){
-        return this.get(term).getIdf();
+        return getEntry(term).getIdf();
+    }
+
+    /**
+     * gets vocabulary entry of a given term
+     * @param term term of which we want to get its vocabulary entry
+     * @return vocabulary entry of such term
+     */
+    public VocabularyEntry getEntry(String term){
+
+        //if term is cached, return its vocabulary entry
+        if(entries.containsKey(term))
+            return (VocabularyEntry) entries.get(term);
+
+        //get entry from disk
+        VocabularyEntry entry = findEntry(term);
+
+        //cache the entry
+        if(entry != null)
+            entries.put(term,entry);
+
+        return entry;
+
     }
 
     public boolean writeToDisk() { //TODO: is useful?
@@ -64,33 +103,38 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
     }
 
     /**
-    *
+    * retrieves the vocabulary entry of a given term from disk
     * @param term: term of which we want vocabulary entry
-    * @return the vocabulary entry of given term
+    * @return the vocabulary entry of given term, null if term is not in vocabulary
     **/
     public VocabularyEntry findEntry(String term){
 
-        VocabularyEntry entry = new VocabularyEntry();
 
-        //performs binary search for input term
-        int start = 0;
-        int end = 1000; //TODO: update parameter with the final collection size
-        int mid;
-        String key;
+        VocabularyEntry entry = new VocabularyEntry(); //entry to be returned
 
-        long entrySize = entry.getENTRY_SIZE();
+        long start = 0; //index of first element of vocabulary portion on which search is performed
+        long end = CollectionSize.getVocabularySize(); //index of last element of vocabulary portion on which search is performed
+        long mid; //index of element of the vocabulary to be read
+        String key; //term read from vocabulary
+        long entrySize = VocabularyEntry.getENTRY_SIZE(); //size of a vocabulary entry
 
+        //performing binary search to get vocabulary entry
         while (start < end) {
 
+
+            // find new entry to read
             mid = (start + end) / 2;
 
+            //get entry from disk
             entry.readFromDisk(mid * entrySize, this.VOCABULARY_PATH);
             key = entry.getTerm();
+            System.out.println(key);
 
+            //check if the search was successful
             if (key.equals(term))
                 return entry;
 
-
+            //update search portion parameters
             if (term.compareTo(key) > 0) {
 
                 start = mid + 1;

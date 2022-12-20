@@ -17,6 +17,11 @@ public class CollectionSize{
     private static long vocabularySize;
 
     /**
+     * Sum of the length of all documents
+     */
+    private static long totalDocLen;
+
+    /**
      * Path to the collection size
      */
     private final static String FILE_PATH = ConfigurationParameters.getCollectionStatisticsPath();
@@ -25,6 +30,7 @@ public class CollectionSize{
         if(!readFile()){
             collectionSize = 0;
             vocabularySize = 0;
+            totalDocLen = 0;
         }
     }
 
@@ -41,6 +47,7 @@ public class CollectionSize{
 
             collectionSize = ois.readLong();
             vocabularySize = ois.readLong();
+            totalDocLen = ois.readLong();
 
             return true;
         }catch(Exception e){
@@ -64,6 +71,11 @@ public class CollectionSize{
     }
 
     /**
+     * @return the sum of the length of all documents
+     */
+    public static long getTotalDocLen() {return totalDocLen;}
+
+    /**
      * write the class into the file
      * @return true if successful
      */
@@ -75,6 +87,7 @@ public class CollectionSize{
         try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))){
             oos.writeLong(collectionSize);
             oos.writeLong(vocabularySize);
+            oos.writeLong(totalDocLen);
             return true;
 
         }catch(Exception e){
@@ -90,6 +103,11 @@ public class CollectionSize{
      */
     public static boolean updateCollectionSize(long size){
         collectionSize = size;
+        return writeFile();
+    }
+
+    public static boolean updateDocumentsLenght(long len){
+        totalDocLen = len;
         return writeFile();
     }
 

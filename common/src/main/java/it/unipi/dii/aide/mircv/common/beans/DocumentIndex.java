@@ -33,6 +33,14 @@ public class DocumentIndex extends LinkedHashMap<Integer, DocumentIndexEntry> {
         return this.get(docid).getPid();
     }
 
+
+    /**
+     * Lookup method on the document index
+     * @param docid the key
+     * @return the length of the document
+     */
+    public int getLength(int docid){return this.get(docid).getDocLen();}
+
     /**
      * Loads the document index from disk
      * @return true if the fetch is successful

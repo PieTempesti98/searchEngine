@@ -8,6 +8,7 @@ import java.io.File;
 
 public class ConfigurationParameters {
     private static String rawCollectionPath;
+    private static String compressedCollectionPath;
     private static String stopwordsPath;
     private static String documentIndexPath;
     private static String vocabularyPath;
@@ -36,6 +37,7 @@ public class ConfigurationParameters {
 
             // retrieve the configuration information
             rawCollectionPath = doc.getElementsByTagName("rawCollectionPath").item(0).getTextContent();
+            compressedCollectionPath = doc.getElementsByTagName("compressedCollectionPath").item(0).getTextContent();
             stopwordsPath = doc.getElementsByTagName("stopwordsPath").item(0).getTextContent();
             documentIndexPath = doc.getElementsByTagName("documentIndexPath").item(0).getTextContent();
             vocabularyPath = doc.getElementsByTagName("vocabularyPath").item(0).getTextContent();
@@ -58,18 +60,31 @@ public class ConfigurationParameters {
         return rawCollectionPath;
     }
 
+    public static String getCompressedCollectionPath() {
+        return compressedCollectionPath;
+    }
+
     public static String getStopwordsPath() {return stopwordsPath;}
 
     public static String getDocumentIndexPath() {return documentIndexPath;}
 
     public static String getVocabularyPath() {return vocabularyPath;}
+
     public static String getCollectionStatisticsPath() {return collectionStatisticsPath;}
+
     public static String getPartialVocabularyDir() {return partialVocabularyDir;}
+
     public static String getFrequencyFileName() {return frequencyFileName;}
+
     public static String getDocidsFileName() {return docidsFileName;}
+
     public static String getFrequencyDir() {return frequencyDir;}
+
     public static String getDocidsDir() {return docidsDir;}
+
     public static String getVocabularyFileName() {return vocabularyFileName;}
+
     public static String getInvertedIndexFreqs() {return invertedIndexFreqs;}
+
     public static String getInvertedIndexDocs() {return invertedIndexDocs;}
 }

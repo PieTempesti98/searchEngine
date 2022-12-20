@@ -1,7 +1,9 @@
 package queryProcessing;
 
+import it.unipi.dii.aide.mircv.common.beans.DocumentIndex;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.Vocabulary;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 
 import java.util.*;
 
@@ -9,10 +11,62 @@ import java.util.*;
 public class DAAT {
 
     private static final Vocabulary vocabulary = Vocabulary.getInstance();
+    private static final DocumentIndex docIndex = DocumentIndex.getInstance();
     /** method to move the iterators of postingsToScore to the given docid
      * @param docidToProcess: docid to which the iterators must be moved to
      * @return -1 if there is at least a list for which there is no docid >= docidToProcess
      */
+
+    /**
+     * parameters for BM25 scoring
+     */
+    private static final double k1 = 1.5;
+    private static final double b = 0.75;
+
+    /**
+     * number of documents in the collection
+     */
+    private static final long N = CollectionSize.getCollectionSize();
+
+    /**
+     * @param postingToScore contains posting list of term we want to score
+     * @return score computed according to BM25
+     */
+    private static double computeBM25(PostingList postingToScore){
+
+
+        //get idf of term
+        double idf = vocabulary.getIdf(postingToScore.getTerm());
+        //get frequency of term occurring in document we are scoring
+        double tf = (1 + Math.log10(postingToScore.getPostings().get(0).getValue()));
+        //get document length
+        int docLen = docIndex.getLength(postingToScore.getPostings().get(0).getKey());
+        //get average document length
+        double avgDocLen = (double) CollectionSize.getTotalDocLen()/N;
+
+        //return score
+        return idf * tf  / ( tf + k1 * (1 - b + b * docLen/avgDocLen));
+
+    }
+
+    /**
+     * @param postingToScore contains posting list of term we want to score
+     * @return score computed according to tfidf
+     */
+    private static double computeTFIDF(PostingList postingToScore){
+
+        //get idf of term
+        double idf = vocabulary.getIdf(postingToScore.getTerm());
+        //get frequency of term occurring in document we are scoring
+        double tf = (1 + Math.log10(postingToScore.getPostings().get(0).getValue()));
+
+        System.out.println(postingToScore);
+        System.out.println("tf-> " + tf);
+
+        //return score
+        return idf * tf ;
+    }
+
     private static int nextGEQ(int docidToProcess, ArrayList<PostingList> postingsToScore){
         // move the iterators for posting lists pointing to docids < docidToProcess
 
@@ -107,10 +161,11 @@ public class DAAT {
 
     /**
      * method to compute the IDF score of a particular document identified by docid
-     * @param docid: docid of the document to be scored
+     * @param docid : docid of the document to be scored
+     * @param scoringFunction
      * @return score of the document
      */
-    private static double scoreDocument(int docid, ArrayList<PostingList> postingsToScore){
+    private static double scoreDocument(int docid, ArrayList<PostingList> postingsToScore, String scoringFunction){
         // initialization of document's score
         double docScore = 0;
 
@@ -121,11 +176,10 @@ public class DAAT {
             if (postingList.getPostings() != null && !postingList.getPostings().isEmpty() && postingList.getPostings().get(0).getKey() == docid) {
                 // process the posting
 
-                double tf = (1 + Math.log10(postingList.getPostings().get(0).getValue()));
-                double idf = vocabulary.getIdf(postingList.getTerm());
-
-                // adding tfidf to doc score
-                docScore += (tf * idf);
+                if(scoringFunction.equals("tfidf"))
+                    docScore += computeTFIDF(postingList);
+                else
+                    docScore += computeBM25(postingList);
 
                 // posting scored, it can be removed by the postings to be scored
                 postingList.getPostings().remove(0);
@@ -135,12 +189,13 @@ public class DAAT {
     }
 
     /** method to process DAAT a list of posting list of the query terms using TFIDF as scoring function
-     * @param queryPostings: list of postings of query terms
-     * @param isConjuctive: if true, the query must be processed in CONJUNCTIVE way, else in DISJUNCTIVE way
-     * @param k: number of top k documents to be returned
+     * @param queryPostings : list of postings of query terms
+     * @param isConjuctive : if true, the query must be processed in CONJUNCTIVE way, else in DISJUNCTIVE way
+     * @param k : number of top k documents to be returned
+     * @param scoringFunction
      * @return returns a priority queue (of at most K elements) in the format <SCORE (Double), DOCID (Integer)> ordered by increasing score value
      */
-    public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, boolean isConjuctive, int k){
+    public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, boolean isConjuctive, int k, String scoringFunction){
 
         // TODO: implement deep copy or iterators
 
@@ -166,10 +221,9 @@ public class DAAT {
 
         // until there are documents to be processed
         while(docToProcess!= -1){
-            //System.out.println("processing document:\t"+ docToProcess);
-            double docScore = scoreDocument(docToProcess, copyPostings);
 
-            //System.out.println("score document:\t"+ docScore);
+            double docScore = scoreDocument(docToProcess, copyPostings,scoringFunction);
+
             // check if the MinHeap is full
             if(topKDocuments.size()==k){
                 // MinHeap is full

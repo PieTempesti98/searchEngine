@@ -70,13 +70,13 @@ public class VocabularyEntry implements Serializable {
      size of the term
      */
 
-    private static final int TERM_SIZE = 64; //TODO: decide term size
+    public static final int TERM_SIZE = 64; //TODO: decide term size
 
     /**
      * term size + 4 + 4 + 8 + 8 + 8 + 8
      * we have to store 2 ints, 1 double and 3 longs
      */
-    private static final long ENTRY_SIZE = TERM_SIZE + 4 + 4 + 8 + 8 + 8 + 8;
+    public static final long ENTRY_SIZE = TERM_SIZE + 4 + 4 + 8 + 8 + 8 + 8;
 
     /**
      * Constructor for the vocabulary entry
