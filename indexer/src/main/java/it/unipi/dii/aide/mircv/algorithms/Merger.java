@@ -11,8 +11,9 @@ import it.unipi.dii.aide.mircv.common.utils.FileUtils;
  */
 public class Merger {
 
-    /* TODO: take from config parameters; it should be the same value as the one in VocbularyEntry file */
-    private static final long VOCENTRY_SIZE = VocabularyEntry.getENTRY_SIZE();
+
+    private static final long VOCENTRY_SIZE = VocabularyEntry.ENTRY_SIZE;
+
     /**
      * Inverted index's next free memory offset in docids file
      */
@@ -147,9 +148,6 @@ public class Merger {
         for (int i = 0; i < numIndexes; i++) {
 /*
             System.out.println("processing partial inverted index: "+i);
-
-
-
             System.out.println("voc entry: ");
             System.out.println(nextTerms[i]);
 */
@@ -195,7 +193,6 @@ public class Merger {
 /*
         System.out.println("final list:");
         System.out.println(finalList);
-
         System.out.println("df:"+vocabularyEntry.getDf()+"\tpostings.size(): "+finalList.getPostings().size());
 */
         return finalList;
@@ -235,10 +232,11 @@ public class Merger {
      * - finds the minimum term between the indexes
      * - creates the whole posting list and the vocabulary entry for that term
      * - stores them in memory
-     *
+     * @param compressedWriting flag deciding whether to compress posting lists or not
+     * @param numIndexes number of partial vocabularies and partial indexes created
      * @return true if the merging is complete, false otherwise
      */
-    public static boolean mergeIndexes(int numIndexes) {
+    public static boolean mergeIndexes(int numIndexes, boolean compressedWriting) {
         Merger.numIndexes = numIndexes;
 
         // initialization operations
@@ -271,14 +269,13 @@ public class Merger {
             long[] offsets = mergedPostingList.writePostingListToDisk(docsMemOffset, freqsMemOffset, PATH_TO_INVERTED_INDEX_DOCS, PATH_TO_INVERTED_INDEX_FREQS);
             docsMemOffset = offsets[0];
             freqsMemOffset = offsets[1];
+
             // save vocabulary entry on disk
-            // TODO: check the return value. Should work
             vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, PATH_TO_VOCABULARY);
 
             /* DEBUG
             System.out.println("vocabulary entry for current term: ");
             System.out.println(vocabularyEntry);
-
              */
         }
 
@@ -301,4 +298,5 @@ public class Merger {
         // remove partial vocabularies directory
         FileUtils.deleteDirectory(ConfigurationParameters.getPartialVocabularyDir());
     }
+
 }
