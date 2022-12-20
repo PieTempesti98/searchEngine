@@ -35,7 +35,7 @@ public class Spimi {
     private static final String PATH_TO_COLLECTION = ConfigurationParameters.getRawCollectionPath();
 
     /**
-     * path to the file on the disk storing the copmressed collection
+     * path to the file on the disk storing the compressed collection
      */
     private static final String PATH_COMPRESSED_COLLECTION = ConfigurationParameters.getCompressedCollectionPath();
 
@@ -64,7 +64,7 @@ public class Spimi {
     /*
     counts the number of partial indexes to write
      */
-
+    private static int numPostings = 0;
 
     /**
      * @param compressed  flag for compressed reading
@@ -97,16 +97,10 @@ public class Spimi {
 
     /**
      * @param index: partial index that must be saved onto file
-
     private static int numPostings = 0;
-
-
     //TODO: error handling
-
     /**
      * @param index:   partial index that must be saved onto file
-     * @param numDocs: number of documents processed
-
      */
     private static boolean saveIndexToDisk(HashMap<String, PostingList> index) {
 
@@ -210,11 +204,13 @@ public class Spimi {
             //update number of partial inverted indexes and vocabularies
             numIndex++;
             numPostings = 0;
+            return true;
         } catch (InvalidPathException e) {
             System.out.println("Path Error " + e);
+            return false;
         } catch (IOException e) {
             System.out.println("I/O Error " + e);
-
+            return false;
         }
     }
 
@@ -242,7 +238,7 @@ public class Spimi {
         // create new pair and add it to the posting list
         postingList.getPostings().add(new AbstractMap.SimpleEntry<>(docid, 1));
 
-        //increment tne number of postings
+        //increment the number of postings
         numPostings++;
 
     }
@@ -262,7 +258,7 @@ public class Spimi {
         Preprocesser.readStopwords();
 
         try (
-                BufferedReader br = initBuffer(compress);
+                BufferedReader br = initBuffer(compress)
 
         ) {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
@@ -320,7 +316,6 @@ public class Spimi {
                         if(term.isBlank())
                             continue;
 
-
                         PostingList posting; //posting list of a given term
                         if (!index.containsKey(term)) {
                             // create new posting list if term wasn't present yet
@@ -335,7 +330,7 @@ public class Spimi {
                         updateOrAddPosting(docid, posting);
 
                     }
-                    System.out.println(docid);
+                    //System.out.println(docid);
                 }
 
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
@@ -353,8 +348,8 @@ public class Spimi {
             // update the size of the document index and save it to disk
 
             if(!CollectionSize.updateCollectionSize(docid) || !CollectionSize.updateDocumentsLenght(docsLen))
-
                 return 0;
+
             return numIndex;
 
         } catch (Exception e) {
