@@ -87,7 +87,7 @@ public class VocabularyEntry {
     /**
      * starting point of the term's posting list in the inverted index in bytes
      */
-    private long memoryOffset = 0;
+    private long docidOffset = 0;
 
     /**
      * Starting point of the frequencies in the inverted index in bytes
@@ -121,10 +121,9 @@ public class VocabularyEntry {
     public static final int TERM_SIZE = 64;
 
     /**
-     * term size + 4 + 4 + 8 + 8 + 8 + 8
-     * we have to store 2 ints, 1 double and 3 longs
+     * we have to store the term size plus 6 ints, 3 double and 3 longs, total 136 bytes
      */
-    public static final long ENTRY_SIZE = TERM_SIZE + 4 + 4 + 8 + 8 + 8 + 8;
+    public static final long ENTRY_SIZE = TERM_SIZE + 72;
 
     /**
      * Constructor for the vocabulary entry
@@ -158,11 +157,11 @@ public class VocabularyEntry {
     public void updateStatistics(PostingList list) {
 
         //for each element of the intermediate posting list
-        for (Map.Entry<Integer, Integer> posting : list.getPostings()) {
+        for (Posting posting : list.getPostings()) {
 
             // update the max term frequency
-            if (posting.getValue() > this.maxTf)
-                this.maxTf = posting.getValue();
+            if (posting.getFrequency() > this.maxTf)
+                this.maxTf = posting.getFrequency();
 
             // update the raw document frequency
             this.df++;
@@ -176,13 +175,6 @@ public class VocabularyEntry {
         this.idf = Math.log10(CollectionSize.getCollectionSize() / (double) this.df);
     }
 
-    /**
-     * Returns the vocabulary entry as a string formatted in the following way:
-     * [termid]-[term]-[idf] [tf] [memoryOffset] [memorySize]\n
-     *
-     * @return the formatted string
-     */
-
     public void setDocidSize(int docidSize) {
         this.docidSize = docidSize;
     }
@@ -192,7 +184,7 @@ public class VocabularyEntry {
     }
 
     public void setMemoryOffset(long memoryOffset) {
-        this.memoryOffset = memoryOffset;
+        this.docidOffset = memoryOffset;
     }
 
     public void setFrequencyOffset(long freqOffset) {
@@ -227,8 +219,25 @@ public class VocabularyEntry {
             // Write the term into file
             buffer.put(StandardCharsets.UTF_8.encode(charBuffer));
 
-            // TODO: refactor of the read/write method with the new parameters
+            // write statistics
+            buffer.putInt(df);
+            buffer.putDouble(idf);
 
+            // write term upper bound information
+            buffer.putInt(maxTf);
+            buffer.putInt(maxDl);
+            buffer.putDouble(maxTFIDF);
+            buffer.putDouble(maxBM25);
+
+            // write memory information
+            buffer.putLong(docidOffset);
+            buffer.putLong(frequencyOffset);
+            buffer.putInt(docidSize);
+            buffer.putInt(frequencySize);
+
+            // write block information
+            buffer.putInt(numBlocks);
+            buffer.putLong(blockOffset);
 
             // return position for which we have to start writing on file
             return position + ENTRY_SIZE;
@@ -277,8 +286,25 @@ public class VocabularyEntry {
             if (buffer == null)
                 return -1;
 
-            // TODO: refactor of the read/write method with the new parameters
+            // read statistics
+            df = buffer.getInt();
+            idf = buffer.getDouble();
 
+            // read term upper bound information
+            maxTf = buffer.getInt();
+            maxDl = buffer.getInt();
+            maxTFIDF = buffer.getDouble();
+            maxBM25 = buffer.getDouble();
+
+            // read memory information
+            docidOffset = buffer.getLong();
+            frequencyOffset = buffer.getLong();
+            docidSize = buffer.getInt();
+            frequencySize = buffer.getInt();
+
+            // write block information
+            numBlocks = buffer.getInt();
+            blockOffset = buffer.getLong();
 
             return memoryOffset + ENTRY_SIZE;
 
@@ -326,8 +352,8 @@ public class VocabularyEntry {
         return idf;
     }
 
-    public long getMemoryOffset() {
-        return memoryOffset;
+    public long getDocidOffset() {
+        return docidOffset;
     }
 
     public long getFrequencyOffset() {

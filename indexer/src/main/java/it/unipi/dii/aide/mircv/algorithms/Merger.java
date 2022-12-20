@@ -1,6 +1,7 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
 import it.unipi.dii.aide.mircv.common.beans.BlockDescriptor;
+import it.unipi.dii.aide.mircv.common.beans.Posting;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
@@ -11,15 +12,12 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
-
 
 /**
  * Class that implements the merge of the intermediate posting lists during the SPIMI-Indexing algorithm
  */
 public class Merger {
 
-    private static final long VOCENTRY_SIZE = VocabularyEntry.ENTRY_SIZE;
     /**
      * Inverted index's next free memory offset in docids file
      */
@@ -215,7 +213,7 @@ public class Merger {
                 // last processed term was present
 
                 // update next memory offset to be read from the i-th vocabulary
-                vocEntryMemOffset[i] += VOCENTRY_SIZE;
+                vocEntryMemOffset[i] += VocabularyEntry.ENTRY_SIZE;
 
                 // read next vocabulary entry from the i-th vocabulary
                 long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+ "_" +i);
@@ -293,6 +291,7 @@ public class Merger {
                 // check if MappedByteBuffers are correctly instantiated
                 if (docsBuffer != null && freqsBuffer != null) {
                     // create and initialize the first block descriptor for the posting list
+                    vocabularyEntry.computeBlocksInformation();
                     BlockDescriptor blockDescriptor = new BlockDescriptor();
                     blockDescriptor.setDocidOffset(docsMemOffset);
                     blockDescriptor.setFreqOffset(freqsMemOffset);
@@ -300,11 +299,11 @@ public class Merger {
                     int currentBlock = 1;
                     int postingsInBlock = 0;
                     // write postings to file
-                    for (Map.Entry<Integer, Integer> posting : mergedPostingList.getPostings()) {
+                    for (Posting posting : mergedPostingList.getPostings()) {
                         // encode docid
-                        docsBuffer.putInt(posting.getKey());
+                        docsBuffer.putInt(posting.getDocid());
                         // encode freq
-                        freqsBuffer.putInt(posting.getValue());
+                        freqsBuffer.putInt(posting.getFrequency());
                         postingsInBlock ++;
                         if(postingsInBlock == maxNumPostings && currentBlock < vocabularyEntry.getNumBlocks()){
                             // update the size of the block
@@ -312,7 +311,7 @@ public class Merger {
                             blockDescriptor.setFreqSize((int) (freqsMemOffset + freqsBuffer.position() - blockDescriptor.getFreqOffset()));
 
                             // update the max docid of the block
-                            blockDescriptor.setMaxDocid(posting.getKey());
+                            blockDescriptor.setMaxDocid(posting.getFrequency());
 
                             // update the number of postings in the block
                             blockDescriptor.setNumPostings(postingsInBlock);

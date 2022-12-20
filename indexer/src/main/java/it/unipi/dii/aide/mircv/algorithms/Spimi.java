@@ -19,7 +19,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
-
 public class Spimi {
 
     /**
@@ -102,16 +101,14 @@ public class Spimi {
             if (docsBuffer != null && freqsBuffer != null && vocBuffer != null) {
                 for (PostingList list : index.values()) {
                     // write postings to file
-                    for (Map.Entry<Integer, Integer> posting : list.getPostings()) {
+                    for (Posting posting : list.getPostings()) {
                         // encode docid
-                        docsBuffer.putInt(posting.getKey());
+                        docsBuffer.putInt(posting.getDocid());
                         // encode freq
-                        freqsBuffer.putInt(posting.getValue());
+                        freqsBuffer.putInt(posting.getFrequency());
                     }
                     //create vocabulary entry
                     VocabularyEntry entry = new VocabularyEntry(list.getTerm());
-
-                    // TODO: fix set and get of this vocabulary
 
                     //allocate char buffer to write term
                     CharBuffer charBuffer = CharBuffer.allocate(VocabularyEntry.TERM_SIZE);
@@ -128,7 +125,25 @@ public class Spimi {
                     // Write the term into file
                     vocBuffer.put(StandardCharsets.UTF_8.encode(charBuffer));
 
-                    //TODO: fix set and get of this vocabulary
+                    // write statistics
+                    vocBuffer.putInt(entry.getDf());
+                    vocBuffer.putDouble(entry.getIdf());
+
+                    // write term upper bound information
+                    vocBuffer.putInt(entry.getMaxTf());
+                    vocBuffer.putInt(entry.getMaxDl());
+                    vocBuffer.putDouble(entry.getMaxTFIDF());
+                    vocBuffer.putDouble(entry.getMaxBM25());
+
+                    // write memory information
+                    vocBuffer.putLong(entry.getDocidOffset());
+                    vocBuffer.putLong(entry.getFrequencyOffset());
+                    vocBuffer.putInt(entry.getDocidSize());
+                    vocBuffer.putInt(entry.getFrequencySize());
+
+                    // write block information
+                    vocBuffer.putInt(entry.getNumBlocks());
+                    vocBuffer.putLong(entry.getBlockOffset());
                 }
             }
             //update number of partial inverted indexes and vocabularies
@@ -154,16 +169,16 @@ public class Spimi {
     private static void updateOrAddPosting(int docid, PostingList postingList) {
         if (postingList.getPostings().size() > 0) {
             // last document inserted:
-            Map.Entry<Integer, Integer> posting = postingList.getPostings().get(postingList.getPostings().size() - 1);
+            Posting posting = postingList.getPostings().get(postingList.getPostings().size() - 1);
             //If the docId is the same I update the posting
-            if (docid == posting.getKey()) {
-                posting.setValue(posting.getValue() + 1);
+            if (docid == posting.getDocid()) {
+                posting.setFrequency(posting.getFrequency() + 1);
                 return;
             }
         }
         // the document has not been processed (docIds are incremental):
         // create new pair and add it to the posting list
-        postingList.getPostings().add(new AbstractMap.SimpleEntry<>(docid, 1));
+        postingList.getPostings().add(new Posting(docid, 1));
 
         //increment tne number of postings
         numPostings++;

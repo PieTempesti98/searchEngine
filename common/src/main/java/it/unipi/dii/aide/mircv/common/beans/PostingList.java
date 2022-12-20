@@ -7,14 +7,12 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Map;
 
 public class PostingList{
 
     private String term;
-    private final ArrayList<Map.Entry<Integer, Integer>> postings = new ArrayList<>();
+    private final ArrayList<Posting> postings = new ArrayList<>();
 
     // variable used for computing the max dl to insert in the vocabulary
     private int maxDl = 0;
@@ -54,7 +52,7 @@ public class PostingList{
             // instantiation of MappedByteBuffer for integer list of docids
             MappedByteBuffer docBuffer = docsFChan.map(
                     FileChannel.MapMode.READ_ONLY,
-                    term.getMemoryOffset(),
+                    term.getDocidOffset(),
                     term.getDocidSize()
             );
 
@@ -69,14 +67,7 @@ public class PostingList{
             this.term = term.getTerm();
 
             for (int i = 0; i < term.getDf(); i++) {
-                /*DEBUG
-                System.out.println("reading document: "+i);
-                System.out.println("at offsets:\tdocs:"+term.getMemoryOffset()+" freqs:"+term.getFrequencyOffset());
-                */
-                Map.Entry<Integer, Integer> posting = new AbstractMap.SimpleEntry<>(docBuffer.getInt(), freqBuffer.getInt());
-                /* DEBUG
-                System.out.println(posting);
-                 */
+                Posting posting = new Posting(docBuffer.getInt(), freqBuffer.getInt());
                 this.getPostings().add(posting);
             }
         } catch (Exception e) {
@@ -88,7 +79,7 @@ public class PostingList{
         String[] documents = rawPostings.split(" ");
         for(String elem: documents){
             String[] posting = elem.split(":");
-            postings.add(new AbstractMap.SimpleEntry<>(Integer.parseInt(posting[0]), Integer.parseInt(posting[1])));
+            postings.add(new Posting(Integer.parseInt(posting[0]), Integer.parseInt(posting[1])));
         }
     }
 
@@ -96,7 +87,7 @@ public class PostingList{
         return term;
     }
 
-    public ArrayList<Map.Entry<Integer, Integer>> getPostings() {
+    public ArrayList<Posting> getPostings() {
         return postings;
     }
 
@@ -104,7 +95,7 @@ public class PostingList{
         this.term = term;
     }
 
-    public void appendPostings(ArrayList<Map.Entry<Integer, Integer>> newPostings){
+    public void appendPostings(ArrayList<Posting> newPostings){
         postings.addAll(newPostings);
     }
 
@@ -157,11 +148,11 @@ public class PostingList{
             // check if MappedByteBuffers are correctly instantiated
             if (docsBuffer != null && freqsBuffer != null) {
                 // write postings to file
-                for (Map.Entry<Integer, Integer> posting : postings) {
+                for (Posting posting : postings) {
                     // encode docid
-                    docsBuffer.putInt(posting.getKey());
+                    docsBuffer.putInt(posting.getDocid());
                     // encode freq
-                    freqsBuffer.putInt(posting.getValue());
+                    freqsBuffer.putInt(posting.getFrequency());
                 }
 
                 /* DEBUG
@@ -182,5 +173,42 @@ public class PostingList{
     public void updateMaxDocumentLength(int length){
         if(length > this.maxDl)
             this.maxDl = length;
+    }
+
+    public void openList(){
+        // TODO: implement method (Pietro)
+        // load the block descriptors
+    }
+
+    public Posting next(){
+        // TODO: implement method (Pietro)
+        /*
+            if !iterator(postings).hasNext
+                loadBlock
+                createNewIterator
+            return iterator(postings).next
+         */
+
+        return new Posting();
+    }
+
+    public Posting nextGEQ(int docid){
+        // TODO: implement method (Pietro)
+        /*
+        while currentBlock.maxDocid < docid
+            if !iterator(blocks).hasNext
+                return null
+            currentBlock = iterator(blocks).next
+        while iterator(postings).hasNext
+            currentPosting = iterator(posting).next
+            if currentPosting.docid >= docid
+                return currentPosting
+         */
+        return new Posting();
+    }
+
+    public void closeList(){
+        //TODO: implement method (Pietro)
+
     }
 }

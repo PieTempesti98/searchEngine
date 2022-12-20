@@ -1,7 +1,6 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
@@ -19,24 +18,6 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
     public double getIdf(String term){
         return this.get(term).getIdf();
-    }
-
-    public boolean writeToDisk() { //TODO: is useful?
-
-
-        long position = 0;
-
-        for (VocabularyEntry entry : this.values()) {
-
-            position = entry.writeEntryToDisk(0,this.VOCABULARY_PATH);
-            if(position == -1)
-                return false;
-
-        }
-
-        return true;
-
-
     }
 
     public boolean readFromDisk(){
@@ -78,7 +59,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
         int mid;
         String key;
 
-        long entrySize = entry.getENTRY_SIZE();
+        long entrySize = VocabularyEntry.ENTRY_SIZE;
 
         while (start < end) {
 

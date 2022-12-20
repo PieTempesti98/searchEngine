@@ -1,5 +1,6 @@
 package indexLoading;
 
+import it.unipi.dii.aide.mircv.common.beans.Posting;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
@@ -9,8 +10,6 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.AbstractMap;
-import java.util.Map;
 
 /**
  * Class used to load in main memory the posting lists of the query terms
@@ -38,7 +37,7 @@ public class IndexLoader {
             // instantiation of MappedByteBuffer for integer list of docids
             MappedByteBuffer docBuffer = docidChan.map(
                     FileChannel.MapMode.READ_ONLY,
-                    term.getMemoryOffset(),
+                    term.getDocidOffset(),
                     term.getDocidSize()
             );
 
@@ -54,7 +53,7 @@ public class IndexLoader {
 
             for (int i = 0; i < term.getDf(); i++) {
 
-                Map.Entry<Integer, Integer> posting = new AbstractMap.SimpleEntry<>(docBuffer.getInt(), freqBuffer.getInt());
+                Posting posting = new Posting(docBuffer.getInt(), freqBuffer.getInt());
                 postingList.getPostings().add(posting);
             }
             return postingList;
