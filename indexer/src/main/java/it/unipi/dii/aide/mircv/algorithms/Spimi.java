@@ -93,7 +93,7 @@ public class Spimi {
     /**
      * @param index: partial index that must be saved onto file
      */
-    private static boolean saveIndexToDisk(HashMap<String, PostingList> index) {
+    private static boolean saveIndexToDisk(HashMap<String, PostingList> index, boolean debugMode) {
 
         if (index.isEmpty()) //if the index is empty there is nothing to write on disk
             return true;
@@ -127,15 +127,19 @@ public class Spimi {
             // instantiation of MappedByteBuffer for integer list of docids
             MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
 
-
             // instantiation of MappedByteBuffer for integer list of freqs
             MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
-
 
             long vocOffset = 0;
             // check if MappedByteBuffers are correctly instantiated
             if (docsBuffer != null && freqsBuffer != null) {
                 for (PostingList list : index.values()) {
+                    //create vocabulary entry
+                    VocabularyEntry vocEntry = new VocabularyEntry(list.getTerm());
+                    vocEntry.setMemoryOffset(docsBuffer.position());
+                    vocEntry.setFrequencyOffset(docsBuffer.position());
+
+
                     // write postings to file
                     for (Posting posting : list.getPostings()) {
                         // encode docid
@@ -143,9 +147,16 @@ public class Spimi {
                         // encode freq
                         freqsBuffer.putInt(posting.getFrequency());
                     }
-                    //create vocabulary entry
-                    VocabularyEntry entry = new VocabularyEntry(list.getTerm());
-                    vocOffset = entry.writeEntryToDisk(vocOffset, vocabularyFchan);
+
+                    vocEntry.updateStatistics(list);
+                    vocEntry.setDocidSize((int) (numPostings*4));
+                    vocEntry.setFrequencySize((int) (numPostings*4));
+
+                    vocOffset = vocEntry.writeEntryToDisk(vocOffset, vocabularyFchan);
+                    if(debugMode){
+                        list.debugSaveToDisk("partialDOCIDS_"+numIndex+".txt", "partialFREQS_"+numIndex+".txt");
+                        vocEntry.debugSaveToDisk("partialVOC_"+numIndex+".txt");
+                    }
                 }
             }
 
@@ -197,7 +208,7 @@ public class Spimi {
      * @return the number of partial indexes created
      * @param compress flag deciding whether to read from compressed file or not
      */
-    public static int executeSpimi(boolean compress) {
+    public static int executeSpimi(boolean compress, boolean debug) {
 
         //create directories to store partial frequencies, docids and vocabularies
         FileUtils.createDirectory(ConfigurationParameters.getDocidsDir());
@@ -247,17 +258,21 @@ public class Spimi {
 
                     int documentLength = processedDocument.getTokens().size();
                     //create new document index entry and add it to file
-                    DocumentIndexEntry entry = new DocumentIndexEntry(
+                    DocumentIndexEntry docIndexEntry = new DocumentIndexEntry(
                             processedDocument.getPid(),
                             docid++,
                             documentLength
                     );
 
                     //update with length of new documents
-                    docsLen += entry.getDocLen();
+                    docsLen += docIndexEntry.getDocLen();
 
                     // write the docIndex entry to disk
-                    entry.writeToDisk();
+                    docIndexEntry.writeToDisk();
+
+                    if(debug){
+                        docIndexEntry.debugWriteToDisk("debugDOCINDEX.txt");
+                    }
 
 
                     for (String term : processedDocument.getTokens()) {
@@ -283,7 +298,7 @@ public class Spimi {
                 }
 
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
-                writeSuccess = saveIndexToDisk(index);
+                writeSuccess = saveIndexToDisk(index, debug);
 
                 //error during data structures creation. Rollback previous operations and end algorithm
                 if(!writeSuccess){

@@ -1,7 +1,11 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
+import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -195,5 +199,18 @@ public class DocumentIndexEntry{
      */
     protected static void setTestPath(){
         DocumentIndexEntry.DOCINDEX_PATH = "../data/test/testDocIndex";
+    }
+
+    public void debugWriteToDisk(String path) {
+        FileUtils.createDirectory("data/debug");
+        FileUtils.createIfNotExists("data/debug/"+path);
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("data/debug/"+path, true));
+            writer.write(this+"\n");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

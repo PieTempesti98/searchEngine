@@ -240,7 +240,7 @@ public class Merger {
      * @param numIndexes number of partial vocabularies and partial indexes created
      * @return true if the merging is complete, false otherwise
      */
-    public static boolean mergeIndexes(int numIndexes, boolean compressionMode) {
+    public static boolean mergeIndexes(int numIndexes, boolean compressionMode, boolean debugMode) {
 
         Merger.numIndexes = numIndexes;
 
@@ -419,6 +419,10 @@ public class Merger {
                 // save vocabulary entry on disk
                 vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
 
+                }
+                if(debugMode){
+                    mergedPostingList.debugSaveToDisk("debugDOCIDS.txt", "debugFREQS.txt");
+                    vocabularyEntry.debugSaveToDisk("debugVOCABULARY.txt");
                 }
             }
 

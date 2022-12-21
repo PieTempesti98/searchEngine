@@ -1,7 +1,11 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.CollectionSize;
+import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -426,5 +430,29 @@ public class VocabularyEntry {
 
     public void setBlockOffset(long blockOffset) {
         this.blockOffset = blockOffset;
+    }
+
+    public void debugSaveToDisk(String path) {
+        FileUtils.createDirectory("data/debug");
+        FileUtils.createIfNotExists("data/debug/"+path);
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("data/debug/"+path, true));
+            writer.write(this+"\n");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return  "term:'" + term + '\'' +
+                ", df=" + df +
+                ", idf=" + idf +
+                ", docidOffset=" + docidOffset +
+                ", frequencyOffset=" + frequencyOffset +
+                ", docidSize=" + docidSize +
+                ", frequencySize=" + frequencySize;
     }
 }
