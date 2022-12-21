@@ -4,7 +4,6 @@ import java.io.IOException;
 import it.unipi.dii.aide.mircv.common.compression.UnaryCompressor;
 import it.unipi.dii.aide.mircv.common.compression.VariableByteCompressor;
 
-import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -12,13 +11,26 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class PostingList{
 
     private String term;
     private final ArrayList<Posting> postings = new ArrayList<>();
 
-    // variable used for computing the max dl to insert in the vocabulary
+    private ArrayList<BlockDescriptor> blocks = null;
+
+    private Iterator<Posting> postingIterator = null;
+
+    private Iterator<BlockDescriptor> blocksIterator = null;
+
+    private BlockDescriptor currentBlock = null;
+
+    private Posting currentPosting = null;
+
+    /**
+     * variable used for computing the max dl to insert in the vocabulary
+     */
     private int maxDl = 0;
 
     public PostingList(String toParse) {
@@ -38,11 +50,6 @@ public class PostingList{
      * @param freqsPath: file path for the file containing freqs of the posting list to be constructed
      */
     public PostingList(VocabularyEntry term, String docsPath, String freqsPath) {
-        /*
-        DEBUG
-        System.out.println("reading posting list for term:"+term.getTerm());
-*/
-        //TODO: must be block based
         try (FileChannel docsFChan = (FileChannel) Files.newByteChannel(
                 Paths.get(docsPath),
                 StandardOpenOption.WRITE,
@@ -217,20 +224,37 @@ public class PostingList{
     }
 
     public void openList(){
-        // TODO: implement method (Pietro)
         // load the block descriptors
+        blocks = Vocabulary.getInstance().get(term).readBlocks();
+
+        // return false if the blocks are not loaded
+        if(blocks == null){
+            return;
+        }
+
+        // initialize block iterator
+        blocksIterator = blocks.iterator();
+
+        //initialize postings iterator
+        postingIterator = postings.iterator();
+
     }
 
     public Posting next(){
-        // TODO: implement method (Pietro)
-        /*
-            if !iterator(postings).hasNext
-                loadBlock
-                createNewIterator
-            return iterator(postings).next
-         */
 
-        return new Posting();
+        // no postings in memory: load new block
+        if(!postingIterator.hasNext()) {
+            // no new blocks: end of list
+            if (!blocksIterator.hasNext())
+                return null;
+            // load the new block and update the postings iterator
+            currentBlock = blocksIterator.next();
+            postings.addAll(currentBlock.getBlockPostings());
+            postingIterator = postings.iterator();
+        }
+        // return the next posting to process
+        currentPosting = postingIterator.next();
+        return currentPosting;
     }
 
 
@@ -239,28 +263,37 @@ public class PostingList{
      * @return posting or null if there are no more postings.
      */
     public Posting getCurrentPosting(){
-        //TODO: implement method (Pietro)
-
-        return new Posting();
+        return currentPosting;
     }
 
     public Posting nextGEQ(int docid){
-        // TODO: implement method (Pietro)
-        /*
-        while currentBlock.maxDocid < docid
-            if !iterator(blocks).hasNext
-                return null
-            currentBlock = iterator(blocks).next
-        while iterator(postings).hasNext
-            currentPosting = iterator(posting).next
-            if currentPosting.docid >= docid
-                return currentPosting
-         */
+
+        // flag to check if the block has changed
+        boolean blockChanged = false;
+        // move to the block with max docid >= docid
+        while(currentBlock.getMaxDocid() < docid){
+            // end of list, return null
+            if(!blocksIterator.hasNext())
+                return null;
+            currentBlock = blocksIterator.next();
+            blockChanged = true;
+        }
+        // block changed, load postings and update iterator
+        if(blockChanged){
+            postings.addAll(currentBlock.getBlockPostings());
+            postingIterator = postings.iterator();
+        }
+        // move to the first GE posting and return it
+        while(postingIterator.hasNext()){
+            currentPosting = postingIterator.next();
+            if (currentPosting.getDocid() >= docid)
+                return currentPosting;
+        }
         return new Posting();
     }
 
     public void closeList(){
-        //TODO: implement method (Pietro)
-
+        postings.clear();
+        blocks.clear();
     }
 }

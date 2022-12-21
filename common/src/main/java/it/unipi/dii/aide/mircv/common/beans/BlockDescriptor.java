@@ -8,9 +8,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Map;
 
 /**
  * Descriptor of a block of postings in a posting list, used to implement the skipping
@@ -130,7 +128,7 @@ public class BlockDescriptor {
 
     }
 
-    public ArrayList<Map.Entry<Integer, Integer>> getBlockPostings(){
+    public ArrayList<Posting> getBlockPostings(){
         try(
             FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexDocs()),
                     StandardOpenOption.WRITE,
@@ -156,10 +154,10 @@ public class BlockDescriptor {
                     freqSize
             );
 
-            ArrayList<Map.Entry<Integer, Integer>> block = new ArrayList<>();
+            ArrayList<Posting> block = new ArrayList<>();
 
             for (int i = 0; i < numPostings; i++) {
-                Map.Entry<Integer, Integer> posting = new AbstractMap.SimpleEntry<>(docBuffer.getInt(), freqBuffer.getInt());
+                Posting posting = new Posting(docBuffer.getInt(), freqBuffer.getInt());
                 block.add(posting);
             }
             return block;
