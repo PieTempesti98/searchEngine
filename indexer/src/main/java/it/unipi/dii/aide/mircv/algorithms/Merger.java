@@ -4,6 +4,8 @@ import it.unipi.dii.aide.mircv.common.beans.BlockDescriptor;
 import it.unipi.dii.aide.mircv.common.beans.Posting;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
+import it.unipi.dii.aide.mircv.common.compression.UnaryCompressor;
+import it.unipi.dii.aide.mircv.common.compression.VariableByteCompressor;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
@@ -12,6 +14,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Iterator;
 
 /**
  * Class that implements the merge of the intermediate posting lists during the SPIMI-Indexing algorithm
@@ -246,6 +249,8 @@ public class Merger {
 
         // next memory offset where to write the next vocabulary entry
         long vocMemOffset = 0;
+
+        // open file channels for vocabulary writes, docid and frequency writes and block descriptor writes
         try(FileChannel vocabularyChan = (FileChannel) Files.newByteChannel(
                 Paths.get(PATH_TO_VOCABULARY),
                 StandardOpenOption.WRITE,
@@ -282,62 +287,137 @@ public class Merger {
                 // merge the posting lists for the term to be processed
                 PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
 
-                // save posting list on disk and update offsets
-                // instantiation of MappedByteBuffer for integer list of docids
-                MappedByteBuffer docsBuffer = docidChan.map(FileChannel.MapMode.READ_WRITE, docsMemOffset, vocabularyEntry.getDocidSize());
+                // compute information about block descriptors for the posting list to be written
+                vocabularyEntry.computeBlocksInformation();
 
-                // instantiation of MappedByteBuffer for integer list of freqs
-                MappedByteBuffer freqsBuffer = frequencyChan.map(FileChannel.MapMode.READ_WRITE, freqsMemOffset, vocabularyEntry.getFrequencySize());
+                // compute maximal number of postings that can be stored in a block
+                int maxNumPostings = (int)Math.ceil(vocabularyEntry.getDf() / (double)vocabularyEntry.getNumBlocks());
 
-                // check if MappedByteBuffers are correctly instantiated
-                if (docsBuffer != null && freqsBuffer != null) {
-                    // create and initialize the first block descriptor for the posting list
-                    vocabularyEntry.computeBlocksInformation();
+                // create iterator over posting list to be written
+                Iterator<Posting> plIterator = mergedPostingList.getPostings().iterator();
+
+                // save posting list on disk writing each block
+                for(int i=0; i<vocabularyEntry.getNumBlocks(); i++){
+
+                    // create a new block descriptor and update its information
                     BlockDescriptor blockDescriptor = new BlockDescriptor();
                     blockDescriptor.setDocidOffset(docsMemOffset);
                     blockDescriptor.setFreqOffset(freqsMemOffset);
-                    int maxNumPostings = (int)Math.ceil(vocabularyEntry.getDf() / (double)vocabularyEntry.getNumBlocks());
-                    int currentBlock = 1;
+
+                    // number of postings written in the block
                     int postingsInBlock = 0;
-                    // write postings to file
-                    //TODO: use iterators instead,make it block based ???
-                    for (Posting posting : mergedPostingList.getPostings()) {
-                        // encode docid
-                        docsBuffer.putInt(posting.getDocid());
-                        // encode freq
-                        freqsBuffer.putInt(posting.getFrequency());
-                        postingsInBlock ++;
-                        if(postingsInBlock == maxNumPostings && currentBlock < vocabularyEntry.getNumBlocks()){
-                            // update the size of the block
-                            blockDescriptor.setDocidSize((int) (docsMemOffset + docsBuffer.position() - blockDescriptor.getDocidOffset()));
-                            blockDescriptor.setFreqSize((int) (freqsMemOffset + freqsBuffer.position() - blockDescriptor.getFreqOffset()));
 
-                            // update the max docid of the block
-                            blockDescriptor.setMaxDocid(posting.getFrequency());
+                    int alreadyWrittenPostings = i*maxNumPostings;
 
-                            // update the number of postings in the block
-                            blockDescriptor.setNumPostings(postingsInBlock);
+                    // number of postings to be written in the current block
+                    int nPostingsToBeWritten = (Math.min((mergedPostingList.getPostings().size() - alreadyWrittenPostings), maxNumPostings));
 
-                            // write the block descriptor on disk
-                            blockDescriptor.saveDescriptorOnDisk(descriptorChan);
+                    if(compressionMode){
+                        // arrays where to store docids and frequencies to be written in current block
+                        int[] docids = new int[nPostingsToBeWritten];
+                        int[] freqs = new int[nPostingsToBeWritten];
 
-                            // create the new block descriptor
-                            blockDescriptor = new BlockDescriptor();
-                            currentBlock ++;
-                            blockDescriptor.setDocidOffset(docsMemOffset + docsBuffer.position());
-                            blockDescriptor.setFreqOffset(freqsMemOffset + freqsBuffer.position());
+                        // initialize docids and freqs arrays
+                        while(true){
+                            // get next posting to be written to disk
+                            Posting currPosting = plIterator.next();
+                            docids[postingsInBlock] = currPosting.getDocid();
+                            freqs[postingsInBlock] = currPosting.getFrequency();
+
+                            postingsInBlock++;
+
+                            if (postingsInBlock == nPostingsToBeWritten){
+                                byte[] compressedDocs = UnaryCompressor.integerArrayCompression(docids);;
+                                byte[] compressedFreqs = VariableByteCompressor.integerArrayCompression(freqs);
+
+                                try{
+                                    // instantiation of MappedByteBuffer for integer list of docids and for integer list of freqs
+                                    MappedByteBuffer docsBuffer = docidChan.map(FileChannel.MapMode.READ_WRITE, docsMemOffset, compressedDocs.length);
+                                    MappedByteBuffer freqsBuffer = frequencyChan.map(FileChannel.MapMode.READ_WRITE, freqsMemOffset, compressedFreqs.length);
+
+                                    // write compressed posting lists to disk
+                                    docsBuffer.put(compressedDocs);
+                                    freqsBuffer.put(compressedFreqs);
+
+                                    // update the size of the block
+                                    blockDescriptor.setDocidSize(compressedDocs.length);
+                                    blockDescriptor.setFreqSize(compressedFreqs.length);
+
+                                    // update the max docid of the block
+                                    blockDescriptor.setMaxDocid(currPosting.getDocid());
+
+                                    // update the number of postings in the block
+                                    blockDescriptor.setNumPostings(postingsInBlock);
+
+                                    // write the block descriptor on disk
+                                    blockDescriptor.saveDescriptorOnDisk(descriptorChan);
+
+                                    docsMemOffset+=compressedDocs.length;
+                                    freqsMemOffset+=compressedFreqs.length;
+                                    break;
+
+                                } catch (Exception e) {
+                                    // TODO: Error handling
+                                    e.printStackTrace();
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        // posting list must not be compressed
+
+                        // set docs and freqs num bytes as (number of postings)*4
+                        blockDescriptor.setDocidSize(nPostingsToBeWritten*4);
+                        blockDescriptor.setFreqSize(nPostingsToBeWritten*4);
+
+                        // write postings to block
+                        try {
+                            // instantiation of MappedByteBuffer for integer list of docids and for integer list of freqs
+                            MappedByteBuffer docsBuffer = docidChan.map(FileChannel.MapMode.READ_WRITE, docsMemOffset, nPostingsToBeWritten* 4L);
+                            MappedByteBuffer freqsBuffer = frequencyChan.map(FileChannel.MapMode.READ_WRITE, freqsMemOffset, nPostingsToBeWritten* 4L);
+
+                            if (docsBuffer != null && freqsBuffer != null) {
+                                while (true) {
+                                    // get next posting to be written to disk
+                                    Posting currPosting = plIterator.next();
+                                    // encode docid
+                                    docsBuffer.putInt(currPosting.getDocid());
+                                    // encode freq
+                                    freqsBuffer.putInt(currPosting.getFrequency());
+
+                                    // increment counter of number of postings written in the block
+                                    postingsInBlock++;
+
+                                    // check if currPosting is the last posting to be written in the current block
+                                    if (postingsInBlock == nPostingsToBeWritten) {
+                                        // update the max docid of the block
+                                        blockDescriptor.setMaxDocid(currPosting.getDocid());
+
+                                        // update the number of postings in the block
+                                        blockDescriptor.setNumPostings(postingsInBlock);
+
+                                        // write the block descriptor on disk
+                                        blockDescriptor.saveDescriptorOnDisk(descriptorChan);
+
+                                        docsMemOffset+=nPostingsToBeWritten*4L;
+                                        freqsMemOffset+=nPostingsToBeWritten*4L;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        catch (Exception e){
+                                // TODO: error handling
+                                e.printStackTrace();
                         }
                     }
-
 
                 /* DEBUG
                 System.out.println("new offsets:\tdocs:"+(docsMemOffset + docsBuffer.position())+" freqs:"+(freqsMemOffset + freqsBuffer.position()));
                 */
 
-                    docsMemOffset += docsBuffer.position();
-                    freqsMemOffset += freqsBuffer.position();
-                    // save vocabulary entry on disk
-                    vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
+                // save vocabulary entry on disk
+                vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
 
                 }
             }
@@ -365,6 +445,8 @@ public class Merger {
 
         // remove partial vocabularies directory
         FileUtils.deleteDirectory(ConfigurationParameters.getPartialVocabularyDir());
+
+        //TODO: remove blocks info
     }
 
 }
