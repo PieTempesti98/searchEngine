@@ -195,18 +195,15 @@ public class Spimi {
      * Performs spimi algorithm
      *
      * @return the number of partial indexes created
-     * @param compress flag deciding whether to read from compressed file or not
+     * @param compressedReadingEnable flag enabling creading from compressed file and stemming if true
+     * @param stemStopRemovalEnable flag enabling stopword removal and stemming if true
      */
-    public static int executeSpimi(boolean compress) {
+    public static int executeSpimi(boolean compressedReadingEnable,boolean stemStopRemovalEnable) {
 
-        //create directories to store partial frequencies, docids and vocabularies
-        FileUtils.createDirectory(ConfigurationParameters.getDocidsDir());
-        FileUtils.createDirectory(ConfigurationParameters.getFrequencyDir());
-        FileUtils.createDirectory(ConfigurationParameters.getPartialVocabularyDir());
-        Preprocesser.readStopwords();
+
 
         try (
-                BufferedReader br = initBuffer(compress)
+                BufferedReader br = initBuffer(compressedReadingEnable)
 
         ) {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
@@ -239,7 +236,7 @@ public class Spimi {
                     TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
                     // Perform text preprocessing on the document
 
-                    ProcessedDocument processedDocument = Preprocesser.processDocument(document);
+                    ProcessedDocument processedDocument = Preprocesser.processDocument(document,stemStopRemovalEnable);
 
                     if (processedDocument.getTokens().isEmpty())
                         continue;

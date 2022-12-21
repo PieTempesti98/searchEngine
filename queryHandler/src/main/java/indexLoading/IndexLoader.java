@@ -20,9 +20,10 @@ public class IndexLoader {
      * Load from the stored inverted index the posting list of a term
      *
      * @param term The vocabulary entry of the term
+     * @param compressedWritingEnable
      * @return the posting list of that term
      */
-    public static PostingList loadTerm(VocabularyEntry term) {
+    public static PostingList loadTerm(VocabularyEntry term, boolean compressedWritingEnable) {
         try (FileChannel docidChan = (FileChannel) Files.newByteChannel(
                 Paths.get(ConfigurationParameters.getInvertedIndexDocs()),
                 StandardOpenOption.WRITE,

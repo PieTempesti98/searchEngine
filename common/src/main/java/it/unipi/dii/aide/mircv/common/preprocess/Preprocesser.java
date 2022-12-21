@@ -181,31 +181,26 @@ public class Preprocesser {
      * Perform the preprocessing of a TextDocument, transforming it in a document formed by
      * its PID and the list of its tokens
      * @param doc the TextDocument to preprocess
+     * @param stemStopRemovalEnable flag for enabling stopword removal and stemming
      * @return the processed document
      */
-    public static ProcessedDocument processDocument(TextDocument doc) {
+    public static ProcessedDocument processDocument(TextDocument doc, boolean stemStopRemovalEnable) {
 
         String text = doc.getText();
 
         // text cleaning
         text = cleanText(text);
 
-
         // tokenize
         String[] tokens = tokenize(text);
 
-        for(String token: tokens){
-            if(token.length() > 64){
-                System.out.println(text);
-                System.out.println(token);
-            }
+        if(stemStopRemovalEnable) {
+            // remove stopwords
+            tokens = removeStopwords(tokens);
+
+            // perform stemming
+            getStems(tokens);
         }
-
-        // remove stopwords
-        tokens = removeStopwords(tokens);
-
-        // perform stemming
-        getStems(tokens);
 
         // Return the processed document
         return new ProcessedDocument(doc.getPid(), tokens);

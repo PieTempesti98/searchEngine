@@ -4,6 +4,7 @@ import it.unipi.dii.aide.mircv.common.beans.BlockDescriptor;
 import it.unipi.dii.aide.mircv.common.beans.Posting;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
@@ -237,12 +238,16 @@ public class Merger {
      * @param numIndexes number of partial vocabularies and partial indexes created
      * @return true if the merging is complete, false otherwise
      */
-    public static boolean mergeIndexes(int numIndexes, boolean compressionMode) {
+    public static boolean mergeIndexes(int numIndexes, boolean compressionMode,boolean debugModeEnabled) {
+
 
         Merger.numIndexes = numIndexes;
 
         // initialization operations
         initialize();
+
+        //size of the vocabulary
+        long vocSize = 0;
 
         // next memory offset where to write the next vocabulary entry
         long vocMemOffset = 0;
@@ -338,12 +343,13 @@ public class Merger {
                     freqsMemOffset += freqsBuffer.position();
                     // save vocabulary entry on disk
                     vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
+                    vocSize++;
 
                 }
             }
 
             cleanUp();
-            //TODO: update vocabulary size
+            CollectionSize.updateVocabularySize(vocSize);
             return true;
         }catch(Exception e){
             e.printStackTrace();

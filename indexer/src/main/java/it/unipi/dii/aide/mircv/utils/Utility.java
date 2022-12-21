@@ -3,8 +3,7 @@ package it.unipi.dii.aide.mircv.utils;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 
-import static it.unipi.dii.aide.mircv.common.utils.FileUtils.deleteDirectory;
-import static it.unipi.dii.aide.mircv.common.utils.FileUtils.removeFile;
+import static it.unipi.dii.aide.mircv.common.utils.FileUtils.*;
 
 public class Utility {
     private static final String DOC_INDEX_PATH = ConfigurationParameters.getDocumentIndexPath();
@@ -33,20 +32,28 @@ public class Utility {
         Utility.numIndexes = numIndexes;
     }
 
-    public static void initializeFiles(){
+    public static void initializeFiles(boolean stemStopRemovalEnable){
+
         removeFile(DOC_INDEX_PATH);
         removeFile(VOCABULARY_PATH);
         removeFile(INVERTED_INDEX_DOCIDS);
         removeFile(INVERTED_INDEX_FREQS);
+
         deleteDirectory(PARTIAL_INDEX_DOCIDS);
         deleteDirectory(PARTIAL_INDEX_FREQS);
         deleteDirectory(PARTIAL_VOCABULARY_PATH);
+
+        //create directories to store partial frequencies, docids and vocabularies
+        createDirectory(ConfigurationParameters.getDocidsDir());
+        createDirectory(ConfigurationParameters.getFrequencyDir());
+        createDirectory(ConfigurationParameters.getPartialVocabularyDir());
 
         //TODO: update
         /*
         removeFile(INVERTED_INDEX_PATH);
         */
-        Preprocesser.readStopwords();
+        if(stemStopRemovalEnable)
+             Preprocesser.readStopwords();
     }
 
 

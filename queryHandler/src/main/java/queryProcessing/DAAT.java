@@ -77,6 +77,7 @@ public class DAAT {
         return nextGEQ;
     }
 
+
     /** method to find next document to be processed among all the postings to be scored
      * @return
      * - if query mode is DISJUNCTIVE, return the minimum docid among all the first docids in the posting lists of the array, -1 if not possible
