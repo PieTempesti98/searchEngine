@@ -15,17 +15,39 @@ import java.util.Iterator;
 
 public class PostingList{
 
+    /**
+     * the term of the posting list
+     */
     private String term;
+
+    /**
+     * the list of the postings loaded in memory
+     */
     private final ArrayList<Posting> postings = new ArrayList<>();
 
+    /**
+     * the list of the blocks n which the posting list is divided
+     */
     private ArrayList<BlockDescriptor> blocks = null;
 
+    /**
+     * iterator for the postings
+     */
     private Iterator<Posting> postingIterator = null;
 
+    /**
+     * iterator for the blocks
+     */
     private Iterator<BlockDescriptor> blocksIterator = null;
 
+    /**
+     * the current block
+     */
     private BlockDescriptor currentBlock = null;
 
+    /**
+     * the current posting
+     */
     private Posting currentPosting = null;
 
     /**
@@ -33,6 +55,14 @@ public class PostingList{
      */
     private int maxDl = 0;
 
+    /**
+     * constructor that create a posting list from a string
+     * @param toParse the string from which we can parse the posting list, with 2 formats:
+     *                <ul>
+     *                <li>[term] -> only the posting term</li>
+     *                <li>[term] \t [docid]:[frequency] [docid]:{frequency] ... -> the term and the posting list}</li>
+     *                </ul>
+     */
     public PostingList(String toParse) {
         String[] termRow = toParse.split("\t");
         this.term = termRow[0];
@@ -40,6 +70,9 @@ public class PostingList{
             parsePostings(termRow[1]);
     }
 
+    /**
+     * default constructor
+     */
     public PostingList(){}
 
     /**
@@ -87,6 +120,10 @@ public class PostingList{
         }
     }
 
+    /**
+     * parses the postings from a string
+     * @param rawPostings string with the rea postings
+     */
     private void parsePostings(String rawPostings){
         String[] documents = rawPostings.split(" ");
         for(String elem: documents){
@@ -218,11 +255,18 @@ public class PostingList{
         return null;
     }
 
+    /**
+     * Update the max document length
+     * @param length the candidate max document length
+     */
     public void updateMaxDocumentLength(int length){
         if(length > this.maxDl)
             this.maxDl = length;
     }
 
+    /**
+     * method that opens and initializes the posting list for the query processing
+     */
     public void openList(){
         // load the block descriptors
         blocks = Vocabulary.getInstance().get(term).readBlocks();
@@ -240,6 +284,10 @@ public class PostingList{
 
     }
 
+    /**
+     * returns the next posting in the list
+     * @return the next posting in the list
+     */
     public Posting next(){
 
         // no postings in memory: load new block
@@ -266,6 +314,12 @@ public class PostingList{
         return currentPosting;
     }
 
+    /**
+     * returns the first posting with docid greater or equal than the specified docid.
+     * If there's no greater or equal docid in the list returns null
+     * @param docid the docid to reach in the list
+     * @return the first posting with docid greater or equal than the specified docid, null if this posting doesn't exist
+     */
     public Posting nextGEQ(int docid){
 
         // flag to check if the block has changed
@@ -293,7 +347,14 @@ public class PostingList{
     }
 
     public void closeList(){
+
+        // clear the list of postings
         postings.clear();
+
+        // clear the list of blocks
         blocks.clear();
+
+        // remove the term from the vocabulary
+        Vocabulary.getInstance().remove(term);
     }
 }

@@ -128,6 +128,10 @@ public class BlockDescriptor {
 
     }
 
+    /**
+     * Method to retrieve the postings in this block
+     * @return the list of postings in the block
+     */
     public ArrayList<Posting> getBlockPostings(){
         try(
             FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexDocs()),
@@ -156,6 +160,7 @@ public class BlockDescriptor {
 
             ArrayList<Posting> block = new ArrayList<>();
 
+            // for each posting read from the files and append the new posting in the list
             for (int i = 0; i < numPostings; i++) {
                 Posting posting = new Posting(docBuffer.getInt(), freqBuffer.getInt());
                 block.add(posting);
