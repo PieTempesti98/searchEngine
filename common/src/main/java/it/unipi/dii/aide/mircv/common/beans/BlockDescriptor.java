@@ -1,5 +1,7 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
+import it.unipi.dii.aide.mircv.common.compression.UnaryCompressor;
+import it.unipi.dii.aide.mircv.common.compression.VariableByteCompressor;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 
 import java.io.IOException;
@@ -130,43 +132,67 @@ public class BlockDescriptor {
 
     }
 
-    public ArrayList<Map.Entry<Integer, Integer>> getBlockPostings(){
-        try(
-            FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexDocs()),
-                    StandardOpenOption.WRITE,
-                    StandardOpenOption.READ,
-                    StandardOpenOption.CREATE
-            );
-            FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexFreqs()),
-                    StandardOpenOption.WRITE,
-                    StandardOpenOption.READ,
-                    StandardOpenOption.CREATE);
-        ){
-            // instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer docBuffer = docsFchan.map(
+    /**
+     * method to get block's postings from file using compressed mode or not
+     * @param docsFChan: file channel for docids file
+     * @param freqsFChan: file hcannel for freqs file
+     * @param compressedMode: if true, decompression of the posting list is performed, else not
+     * @return arraylist containing block's postings
+     */
+    public ArrayList<Posting> getBlockPostings(FileChannel docsFChan, FileChannel freqsFChan, boolean compressedMode){
+
+        try {
+            // instantiation of MappedByteBuffer for integer list of docids and for integer list of frequencies
+            MappedByteBuffer docBuffer = docsFChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     docidOffset,
                     docidSize
             );
-
-            // instantiation of MappedByteBuffer for integer list of frequencies
-            MappedByteBuffer freqBuffer = freqsFchan.map(
+            MappedByteBuffer freqBuffer = freqsFChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     freqOffset,
                     freqSize
             );
 
-            ArrayList<Map.Entry<Integer, Integer>> block = new ArrayList<>();
-
-            for (int i = 0; i < numPostings; i++) {
-                Map.Entry<Integer, Integer> posting = new AbstractMap.SimpleEntry<>(docBuffer.getInt(), freqBuffer.getInt());
-                block.add(posting);
+            if(docBuffer ==null || freqBuffer == null){
+                return null;
             }
+
+            ArrayList<Posting> block = new ArrayList<>();
+
+            if(compressedMode){
+                // initialization of arrays of bytes for docids and freqs (compressed)
+                byte[] compressedDocids = new byte[docidSize];
+                byte[] compressedFreqs = new byte[freqSize];
+
+                // read bytes from file
+                docBuffer.get(compressedDocids, 0, docidSize);
+                freqBuffer.get(compressedFreqs, 0, freqSize);
+
+                // perform decompression of docids and frequencies
+                int[] decompressedDocids = VariableByteCompressor.integerArrayDecompression(compressedDocids, numPostings);
+                int[] decompressedFreqs = UnaryCompressor.integerArrayDecompression(compressedDocids, numPostings);
+
+                // populate the array list of postings with the decompressed information about block postings
+                for(int i=0; i<numPostings; i++){
+                    Posting posting = new Posting(decompressedDocids[i], decompressedFreqs[i]);
+                    block.add(posting);
+                }
+            }
+            else {
+                // not compressed posting list
+
+                for(int i = 0; i < numPostings; i++){
+                    // create a new posting reading docid and frequency from the buffers
+                    Posting posting = new Posting(docBuffer.getInt(), freqBuffer.getInt());
+                    block.add(posting);
+                }
+            }
+
             return block;
 
-
-        }catch(Exception e){
-            e. printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
             return null;
         }
 
