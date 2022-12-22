@@ -44,7 +44,7 @@ public class PostingList{
         DEBUG
         System.out.println("reading posting list for term:"+term.getTerm());
 */
-        //TODO: must be block based
+        // TODO: relocate and reuse filechannels
         try (FileChannel docsFChan = (FileChannel) Files.newByteChannel(
                 Paths.get(docsPath),
                 StandardOpenOption.WRITE,
