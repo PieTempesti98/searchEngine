@@ -15,4 +15,5 @@
     <docidsDir>data/partial_docids</docidsDir>
     <collectionStatisticsPath>config/collectionStatistics</collectionStatisticsPath>
     <blockDescriptorsPath>data/blockDescriptors</blockDescriptorsPath>
+    <flagsFilePath>data/flags</flagsFilePath>
 </it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
