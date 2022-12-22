@@ -2,6 +2,8 @@ package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
+import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
+
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -13,7 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
+import java.util.ArrayList;
 
 
 /**
@@ -433,6 +435,7 @@ public class VocabularyEntry {
     }
 
     /**
+
      * function to write a summarization of the most important data about a vocabulary entry as plain text in the debug file
      * @param path: path of the file where to write
      */
@@ -461,4 +464,39 @@ public class VocabularyEntry {
     }
 
     // TODO: if npostings <1024 non c'è suddivisione in blocchi, va gestita questa situazione (sia qui, sia nel merger)
+    /**
+     * method to read from memory the block descriptors for the term
+     * @return the arrayList of the block descriptors
+     */
+    public ArrayList<BlockDescriptor> readBlocks(){
+        try(
+                FileChannel fileChannel = (FileChannel) Files.newByteChannel(
+                        Paths.get(ConfigurationParameters.getBlockDescriptorsPath()),
+                        StandardOpenOption.READ,
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.CREATE
+                )
+        ){
+            ArrayList<BlockDescriptor> blocks = new ArrayList<>();
+
+            MappedByteBuffer buffer = fileChannel.map(FileChannel.MapMode.READ_ONLY, blockOffset, (long) numBlocks * BlockDescriptor.BLOCK_DESCRIPTOR_ENTRY_BYTES);
+
+            if(buffer == null)
+                return null;
+            for(int i = 0; i < numBlocks; i++){
+                BlockDescriptor block = new BlockDescriptor();
+                block.setDocidOffset(buffer.getLong());
+                block.setDocidSize(buffer.getInt());
+                block.setFreqOffset(buffer.getLong());
+                block.setFreqSize(buffer.getInt());
+                block.setMaxDocid(buffer.getInt());
+                block.setNumPostings(buffer.getInt());
+                blocks.add(block);
+            }
+            return blocks;
+        }catch(Exception e){
+            e.printStackTrace();
+            return null;
+        }
+    }
 }

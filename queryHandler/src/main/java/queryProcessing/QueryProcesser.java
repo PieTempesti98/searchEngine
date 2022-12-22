@@ -8,7 +8,9 @@ import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 
+import java.io.DataInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -40,11 +42,29 @@ public class QueryProcesser {
     private static final String INVERTED_INDEX_FREQS_PATH = ConfigurationParameters.getInvertedIndexFreqs();
 
     /**
+     * path to file storing flags
+     */
+    private static final String FLAGS_FILE_PATH = ConfigurationParameters.getFlagsFilePath();
+
+    /**
+     * if set to true, compression of inverted index is enabled
+     */
+    private static boolean compressedWritingEnable = false;
+
+    /**
+     * if set to true, stemming and stopwords removal is enabled
+     */
+    private static boolean stemStopRemovalEnable = false;
+
+
+
+    /**
      * load from disk the posting lists of the query tokens
      * @param query the query document
+     * @param compressedWritingEnable
      * @return the list of the query terms' posting lists
      */
-    private static ArrayList<PostingList> getQueryPostings(ProcessedDocument query){
+    private static ArrayList<PostingList> getQueryPostings(ProcessedDocument query, boolean compressedWritingEnable){
 
         // ArrayList with all the posting lists
         ArrayList<PostingList> queryPostings = new ArrayList<>();
@@ -56,13 +76,12 @@ public class QueryProcesser {
                 .collect(Collectors.toList());
 
         for(String queryTerm: queryTerms){
-            if(vocabulary.getEntry(queryTerm) == null){
+            VocabularyEntry entry = vocabulary.getEntry(queryTerm);
+            if(entry == null){
                 continue;
             }
-            //TODO: add vocabulary entry
-
-            //load the posting lists
-            queryPostings.add(IndexLoader.loadTerm(vocabulary.getEntry(queryTerm)));
+            vocabulary.put(queryTerm, entry);
+            queryPostings.add(new PostingList(entry.getTerm()));
         }
         return queryPostings;
     }
@@ -94,9 +113,8 @@ public class QueryProcesser {
      * @return an array with the top-k document pids
      */
     public static String[] processQuery(String query, int k, boolean isConjunctive, String scoringFunction){
-        ProcessedDocument processedQuery = Preprocesser.processDocument(new TextDocument("query", query));
+        ProcessedDocument processedQuery = Preprocesser.processDocument(new TextDocument("query", query), stemStopRemovalEnable);
         // load the posting lists of the tokens
-        //TODO: modify get query postings
         ArrayList<PostingList> queryPostings = getQueryPostings(processedQuery);
         if(queryPostings.isEmpty()){
             return null;
@@ -112,7 +130,10 @@ public class QueryProcesser {
      */
     public static boolean setupProcesser(){
 
-        //TODO: READ FLAGS from file
+        //initialize flags
+        if(!initializeFlags())
+            return false;
+
         //check if document index exists. If not the setup failed
         if(! new File(INVERTED_INDEX_DOCIDS_PATH).exists() || ! new File(INVERTED_INDEX_FREQS_PATH).exists())
             return false;
@@ -125,6 +146,26 @@ public class QueryProcesser {
         //check if document index contains entries. If not the setup failed
         return !documentIndex.isEmpty();
 
+
+    }
+
+    private static boolean initializeFlags(){
+
+        try(
+                FileInputStream flagsInStream = new FileInputStream(FLAGS_FILE_PATH);
+                DataInputStream flagsDataStream = new DataInputStream(flagsInStream)
+        ){
+
+            compressedWritingEnable = flagsDataStream.readBoolean();
+
+            stemStopRemovalEnable = flagsDataStream.readBoolean();
+
+            return true;
+
+        }catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
 
     }
 

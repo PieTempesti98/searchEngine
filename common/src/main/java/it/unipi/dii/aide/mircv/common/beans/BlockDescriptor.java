@@ -10,9 +10,7 @@ import java.nio.channels.FileChannel;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Map;
 
 /**
  * Descriptor of a block of postings in a posting list, used to implement the skipping
@@ -134,16 +132,23 @@ public class BlockDescriptor {
 
     /**
      * method to get block's postings from file using compressed mode or not
-     * @param docsFChan: file channel for docids file
-     * @param freqsFChan: file hcannel for freqs file
      * @param compressedMode: if true, decompression of the posting list is performed, else not
      * @return arraylist containing block's postings
      */
-    public ArrayList<Posting> getBlockPostings(FileChannel docsFChan, FileChannel freqsFChan, boolean compressedMode){
-
-        try {
-            // instantiation of MappedByteBuffer for integer list of docids and for integer list of frequencies
-            MappedByteBuffer docBuffer = docsFChan.map(
+    public ArrayList<Posting> getBlockPostings(boolean compressedMode){
+        try(
+            FileChannel docsFChan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexDocs()),
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.READ,
+                    StandardOpenOption.CREATE
+            );
+            FileChannel freqsFChan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexFreqs()),
+                    StandardOpenOption.WRITE,
+                    StandardOpenOption.READ,
+                    StandardOpenOption.CREATE);
+        ){
+            // instantiation of MappedByteBuffer for integer list of docids
+            MappedByteBuffer docBuffer = docsFchan.map(
                     FileChannel.MapMode.READ_ONLY,
                     docidOffset,
                     docidSize
@@ -187,6 +192,7 @@ public class BlockDescriptor {
                     Posting posting = new Posting(docBuffer.getInt(), freqBuffer.getInt());
                     block.add(posting);
                 }
+
             }
 
             return block;

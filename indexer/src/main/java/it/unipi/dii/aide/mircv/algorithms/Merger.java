@@ -6,6 +6,7 @@ import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
 import it.unipi.dii.aide.mircv.common.compression.UnaryCompressor;
 import it.unipi.dii.aide.mircv.common.compression.VariableByteCompressor;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
@@ -247,6 +248,9 @@ public class Merger {
         // initialization operations
         initialize();
 
+        //size of the vocabulary
+        long vocSize = 0;
+
         // next memory offset where to write the next vocabulary entry
         long vocMemOffset = 0;
 
@@ -417,8 +421,11 @@ public class Merger {
                 System.out.println("new offsets:\tdocs:"+(docsMemOffset + docsBuffer.position())+" freqs:"+(freqsMemOffset + freqsBuffer.position()));
                 */
 
-                // save vocabulary entry on disk
-                vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
+                    docsMemOffset += docsBuffer.position();
+                    freqsMemOffset += freqsBuffer.position();
+                    // save vocabulary entry on disk
+                    vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
+                    vocSize++;
 
                 }
                 if(debugMode){
@@ -428,7 +435,7 @@ public class Merger {
             }
 
             cleanUp();
-            //TODO: update vocabulary size
+            CollectionSize.updateVocabularySize(vocSize);
             return true;
         }catch(Exception e){
             e.printStackTrace();

@@ -22,6 +22,7 @@ public class ConfigurationParameters {
     private static String docidsDir;
     private static String collectionStatisticsPath;
     private static String blockDescriptorsPath;
+    private static String flagsFilePath;
 
     static {
         try{
@@ -52,6 +53,7 @@ public class ConfigurationParameters {
             docidsDir = doc.getElementsByTagName("docidsDir").item(0).getTextContent();
             collectionStatisticsPath = doc.getElementsByTagName("collectionStatisticsPath").item(0).getTextContent();
             blockDescriptorsPath = doc.getElementsByTagName("blockDescriptorsPath").item(0).getTextContent();
+            flagsFilePath = doc.getElementsByTagName("flagsFilePath").item(0).getTextContent();
 
         } catch(Exception e){
             e.printStackTrace();
@@ -89,5 +91,8 @@ public class ConfigurationParameters {
     public static String getInvertedIndexFreqs() {return invertedIndexFreqs;}
 
     public static String getInvertedIndexDocs() {return invertedIndexDocs;}
+
     public static String getBlockDescriptorsPath() {return blockDescriptorsPath;}
+
+    public static String getFlagsFilePath() {return flagsFilePath;}
 }
