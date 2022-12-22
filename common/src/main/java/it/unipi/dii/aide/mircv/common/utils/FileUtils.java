@@ -39,11 +39,7 @@ public class FileUtils {
     public static void createIfNotExists(String path){
         File file = new File(path);
         try{
-            if (file.createNewFile()) {
-                System.out.println("File created: " + file.getName());
-            } else {
-                System.out.println("File " + file.getName() + " already exists.");
-            }
+            file.createNewFile();
         } catch(Exception e){
             e.printStackTrace();
         }

@@ -17,7 +17,6 @@ public class Utility {
     private static final String INVERTED_INDEX_FREQS = ConfigurationParameters.getInvertedIndexFreqs();
     private static final String PARTIAL_VOCABULARY_PATH = ConfigurationParameters.getPartialVocabularyDir();
 
-    //private static final String INVERTED_INDEX_PATH = ConfigurationParameters.getInvertedIndexPath();
 
     /**
      * Number of different intermediate indexes
@@ -42,6 +41,7 @@ public class Utility {
         deleteDirectory(PARTIAL_INDEX_DOCIDS);
         deleteDirectory(PARTIAL_INDEX_FREQS);
         deleteDirectory(PARTIAL_VOCABULARY_PATH);
+        deleteDirectory("data/debug");
 
         //create directories to store partial frequencies, docids and vocabularies
         createDirectory(ConfigurationParameters.getDocidsDir());

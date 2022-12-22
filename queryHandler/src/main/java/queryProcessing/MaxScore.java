@@ -44,7 +44,7 @@ public class MaxScore {
         PriorityQueue<Map.Entry<Double, Integer>> topKDocuments = new PriorityQueue<>(k, Map.Entry.comparingByKey());
 
         // sort by increasing term upper bound posting lists to be scored
-        ArrayList<Map.Entry<PostingList, Double>> sortedLists = sortPostingListsByTermUpperBound(queryPostings, vocEntries);
+        ArrayList<Map.Entry<PostingList, Double>> sortedLists = sortPostingListsByTermUpperBound(queryPostings, vocEntries, scoringFunction);
 
         // initialization of current threshold to enter the MinHeap of the results
         double currThreshold = -1;
@@ -127,7 +127,7 @@ public class MaxScore {
      * @param sortedLists : array list of the posting lists sorted by increasing term upper bound
      * @param firstEssentialPLIndex : index of the first essential-posting list
      * @param docToProcess : docid of the document to be processed
-     * @param scoringFunction
+     * @param scoringFunction: scoring function to be used (tfidf or bm25)
      * @return double value corresponding to the partial score of docToProcess in the non-essential posting lists
      */
     private static double processNonEssentialListsWithSkipping(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex, int docToProcess, String scoringFunction) {
@@ -214,7 +214,7 @@ public class MaxScore {
      */
     private static int nextDocToProcess(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex) {
         int nextDocid = -1;
-
+        // TODO: handle also conjunctive queries
         // go through all posting list and search for minimum docid
         for(int i=firstEssentialPLIndex; i< sortedLists.size(); i++){
 
@@ -234,17 +234,22 @@ public class MaxScore {
      * @param vocabularyEntries: vocabulary entries of the given posting lists
      * @return arraylist of entries of the following format: <POSTING LIST><TERM UPPER BOUND>. The arraylist is sorted by increasing TUB
      */
-    private static ArrayList<Map.Entry<PostingList, Double>> sortPostingListsByTermUpperBound(ArrayList<PostingList> queryPostings, ArrayList<VocabularyEntry> vocabularyEntries){
-
-        // TODO: verify that term upper bounds of posting lists are already computed
-
+    private static ArrayList<Map.Entry<PostingList, Double>> sortPostingListsByTermUpperBound(ArrayList<PostingList> queryPostings, ArrayList<VocabularyEntry> vocabularyEntries, String scoringFunction){
         // TODO: update how posting lists are sorted
 
         PriorityQueue<Map.Entry<PostingList, Double>> sortedPostingLists = new PriorityQueue<>(queryPostings.size(), Map.Entry.comparingByValue());
 
         for(int i=0; i< queryPostings.size(); i++){
             PostingList postingList = queryPostings.get(i);
-            Double termUpperBound = vocabularyEntries.get(i).getMaxTFIDF();
+
+            // retrieve document upper bound
+            Double termUpperBound = null;
+            if(scoringFunction.equals("tfidf")){
+                termUpperBound = vocabularyEntries.get(i).getMaxTFIDF();
+            }
+            else
+                termUpperBound= vocabularyEntries.get(i).getMaxBM25();
+
             sortedPostingLists.add(new AbstractMap.SimpleEntry<>(postingList, termUpperBound));
         }
 

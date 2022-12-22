@@ -1,8 +1,13 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.CollectionSize;
+import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -429,6 +434,36 @@ public class VocabularyEntry {
         this.blockOffset = blockOffset;
     }
 
+    /**
+
+     * function to write a summarization of the most important data about a vocabulary entry as plain text in the debug file
+     * @param path: path of the file where to write
+     */
+    public void debugSaveToDisk(String path) {
+        FileUtils.createDirectory("data/debug");
+        FileUtils.createIfNotExists("data/debug/"+path);
+
+        try {
+            BufferedWriter writer = new BufferedWriter(new FileWriter("data/debug/"+path, true));
+            writer.write(this+"\n");
+            writer.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public String toString() {
+        return  "term:'" + term + '\'' +
+                ", df=" + df +
+                ", idf=" + idf +
+                ", docidOffset=" + docidOffset +
+                ", frequencyOffset=" + frequencyOffset +
+                ", docidSize=" + docidSize +
+                ", frequencySize=" + frequencySize;
+    }
+
+    // TODO: if npostings <1024 non c'è suddivisione in blocchi, va gestita questa situazione (sia qui, sia nel merger)
     /**
      * method to read from memory the block descriptors for the term
      * @return the arrayList of the block descriptors
