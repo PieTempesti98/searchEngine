@@ -2,20 +2,12 @@ package it.unipi.dii.aide.mircv;
 
 import it.unipi.dii.aide.mircv.algorithms.Merger;
 import it.unipi.dii.aide.mircv.algorithms.Spimi;
-import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.config.Flags;
 
-
-import java.io.*;
 
 import static it.unipi.dii.aide.mircv.utils.Utility.initializeFiles;
 
 public class Main {
-
-    /**
-     * path to file storing flags
-     */
-    private static final String FLAGS_FILE_PATH = ConfigurationParameters.getFlagsFilePath();
 
     /**
      * @param args args[0] -> compression flag
@@ -81,7 +73,7 @@ public class Main {
         //initialize files and directories needed for Spimi execution
         initializeFiles();
 
-        int numIndexes = Spimi.executeSpimi(compressedReadingEnable,stemStopRemovalEnable,debugModeEnable);
+        int numIndexes = Spimi.executeSpimi(compressedReadingEnable, debugModeEnable);
         if(numIndexes <= 0){
             System.out.println("An error occurred: no partial indexes.");
             return;

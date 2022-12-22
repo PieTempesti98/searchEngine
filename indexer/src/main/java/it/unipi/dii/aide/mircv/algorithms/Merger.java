@@ -82,12 +82,15 @@ public class Merger {
      */
     private static long[] vocEntryMemOffset = null;
 
+    private static FileChannel[] docidChannels = null;
+
+    private static FileChannel[] frequencyChannels = null;
     /**
      * Method that initializes all the data structures:
      * - setting openIndexes to the total number of indexes produced by SPIMI
      * - initializing all the intermediate inverted index structures
      */
-    private static void initialize() {
+    private static boolean initialize() {
 
         // initialization of array of next vocabulary entries tp be processed
         nextTerms = new VocabularyEntry[numIndexes];
@@ -95,19 +98,41 @@ public class Merger {
         // initialization of next memory offset to be read for each partial vocabulary
         vocEntryMemOffset = new long[numIndexes];
 
-        for (int i=0; i < numIndexes; i++){
+        // initialize the array of the file channels
+        docidChannels = new FileChannel[numIndexes];
+        frequencyChannels = new FileChannel[numIndexes];
 
-            nextTerms[i] = new VocabularyEntry();
-            vocEntryMemOffset[i] = 0;
+        try {
+            for (int i = 0; i < numIndexes; i++) {
 
-            // read first entry of the vocabulary
-            long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES+"_"+i);
+                nextTerms[i] = new VocabularyEntry();
+                vocEntryMemOffset[i] = 0;
 
-            if(ret == -1 || ret == 0){
-                // error encountered during vocabulary entry reading operation
-                // or read ended
-                nextTerms[i] = null;
+                // read first entry of the vocabulary
+                long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES + "_" + i);
+
+                if (ret == -1 || ret == 0) {
+                    // error encountered during vocabulary entry reading operation
+                    // or read ended
+                    nextTerms[i] = null;
+                }
+                docidChannels[i] = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_INDEXES_DOCS+ "_" + i),
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.READ,
+                        StandardOpenOption.CREATE
+                );
+
+                frequencyChannels[i] = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_INDEXES_FREQS+ "_" + i),
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.READ,
+                        StandardOpenOption.CREATE
+                );
             }
+            return true;
+        }catch(Exception e){
+            cleanUp();
+            e.printStackTrace();
+            return false;
         }
     }
 
@@ -142,7 +167,7 @@ public class Merger {
      * method to process a term in a parallelized way across all the intermediate indexes:
      * - create the final posting list
      * - create the vocabulary entry for the term
-     * - update term statistics in the vocabulary entry
+     * - update term statistics in the vocabulary entry (side effect)
      *
      * @param termToProcess: term to be processed
      * @param vocabularyEntry: vocabulary entry for new term
@@ -153,27 +178,19 @@ public class Merger {
         PostingList finalList = new PostingList();
         finalList.setTerm(termToProcess);
 
-        // total space occupancy in bytes of the final posting list
-        int numBytes = 0;
-
         // processing the term
         for (int i = 0; i < numIndexes; i++) {
 
             // Found the matching term
             if (nextTerms[i] != null && nextTerms[i].getTerm().equals(termToProcess)) {
-                // intermediate posting list for term 'termToProcess' in index 'i'
-
-                String docsPath = PATH_TO_PARTIAL_INDEXES_DOCS + "_" + i;
-                String freqsPath = PATH_TO_PARTIAL_INDEXES_FREQS + "_" + i;
 
                 // retrieve posting list from partial inverted index file
-                PostingList intermediatePostingList = new PostingList(nextTerms[i], docsPath, freqsPath);
+                PostingList intermediatePostingList = loadList(nextTerms[i], i);
+                if(intermediatePostingList == null)
+                    return null;
 
                 // update max docLen
                 vocabularyEntry.updateMaxDl(nextTerms[i].getMaxDl());
-
-                // compute memory occupancy and add it to total space occupancy
-                numBytes += intermediatePostingList.getNumBytes();
 
                 //update vocabulary statistics
                 vocabularyEntry.updateStatistics(intermediatePostingList);
@@ -189,8 +206,6 @@ public class Merger {
         moveVocabulariesToNextTerm(termToProcess);
 
         // writing to vocabulary the space occupancy and memory offset of the posting list into
-        vocabularyEntry.setDocidSize(numBytes);
-        vocabularyEntry.setFrequencySize(numBytes);
         vocabularyEntry.setMemoryOffset(docsMemOffset);
         vocabularyEntry.setFrequencyOffset(freqsMemOffset);
 
@@ -245,7 +260,8 @@ public class Merger {
         Merger.numIndexes = numIndexes;
 
         // initialization operations
-        initialize();
+        if(!initialize())
+            return false;
 
         //size of the vocabulary
         long vocSize = 0;
@@ -289,13 +305,15 @@ public class Merger {
 
                 // merge the posting lists for the term to be processed
                 PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
+                if(mergedPostingList == null){
+                    throw new Exception("ERROR: the merged posting list for the term " + termToProcess + " is null");
+                }
 
                 // compute information about block descriptors for the posting list to be written
                 vocabularyEntry.computeBlocksInformation();
 
-                // TODO: make function of vocEntry
                 // compute maximal number of postings that can be stored in a block
-                int maxNumPostings = (int)Math.ceil(vocabularyEntry.getDf() / (double)vocabularyEntry.getNumBlocks());
+                int maxNumPostings = vocabularyEntry.getMaxNumberOfPostingsInBlock();
 
                 // create iterator over posting list to be written
                 Iterator<Posting> plIterator = mergedPostingList.getPostings().iterator();
@@ -331,7 +349,7 @@ public class Merger {
                             postingsInBlock++;
 
                             if (postingsInBlock == nPostingsToBeWritten){
-                                byte[] compressedDocs = UnaryCompressor.integerArrayCompression(docids);;
+                                byte[] compressedDocs = UnaryCompressor.integerArrayCompression(docids);
                                 byte[] compressedFreqs = VariableByteCompressor.integerArrayCompression(freqs);
 
                                 try{
@@ -361,10 +379,9 @@ public class Merger {
                                     break;
 
                                 } catch (Exception e) {
-                                    // TODO: Error handling
                                     cleanUp();
                                     e.printStackTrace();
-                                    break;
+                                    return false;
                                 }
                             }
                         }
@@ -412,8 +429,8 @@ public class Merger {
                             }
                         }
                         catch (Exception e){
-                                // TODO: error handling
-                                e.printStackTrace();
+                            cleanUp();
+                            e.printStackTrace();
                         }
                     }
 
@@ -455,7 +472,52 @@ public class Merger {
         // remove partial vocabularies directory
         FileUtils.deleteDirectory(ConfigurationParameters.getPartialVocabularyDir());
 
-        //TODO: remove blocks info
+        try{
+            for(int i = 0; i < numIndexes; i++){
+                if(docidChannels[i] != null){
+                    docidChannels[i].close();
+                }
+                if(frequencyChannels[i] != null){
+                    frequencyChannels[i].close();
+                }
+            }
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    private static PostingList loadList(VocabularyEntry term, int index) {
+
+        PostingList newList;
+
+        try {
+            // instantiation of MappedByteBuffer for integer list of docids
+            MappedByteBuffer docBuffer = docidChannels[index].map(
+                    FileChannel.MapMode.READ_ONLY,
+                    term.getDocidOffset(),
+                    term.getDocidSize()
+            );
+
+            // instantiation of MappedByteBuffer for integer list of frequencies
+            MappedByteBuffer freqBuffer = frequencyChannels[index].map(
+                    FileChannel.MapMode.READ_ONLY,
+                    term.getFrequencyOffset(),
+                    term.getFrequencySize()
+            );
+
+            // create the posting list for the term
+            newList = new PostingList(term.getTerm());
+
+            for (int i = 0; i < term.getDf(); i++) {
+                Posting posting = new Posting(docBuffer.getInt(), freqBuffer.getInt());
+                newList.getPostings().add(posting);
+            }
+            return newList;
+        } catch (Exception e) {
+            cleanUp();
+            e.printStackTrace();
+            return null;
+        }
     }
 
 }

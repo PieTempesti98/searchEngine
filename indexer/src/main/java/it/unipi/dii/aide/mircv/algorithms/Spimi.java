@@ -11,7 +11,6 @@ import java.io.*;
 import java.io.BufferedReader;
 import java.io.IOException;
 
-import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
@@ -206,10 +205,10 @@ public class Spimi {
      * Performs spimi algorithm
      *
      * @return the number of partial indexes created
-     * @param compressedReadingEnable flag enabling creading from compressed file and stemming if true
-     * @param stemStopRemovalEnable flag enabling stopword removal and stemming if true
+     * @param compressedReadingEnable flag enabling reading from compressed file and stemming if true
+     * @param debug flag enabling debug mode
      */
-    public static int executeSpimi(boolean compressedReadingEnable,boolean stemStopRemovalEnable, boolean debug) {
+    public static int executeSpimi(boolean compressedReadingEnable,boolean debug) {
 
         try (
                 BufferedReader br = initBuffer(compressedReadingEnable)
@@ -245,7 +244,7 @@ public class Spimi {
                     TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
                     // Perform text preprocessing on the document
 
-                    ProcessedDocument processedDocument = Preprocesser.processDocument(document,stemStopRemovalEnable);
+                    ProcessedDocument processedDocument = Preprocesser.processDocument(document);
 
                     if (processedDocument.getTokens().isEmpty())
                         continue;

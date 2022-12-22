@@ -4,12 +4,6 @@ import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
-
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -76,58 +70,6 @@ public class PostingList{
     public PostingList(){}
 
     /**
-     * Constructor for PostingList
-     * it reads the PostingList directly from file
-     * @param term: vocabulary entry for the posting list to be constructed
-     * @param docsPath: file path for the file containing docids of the posting list to be constructed
-     * @param freqsPath: file path for the file containing freqs of the posting list to be constructed
-     */
-    public PostingList(VocabularyEntry term, String docsPath, String freqsPath) {
-
-        /*
-        DEBUG
-        System.out.println("reading posting list for term:"+term.getTerm());
-*/
-        // TODO: relocate and reuse filechannels
-
-        try (FileChannel docsFChan = (FileChannel) Files.newByteChannel(
-                Paths.get(docsPath),
-                StandardOpenOption.WRITE,
-                StandardOpenOption.READ,
-                StandardOpenOption.CREATE);
-             FileChannel freqsFChan = (FileChannel) Files.newByteChannel(
-                     Paths.get(freqsPath),
-                     StandardOpenOption.WRITE,
-                     StandardOpenOption.READ,
-                     StandardOpenOption.CREATE)
-        ) {
-            // instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer docBuffer = docsFChan.map(
-                    FileChannel.MapMode.READ_ONLY,
-                    term.getDocidOffset(),
-                    term.getDocidSize()
-            );
-
-            // instantiation of MappedByteBuffer for integer list of frequencies
-            MappedByteBuffer freqBuffer = freqsFChan.map(
-                    FileChannel.MapMode.READ_ONLY,
-                    term.getFrequencyOffset(),
-                    term.getFrequencySize()
-            );
-
-            // create the posting list for the term
-            this.term = term.getTerm();
-
-            for (int i = 0; i < term.getDf(); i++) {
-                Posting posting = new Posting(docBuffer.getInt(), freqBuffer.getInt());
-                this.getPostings().add(posting);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * parses the postings from a string
      * @param rawPostings string with the rea postings
      */
@@ -155,13 +97,6 @@ public class PostingList{
         postings.addAll(newPostings);
     }
 
-    /**
-     * method to return the numbers of bytes occupied by this posting list when stored in memory
-     * @return posting list's space occupancy in bytes
-     */
-    public int getNumBytes() {
-        return postings.size()*4*2;
-    }
     @Override
     public String toString() {
         return "PostingList{" +

@@ -342,6 +342,10 @@ public class VocabularyEntry {
         return numBlocks;
     }
 
+    public int getMaxNumberOfPostingsInBlock(){
+        return (int) Math.ceil( df / (double) numBlocks);
+    }
+
     public String getTerm() {
         return term;
     }
