@@ -32,7 +32,7 @@ public class Main {
         boolean debugModeEnable = false;
 
         //check input and initialize flags
-        if(args.length > 0) {
+        if(args.length > 1) {
 
             for(String flag: args){
 

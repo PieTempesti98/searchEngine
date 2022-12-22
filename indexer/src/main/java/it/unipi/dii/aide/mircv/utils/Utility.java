@@ -48,10 +48,6 @@ public class Utility {
         createDirectory(ConfigurationParameters.getFrequencyDir());
         createDirectory(ConfigurationParameters.getPartialVocabularyDir());
 
-        //TODO: update
-        /*
-        removeFile(INVERTED_INDEX_PATH);
-        */
         if(stemStopRemovalEnable)
              Preprocesser.readStopwords();
     }
