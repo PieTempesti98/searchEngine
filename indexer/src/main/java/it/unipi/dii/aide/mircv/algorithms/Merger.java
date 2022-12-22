@@ -82,7 +82,6 @@ public class Merger {
      */
     private static long[] vocEntryMemOffset = null;
 
-
     /**
      * Method that initializes all the data structures:
      * - setting openIndexes to the total number of indexes produced by SPIMI
@@ -363,6 +362,7 @@ public class Merger {
 
                                 } catch (Exception e) {
                                     // TODO: Error handling
+                                    cleanUp();
                                     e.printStackTrace();
                                     break;
                                 }
@@ -420,9 +420,6 @@ public class Merger {
                 /* DEBUG
                 System.out.println("new offsets:\tdocs:"+(docsMemOffset + docsBuffer.position())+" freqs:"+(freqsMemOffset + freqsBuffer.position()));
                 */
-
-                    docsMemOffset += docsBuffer.position();
-                    freqsMemOffset += freqsBuffer.position();
                     // save vocabulary entry on disk
                     vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
                     vocSize++;

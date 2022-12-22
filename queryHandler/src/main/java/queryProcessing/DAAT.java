@@ -41,8 +41,6 @@ public class DAAT {
 
             // check if there are postings to iterate in the i-th posting list
             if(currPostingList != null){
-                //TODO: use interfaces
-                // I should move the iterator until I find a docid >= docidToProcess
                 Posting pointedPosting = currPostingList.getCurrentPosting();
 
                 if(pointedPosting == null){
@@ -132,7 +130,7 @@ public class DAAT {
      * @param scoringFunction
      * @return score of the document
      */
-    private static double scoreDocument(int docid, ArrayList<PostingList> postingsToScore, String scoringFunction, ArrayList<VocabularyEntry> vocabularyEntry){
+    private static double scoreDocument(int docid, ArrayList<PostingList> postingsToScore, String scoringFunction){
 
         // initialization of document's score
         double docScore = 0;
@@ -146,7 +144,7 @@ public class DAAT {
             if (postingToScore != null && postingToScore.getDocid() == docid) {
                 // process the posting
 
-                docScore += postingToScore.scoreDocument(null,scoringFunction);
+                docScore += Scorer.scoreDocument(postingToScore, Vocabulary.getInstance().getIdf(postingList.getTerm()), scoringFunction);
 
                 // posting scored, it can be removed by the postings to be scored
                 postingList.next();
@@ -162,7 +160,7 @@ public class DAAT {
      * @param scoringFunction
      * @return returns a priority queue (of at most K elements) in the format <SCORE (Double), DOCID (Integer)> ordered by increasing score value
      */
-    public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, boolean isConjuctive, int k, String scoringFunction,ArrayList<VocabularyEntry> vocabularyEntries){
+    public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, boolean isConjuctive, int k, String scoringFunction){
 
         initialize(queryPostings);
 
@@ -174,7 +172,7 @@ public class DAAT {
         // until there are documents to be processed
         while(docToProcess!= -1){
 
-            double docScore = scoreDocument(docToProcess, queryPostings,scoringFunction,vocabularyEntries);
+            double docScore = scoreDocument(docToProcess, queryPostings,scoringFunction);
 
             // check if the MinHeap is full
             if(topKDocuments.size()==k){

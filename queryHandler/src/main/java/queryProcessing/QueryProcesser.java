@@ -6,6 +6,7 @@ import it.unipi.dii.aide.mircv.common.beans.*;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 
+import it.unipi.dii.aide.mircv.common.config.Flags;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 
 import java.io.DataInputStream;
@@ -44,27 +45,19 @@ public class QueryProcesser {
     /**
      * path to file storing flags
      */
-    private static final String FLAGS_FILE_PATH = ConfigurationParameters.getFlagsFilePath();
+
 
     /**
      * if set to true, compression of inverted index is enabled
      */
-    private static boolean compressedWritingEnable = false;
-
-    /**
-     * if set to true, stemming and stopwords removal is enabled
-     */
-    private static boolean stemStopRemovalEnable = false;
-
 
 
     /**
      * load from disk the posting lists of the query tokens
      * @param query the query document
-     * @param compressedWritingEnable
      * @return the list of the query terms' posting lists
      */
-    private static ArrayList<PostingList> getQueryPostings(ProcessedDocument query, boolean compressedWritingEnable){
+    private static ArrayList<PostingList> getQueryPostings(ProcessedDocument query){
 
         // ArrayList with all the posting lists
         ArrayList<PostingList> queryPostings = new ArrayList<>();
@@ -113,13 +106,13 @@ public class QueryProcesser {
      * @return an array with the top-k document pids
      */
     public static String[] processQuery(String query, int k, boolean isConjunctive, String scoringFunction){
-        ProcessedDocument processedQuery = Preprocesser.processDocument(new TextDocument("query", query), stemStopRemovalEnable);
+        ProcessedDocument processedQuery = Preprocesser.processDocument(new TextDocument("query", query));
         // load the posting lists of the tokens
         ArrayList<PostingList> queryPostings = getQueryPostings(processedQuery);
         if(queryPostings.isEmpty()){
             return null;
         }
-        PriorityQueue<Map.Entry<Double, Integer>> priorityQueue = DAAT.scoreQuery(queryPostings, isConjunctive, k,scoringFunction,null);
+        PriorityQueue<Map.Entry<Double, Integer>> priorityQueue = DAAT.scoreQuery(queryPostings, isConjunctive, k,scoringFunction);
 
         return lookupPid(priorityQueue, k);
     }
@@ -131,7 +124,7 @@ public class QueryProcesser {
     public static boolean setupProcesser(){
 
         //initialize flags
-        if(!initializeFlags())
+        if(!Flags.initializeFlags())
             return false;
 
         //check if document index exists. If not the setup failed
@@ -149,25 +142,6 @@ public class QueryProcesser {
 
     }
 
-    private static boolean initializeFlags(){
-
-        try(
-                FileInputStream flagsInStream = new FileInputStream(FLAGS_FILE_PATH);
-                DataInputStream flagsDataStream = new DataInputStream(flagsInStream)
-        ){
-
-            compressedWritingEnable = flagsDataStream.readBoolean();
-
-            stemStopRemovalEnable = flagsDataStream.readBoolean();
-
-            return true;
-
-        }catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-
-    }
 
 
 }

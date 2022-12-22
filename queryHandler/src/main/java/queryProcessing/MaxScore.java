@@ -2,6 +2,7 @@ package queryProcessing;
 
 import it.unipi.dii.aide.mircv.common.beans.Posting;
 import it.unipi.dii.aide.mircv.common.beans.PostingList;
+import it.unipi.dii.aide.mircv.common.beans.Vocabulary;
 import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
 
 import java.util.*;
@@ -44,7 +45,7 @@ public class MaxScore {
         PriorityQueue<Map.Entry<Double, Integer>> topKDocuments = new PriorityQueue<>(k, Map.Entry.comparingByKey());
 
         // sort by increasing term upper bound posting lists to be scored
-        ArrayList<Map.Entry<PostingList, Double>> sortedLists = sortPostingListsByTermUpperBound(queryPostings, vocEntries, scoringFunction);
+        ArrayList<Map.Entry<PostingList, Double>> sortedLists = sortPostingListsByTermUpperBound(queryPostings, scoringFunction);
 
         // initialization of current threshold to enter the MinHeap of the results
         double currThreshold = -1;
@@ -139,7 +140,7 @@ public class MaxScore {
             Posting posting = postingList.getKey().nextGEQ(docToProcess);
             if(posting != null && posting.getDocid() == docToProcess) {
                 // TODO: how to pass vocabulary entry
-                nonEssentialScore += posting.scoreDocument(null, scoringFunction);
+                nonEssentialScore += Scorer.scoreDocument(posting, Vocabulary.getInstance().getIdf(postingList.getKey().getTerm()), scoringFunction);
                 postingList.getKey().next();
             }
         }
@@ -174,7 +175,7 @@ public class MaxScore {
                 if(pointedPosting.getDocid() == docToProcess){
 
                     // process the current document
-                    partialScore += pointedPosting.scoreDocument(null,scoringFunction);
+                    partialScore += Scorer.scoreDocument(pointedPosting, Vocabulary.getInstance().getIdf(postingList.getTerm()), scoringFunction);
                 }
             }
         }
@@ -231,24 +232,18 @@ public class MaxScore {
     /**
      * given the array of posting list of query terms and their vocabulary entries, sort them by increasing term upper bound
      * @param queryPostings: query posting lists to be sorted
-     * @param vocabularyEntries: vocabulary entries of the given posting lists
      * @return arraylist of entries of the following format: <POSTING LIST><TERM UPPER BOUND>. The arraylist is sorted by increasing TUB
      */
-    private static ArrayList<Map.Entry<PostingList, Double>> sortPostingListsByTermUpperBound(ArrayList<PostingList> queryPostings, ArrayList<VocabularyEntry> vocabularyEntries, String scoringFunction){
-        // TODO: update how posting lists are sorted
-
+    private static ArrayList<Map.Entry<PostingList, Double>> sortPostingListsByTermUpperBound(ArrayList<PostingList> queryPostings, String scoringFunction){
         PriorityQueue<Map.Entry<PostingList, Double>> sortedPostingLists = new PriorityQueue<>(queryPostings.size(), Map.Entry.comparingByValue());
 
-        for(int i=0; i< queryPostings.size(); i++){
-            PostingList postingList = queryPostings.get(i);
-
+        for (PostingList postingList : queryPostings) {
             // retrieve document upper bound
-            Double termUpperBound = null;
-            if(scoringFunction.equals("tfidf")){
-                termUpperBound = vocabularyEntries.get(i).getMaxTFIDF();
-            }
-            else
-                termUpperBound= vocabularyEntries.get(i).getMaxBM25();
+            double termUpperBound;
+            if (scoringFunction.equals("tfidf")) {
+                termUpperBound = Vocabulary.getInstance().get(postingList.getTerm()).getMaxTFIDF();
+            } else
+                termUpperBound = Vocabulary.getInstance().get(postingList.getTerm()).getMaxBM25();
 
             sortedPostingLists.add(new AbstractMap.SimpleEntry<>(postingList, termUpperBound));
         }

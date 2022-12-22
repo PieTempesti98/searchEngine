@@ -3,6 +3,7 @@ package it.unipi.dii.aide.mircv;
 import it.unipi.dii.aide.mircv.algorithms.Merger;
 import it.unipi.dii.aide.mircv.algorithms.Spimi;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
+import it.unipi.dii.aide.mircv.common.config.Flags;
 
 
 import java.io.*;
@@ -72,25 +73,15 @@ public class Main {
         }
 
         //save to file flags that will be useful for query handling
-
-        try(
-            FileOutputStream flagsOutStream = new FileOutputStream(FLAGS_FILE_PATH);
-            DataOutputStream flagsDataStream = new DataOutputStream(flagsOutStream)
-        ){
-
-            flagsDataStream.writeBoolean(compressedWritingEnable);
-            flagsDataStream.writeBoolean(stemStopRemovalEnable);
-
-        }catch (Exception e) {
-            e.printStackTrace();
+        if(!Flags.saveFlags(compressedWritingEnable,stemStopRemovalEnable)){
+            System.out.println("Error in saving configuration modes");
             return;
         }
 
-
         //initialize files and directories needed for Spimi execution
-        initializeFiles(stemStopRemovalEnable);
+        initializeFiles();
 
-        int numIndexes = Spimi.executeSpimi(compressedReadingEnable,stemStopRemovalEnable);
+        int numIndexes = Spimi.executeSpimi(compressedReadingEnable,stemStopRemovalEnable,debugModeEnable);
         if(numIndexes <= 0){
             System.out.println("An error occurred: no partial indexes.");
             return;

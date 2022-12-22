@@ -1,15 +1,13 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
-import it.unipi.dii.aide.mircv.common.compression.UnaryCompressor;
-import it.unipi.dii.aide.mircv.common.compression.VariableByteCompressor;
-import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;

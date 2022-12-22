@@ -3,6 +3,7 @@ package it.unipi.dii.aide.mircv.common.beans;
 import it.unipi.dii.aide.mircv.common.compression.UnaryCompressor;
 import it.unipi.dii.aide.mircv.common.compression.VariableByteCompressor;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
+import it.unipi.dii.aide.mircv.common.config.Flags;
 
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
@@ -132,10 +133,9 @@ public class BlockDescriptor {
 
     /**
      * method to get block's postings from file using compressed mode or not
-     * @param compressedMode: if true, decompression of the posting list is performed, else not
      * @return arraylist containing block's postings
      */
-    public ArrayList<Posting> getBlockPostings(boolean compressedMode){
+    public ArrayList<Posting> getBlockPostings(){
         try(
             FileChannel docsFChan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexDocs()),
                     StandardOpenOption.WRITE,
@@ -148,7 +148,7 @@ public class BlockDescriptor {
                     StandardOpenOption.CREATE);
         ){
             // instantiation of MappedByteBuffer for integer list of docids
-            MappedByteBuffer docBuffer = docsFchan.map(
+            MappedByteBuffer docBuffer = docsFChan.map(
                     FileChannel.MapMode.READ_ONLY,
                     docidOffset,
                     docidSize
@@ -165,7 +165,7 @@ public class BlockDescriptor {
 
             ArrayList<Posting> block = new ArrayList<>();
 
-            if(compressedMode){
+            if(Flags.isCompressionEnabled()){
                 // initialization of arrays of bytes for docids and freqs (compressed)
                 byte[] compressedDocids = new byte[docidSize];
                 byte[] compressedFreqs = new byte[freqSize];

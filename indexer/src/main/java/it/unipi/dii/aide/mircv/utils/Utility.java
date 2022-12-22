@@ -1,6 +1,7 @@
 package it.unipi.dii.aide.mircv.utils;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
+import it.unipi.dii.aide.mircv.common.config.Flags;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 
 import static it.unipi.dii.aide.mircv.common.utils.FileUtils.*;
@@ -31,7 +32,7 @@ public class Utility {
         Utility.numIndexes = numIndexes;
     }
 
-    public static void initializeFiles(boolean stemStopRemovalEnable){
+    public static void initializeFiles(){
 
         removeFile(DOC_INDEX_PATH);
         removeFile(VOCABULARY_PATH);
@@ -48,7 +49,7 @@ public class Utility {
         createDirectory(ConfigurationParameters.getFrequencyDir());
         createDirectory(ConfigurationParameters.getPartialVocabularyDir());
 
-        if(stemStopRemovalEnable)
+        if(Flags.isStemStopRemovalEnabled())
              Preprocesser.readStopwords();
     }
 

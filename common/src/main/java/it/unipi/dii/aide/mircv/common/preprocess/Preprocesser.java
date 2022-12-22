@@ -4,6 +4,7 @@ import ca.rmen.porterstemmer.PorterStemmer;
 import it.unipi.dii.aide.mircv.common.beans.TextDocument;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
+import it.unipi.dii.aide.mircv.common.config.Flags;
 
 import java.io.BufferedReader;
 import java.nio.charset.StandardCharsets;
@@ -181,10 +182,9 @@ public class Preprocesser {
      * Perform the preprocessing of a TextDocument, transforming it in a document formed by
      * its PID and the list of its tokens
      * @param doc the TextDocument to preprocess
-     * @param stemStopRemovalEnable flag for enabling stopword removal and stemming
      * @return the processed document
      */
-    public static ProcessedDocument processDocument(TextDocument doc, boolean stemStopRemovalEnable) {
+    public static ProcessedDocument processDocument(TextDocument doc) {
 
         String text = doc.getText();
 
@@ -194,7 +194,7 @@ public class Preprocesser {
         // tokenize
         String[] tokens = tokenize(text);
 
-        if(stemStopRemovalEnable) {
+        if(Flags.isStemStopRemovalEnabled()) {
             // remove stopwords
             tokens = removeStopwords(tokens);
 
