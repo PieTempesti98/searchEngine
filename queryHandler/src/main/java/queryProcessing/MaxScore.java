@@ -127,7 +127,7 @@ public class MaxScore {
      * @param sortedLists : array list of the posting lists sorted by increasing term upper bound
      * @param firstEssentialPLIndex : index of the first essential-posting list
      * @param docToProcess : docid of the document to be processed
-     * @param scoringFunction
+     * @param scoringFunction: scoring function to be used (tfidf or bm25)
      * @return double value corresponding to the partial score of docToProcess in the non-essential posting lists
      */
     private static double processNonEssentialListsWithSkipping(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex, int docToProcess, String scoringFunction) {
@@ -214,7 +214,7 @@ public class MaxScore {
      */
     private static int nextDocToProcess(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex) {
         int nextDocid = -1;
-
+        // TODO: handle also conjunctive queries
         // go through all posting list and search for minimum docid
         for(int i=firstEssentialPLIndex; i< sortedLists.size(); i++){
 
