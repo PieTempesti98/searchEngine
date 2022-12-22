@@ -76,13 +76,12 @@ public class QueryProcesser {
                 .collect(Collectors.toList());
 
         for(String queryTerm: queryTerms){
-            if(vocabulary.getEntry(queryTerm) == null){
+            VocabularyEntry entry = vocabulary.getEntry(queryTerm);
+            if(entry == null){
                 continue;
             }
-            //TODO: add vocabulary entry
-
-            //load the posting lists
-            queryPostings.add(IndexLoader.loadTerm(vocabulary.getEntry(queryTerm),compressedWritingEnable));
+            vocabulary.put(queryTerm, entry);
+            queryPostings.add(new PostingList(entry.getTerm()));
         }
         return queryPostings;
     }
@@ -116,8 +115,7 @@ public class QueryProcesser {
     public static String[] processQuery(String query, int k, boolean isConjunctive, String scoringFunction){
         ProcessedDocument processedQuery = Preprocesser.processDocument(new TextDocument("query", query), stemStopRemovalEnable);
         // load the posting lists of the tokens
-        //TODO: modify get query postings
-        ArrayList<PostingList> queryPostings = getQueryPostings(processedQuery,compressedWritingEnable);
+        ArrayList<PostingList> queryPostings = getQueryPostings(processedQuery);
         if(queryPostings.isEmpty()){
             return null;
         }

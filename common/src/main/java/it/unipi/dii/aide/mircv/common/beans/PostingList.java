@@ -4,7 +4,6 @@ import java.io.IOException;
 import it.unipi.dii.aide.mircv.common.compression.UnaryCompressor;
 import it.unipi.dii.aide.mircv.common.compression.VariableByteCompressor;
 
-import java.io.*;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.file.Files;
@@ -12,15 +11,58 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Iterator;
 
 public class PostingList{
 
+    /**
+     * the term of the posting list
+     */
     private String term;
+
+    /**
+     * the list of the postings loaded in memory
+     */
     private final ArrayList<Posting> postings = new ArrayList<>();
 
-    // variable used for computing the max dl to insert in the vocabulary
+    /**
+     * the list of the blocks n which the posting list is divided
+     */
+    private ArrayList<BlockDescriptor> blocks = null;
+
+    /**
+     * iterator for the postings
+     */
+    private Iterator<Posting> postingIterator = null;
+
+    /**
+     * iterator for the blocks
+     */
+    private Iterator<BlockDescriptor> blocksIterator = null;
+
+    /**
+     * the current block
+     */
+    private BlockDescriptor currentBlock = null;
+
+    /**
+     * the current posting
+     */
+    private Posting currentPosting = null;
+
+    /**
+     * variable used for computing the max dl to insert in the vocabulary
+     */
     private int maxDl = 0;
 
+    /**
+     * constructor that create a posting list from a string
+     * @param toParse the string from which we can parse the posting list, with 2 formats:
+     *                <ul>
+     *                <li>[term] -> only the posting term</li>
+     *                <li>[term] \t [docid]:[frequency] [docid]:{frequency] ... -> the term and the posting list}</li>
+     *                </ul>
+     */
     public PostingList(String toParse) {
         String[] termRow = toParse.split("\t");
         this.term = termRow[0];
@@ -28,6 +70,9 @@ public class PostingList{
             parsePostings(termRow[1]);
     }
 
+    /**
+     * default constructor
+     */
     public PostingList(){}
 
     /**
@@ -38,11 +83,6 @@ public class PostingList{
      * @param freqsPath: file path for the file containing freqs of the posting list to be constructed
      */
     public PostingList(VocabularyEntry term, String docsPath, String freqsPath) {
-        /*
-        DEBUG
-        System.out.println("reading posting list for term:"+term.getTerm());
-*/
-        //TODO: must be block based
         try (FileChannel docsFChan = (FileChannel) Files.newByteChannel(
                 Paths.get(docsPath),
                 StandardOpenOption.WRITE,
@@ -80,6 +120,10 @@ public class PostingList{
         }
     }
 
+    /**
+     * parses the postings from a string
+     * @param rawPostings string with the rea postings
+     */
     private void parsePostings(String rawPostings){
         String[] documents = rawPostings.split(" ");
         for(String elem: documents){
@@ -211,26 +255,54 @@ public class PostingList{
         return null;
     }
 
+    /**
+     * Update the max document length
+     * @param length the candidate max document length
+     */
     public void updateMaxDocumentLength(int length){
         if(length > this.maxDl)
             this.maxDl = length;
     }
 
+    /**
+     * method that opens and initializes the posting list for the query processing
+     */
     public void openList(){
-        // TODO: implement method (Pietro)
         // load the block descriptors
+        blocks = Vocabulary.getInstance().get(term).readBlocks();
+
+        // return false if the blocks are not loaded
+        if(blocks == null){
+            return;
+        }
+
+        // initialize block iterator
+        blocksIterator = blocks.iterator();
+
+        //initialize postings iterator
+        postingIterator = postings.iterator();
+
     }
 
+    /**
+     * returns the next posting in the list
+     * @return the next posting in the list
+     */
     public Posting next(){
-        // TODO: implement method (Pietro)
-        /*
-            if !iterator(postings).hasNext
-                loadBlock
-                createNewIterator
-            return iterator(postings).next
-         */
 
-        return new Posting();
+        // no postings in memory: load new block
+        if(!postingIterator.hasNext()) {
+            // no new blocks: end of list
+            if (!blocksIterator.hasNext())
+                return null;
+            // load the new block and update the postings iterator
+            currentBlock = blocksIterator.next();
+            postings.addAll(currentBlock.getBlockPostings());
+            postingIterator = postings.iterator();
+        }
+        // return the next posting to process
+        currentPosting = postingIterator.next();
+        return currentPosting;
     }
 
 
@@ -239,28 +311,51 @@ public class PostingList{
      * @return posting or null if there are no more postings.
      */
     public Posting getCurrentPosting(){
-        //TODO: implement method (Pietro)
-
-        return new Posting();
+        return currentPosting;
     }
 
+    /**
+     * returns the first posting with docid greater or equal than the specified docid.
+     * If there's no greater or equal docid in the list returns null
+     * @param docid the docid to reach in the list
+     * @return the first posting with docid greater or equal than the specified docid, null if this posting doesn't exist
+     */
     public Posting nextGEQ(int docid){
-        // TODO: implement method (Pietro)
-        /*
-        while currentBlock.maxDocid < docid
-            if !iterator(blocks).hasNext
-                return null
-            currentBlock = iterator(blocks).next
-        while iterator(postings).hasNext
-            currentPosting = iterator(posting).next
-            if currentPosting.docid >= docid
-                return currentPosting
-         */
-        return new Posting();
+
+        // flag to check if the block has changed
+        boolean blockChanged = false;
+        // move to the block with max docid >= docid
+        // current block is null only if it's the first read
+        while(currentBlock == null || currentBlock.getMaxDocid() < docid){
+            // end of list, return null
+            if(!blocksIterator.hasNext())
+                return null;
+            currentBlock = blocksIterator.next();
+            blockChanged = true;
+        }
+        // block changed, load postings and update iterator
+        if(blockChanged){
+            postings.addAll(currentBlock.getBlockPostings());
+            postingIterator = postings.iterator();
+        }
+        // move to the first GE posting and return it
+        while(postingIterator.hasNext()){
+            currentPosting = postingIterator.next();
+            if (currentPosting.getDocid() >= docid)
+                return currentPosting;
+        }
+        return null;
     }
 
     public void closeList(){
-        //TODO: implement method (Pietro)
 
+        // clear the list of postings
+        postings.clear();
+
+        // clear the list of blocks
+        blocks.clear();
+
+        // remove the term from the vocabulary
+        Vocabulary.getInstance().remove(term);
     }
 }
