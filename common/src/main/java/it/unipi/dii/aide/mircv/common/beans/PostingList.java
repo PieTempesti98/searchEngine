@@ -325,7 +325,8 @@ public class PostingList{
         // flag to check if the block has changed
         boolean blockChanged = false;
         // move to the block with max docid >= docid
-        while(currentBlock.getMaxDocid() < docid){
+        // current block is null only if it's the first read
+        while(currentBlock == null || currentBlock.getMaxDocid() < docid){
             // end of list, return null
             if(!blocksIterator.hasNext())
                 return null;
@@ -343,7 +344,7 @@ public class PostingList{
             if (currentPosting.getDocid() >= docid)
                 return currentPosting;
         }
-        return new Posting();
+        return null;
     }
 
     public void closeList(){
