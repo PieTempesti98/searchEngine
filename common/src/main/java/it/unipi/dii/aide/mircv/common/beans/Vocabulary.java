@@ -11,12 +11,12 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
     /**
      * cache used for most recently used vocabulary entries
      */
-    private LruCache entries = new LruCache(10);
+    private final LruCache<String, VocabularyEntry> entries= new LruCache<>(10);
 
     /**
      * path to file storing the vocabulary
      */
-    private final String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
+    private static final String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
 
     /**
      * singleton pattern
@@ -46,7 +46,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
         //if term is cached, return its vocabulary entry
         if(entries.containsKey(term))
-            return (VocabularyEntry) entries.get(term);
+            return entries.get(term);
 
         //get entry from disk
         VocabularyEntry entry = findEntry(term);
@@ -68,7 +68,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
             VocabularyEntry entry = new VocabularyEntry();
 
             //read entry and update position
-            position = entry.readFromDisk(position,this.VOCABULARY_PATH);
+            position = entry.readFromDisk(position,VOCABULARY_PATH);
 
             if(position == 0)
                 return  true;
@@ -107,7 +107,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
             mid = (start + end) / 2;
 
             //get entry from disk
-            entry.readFromDisk(mid * entrySize, this.VOCABULARY_PATH);
+            entry.readFromDisk(mid * entrySize, VOCABULARY_PATH);
             key = entry.getTerm();
             System.out.println(key);
 
