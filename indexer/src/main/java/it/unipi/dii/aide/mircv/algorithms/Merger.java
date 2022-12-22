@@ -290,6 +290,7 @@ public class Merger {
                 // compute information about block descriptors for the posting list to be written
                 vocabularyEntry.computeBlocksInformation();
 
+                // TODO: make function of vocEntry
                 // compute maximal number of postings that can be stored in a block
                 int maxNumPostings = (int)Math.ceil(vocabularyEntry.getDf() / (double)vocabularyEntry.getNumBlocks());
 

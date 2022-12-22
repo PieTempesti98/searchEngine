@@ -459,4 +459,6 @@ public class VocabularyEntry {
                 ", docidSize=" + docidSize +
                 ", frequencySize=" + frequencySize;
     }
+
+    // TODO: if npostings <1024 non c'è suddivisione in blocchi, va gestita questa situazione (sia qui, sia nel merger)
 }
