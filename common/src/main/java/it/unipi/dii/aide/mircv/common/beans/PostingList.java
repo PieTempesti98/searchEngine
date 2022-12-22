@@ -174,6 +174,11 @@ public class PostingList{
 
     }
 
+    /**
+     * function to write the posting list as plain text in the debug files
+     * @param docidsPath: path of docids file where to write
+     * @param freqsPath: path of freqs file where to write
+     */
     public void debugSaveToDisk(String docidsPath, String freqsPath){
         FileUtils.createDirectory("data/debug");
         FileUtils.createIfNotExists("data/debug/"+docidsPath);

@@ -250,7 +250,7 @@ public class Merger {
         // next memory offset where to write the next vocabulary entry
         long vocMemOffset = 0;
 
-        // open file channels for vocabulary writes, docid and frequency writes and block descriptor writes
+        // open file channels for vocabulary writes, docid and frequency writes, and block descriptor writes
         try(FileChannel vocabularyChan = (FileChannel) Files.newByteChannel(
                 Paths.get(PATH_TO_VOCABULARY),
                 StandardOpenOption.WRITE,

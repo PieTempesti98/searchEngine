@@ -201,6 +201,10 @@ public class DocumentIndexEntry{
         DocumentIndexEntry.DOCINDEX_PATH = "../data/test/testDocIndex";
     }
 
+    /**
+     * function to write a summarization of the most important data about a document index entry as plain text in the debug file
+     * @param path: path of the file where to write
+     */
     public void debugWriteToDisk(String path) {
         FileUtils.createDirectory("data/debug");
         FileUtils.createIfNotExists("data/debug/"+path);
