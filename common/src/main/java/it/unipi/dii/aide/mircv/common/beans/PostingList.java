@@ -147,6 +147,7 @@ public class PostingList{
                 return null;
             // load the new block and update the postings iterator
             currentBlock = blocksIterator.next();
+            postings.removeAll(postings);
             postings.addAll(currentBlock.getBlockPostings());
             postingIterator = postings.iterator();
         }

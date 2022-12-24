@@ -209,6 +209,7 @@ public class Merger {
         vocabularyEntry.setMemoryOffset(docsMemOffset);
         vocabularyEntry.setFrequencyOffset(freqsMemOffset);
 
+
         // compute the final idf
         vocabularyEntry.computeIDF();
 
@@ -293,7 +294,6 @@ public class Merger {
         ) {
             // open all the indexes in parallel and start merging their posting lists
             while (true) {
-
                 // find next term to be processed (the minimum in lexicographical order)
                 String termToProcess = getMinTerm();
 
@@ -349,8 +349,9 @@ public class Merger {
                             postingsInBlock++;
 
                             if (postingsInBlock == nPostingsToBeWritten){
-                                byte[] compressedDocs = UnaryCompressor.integerArrayCompression(docids);
-                                byte[] compressedFreqs = VariableByteCompressor.integerArrayCompression(freqs);
+
+                                byte[] compressedDocs = VariableByteCompressor.integerArrayCompression(docids);
+                                byte[] compressedFreqs = UnaryCompressor.integerArrayCompression(freqs);
 
                                 try{
                                     // instantiation of MappedByteBuffer for integer list of docids and for integer list of freqs
@@ -402,9 +403,9 @@ public class Merger {
                                 while (true) {
                                     // get next posting to be written to disk
                                     Posting currPosting = plIterator.next();
-                                    // encode docid
+
+                                    // encode docid and freq
                                     docsBuffer.putInt(currPosting.getDocid());
-                                    // encode freq
                                     freqsBuffer.putInt(currPosting.getFrequency());
 
                                     // increment counter of number of postings written in the block
@@ -434,9 +435,6 @@ public class Merger {
                         }
                     }
 
-                /* DEBUG
-                System.out.println("new offsets:\tdocs:"+(docsMemOffset + docsBuffer.position())+" freqs:"+(freqsMemOffset + freqsBuffer.position()));
-                */
                     // save vocabulary entry on disk
                     vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
                     vocSize++;
