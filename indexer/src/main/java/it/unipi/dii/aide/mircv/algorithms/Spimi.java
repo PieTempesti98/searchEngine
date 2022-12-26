@@ -31,7 +31,7 @@ public class Spimi {
     /**
      * path to the file on the disk storing the compressed collection
      */
-    private static final String PATH_COMPRESSED_COLLECTION = ConfigurationParameters.getCompressedCollectionPath();
+    protected static final String PATH_COMPRESSED_COLLECTION = ConfigurationParameters.getCompressedCollectionPath();
 
     /*
     path to the file on the disk storing the partial vocabulary

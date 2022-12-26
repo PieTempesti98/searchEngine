@@ -2,6 +2,7 @@ package it.unipi.dii.aide.mircv.algorithms.test;
 
 import it.unipi.dii.aide.mircv.algorithms.Merger;
 import it.unipi.dii.aide.mircv.common.beans.*;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.config.Flags;
 
@@ -11,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Scanner;
 
 import static it.unipi.dii.aide.mircv.utils.Utility.initializeFiles;
 
@@ -68,7 +70,7 @@ public class MergerTest {
                 long vocOffset = 0;
                 long docidOffset = 0;
                 long freqOffset = 0;
-                for(PostingList postingList: intermediateIndex){
+                for (PostingList postingList : intermediateIndex) {
                     int numPostings = intermediateIndex.size();
                     // instantiation of MappedByteBuffer for integer list of docids and for integer list of freqs
                     MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, docidOffset, numPostings * 4L);
@@ -81,38 +83,50 @@ public class MergerTest {
                         vocEntry.setMemoryOffset(docsBuffer.position());
                         vocEntry.setFrequencyOffset(docsBuffer.position());
 
+                        int MaxDL = 0;
+
                         // write postings to file
                         for (Posting posting : postingList.getPostings()) {
-                            if(verboseMode)
-                                System.out.println("\t- writing posting: " + "("+posting.getDocid()+","+posting.getFrequency()+")");
+                            if (verboseMode)
+                                System.out.println("\t- writing posting: " + "(" + posting.getDocid() + "," + posting.getFrequency() + ")");
 
                             // encode docid and freq
                             docsBuffer.putInt(posting.getDocid());
                             freqsBuffer.putInt(posting.getFrequency());
+
+                            int dl = DocumentIndex.getInstance().getLength(posting.getDocid());
+                            if(dl>MaxDL)
+                                MaxDL = dl;
+
                         }
+
 
                         vocEntry.updateStatistics(postingList);
                         vocEntry.setDocidSize(numPostings * 4);
                         vocEntry.setFrequencySize(numPostings * 4);
                         vocEntry.setMemoryOffset(docidOffset);
                         vocEntry.setFrequencyOffset(freqOffset);
+                        vocEntry.setMaxDl(MaxDL);
 
-                        if(verboseMode)
-                            System.out.println("\t- writing vocabulary entry: " + "{"+vocEntry+"}");
+                        if (verboseMode){
+                            System.out.println("\t- writing vocabulary entry: " + "{" + vocEntry + "}");
+                        }
+
 
                         vocOffset = vocEntry.writeEntryToDisk(vocOffset, vocabularyFchan);
 
-                        docidOffset+=numPostings*4L;
-                        freqOffset+=numPostings*4L;
+                        docidOffset += numPostings * 4L;
+                        freqOffset += numPostings * 4L;
 
-                    }
-                    else
+                    } else {
                         return false;
+                    }
                 }
             } catch (Exception e) {
                 return false;
             }
         }
+
         return true;
     }
 
@@ -178,7 +192,6 @@ public class MergerTest {
     }
 
     private static boolean test1(boolean compressionMode){
-        System.out.println("\n----------- TEST 1 ------------\n");
 
         System.out.println("""
                 \tThe aim of this test is to apply merger with just one intermediate index.
@@ -196,15 +209,30 @@ public class MergerTest {
         ArrayList<ArrayList<PostingList>> intermediateIndexes = new ArrayList<>();
         intermediateIndexes.add(index1);
 
+        // write the docIndex entry to disk
+        ArrayList<DocumentIndexEntry> docIndex = new ArrayList<>();
+        docIndex.add( new DocumentIndexEntry("examplePID", 1, 4));
+        docIndex.add( new DocumentIndexEntry("examplePID", 2, 4));
+        docIndex.add( new DocumentIndexEntry("examplePID", 3, 9));
+        docIndex.add( new DocumentIndexEntry("examplePID", 4, 3));
+        docIndex.add( new DocumentIndexEntry("examplePID", 5, 3));
+
+        writeDocumentIndexToDisk(docIndex);
+
+        if(DocumentIndex.getInstance().isEmpty())
+            DocumentIndex.getInstance().loadFromDisk();
+
         // write intermediate indexes to disk so that SPIMI can be executed
         if (!writeIntermediateIndexesToDisk(intermediateIndexes)) {
-            System.out.println("\nError while writing intermediate indexes to disk\n");
+            if(verboseMode)
+                System.out.println("\nError while writing intermediate indexes to disk\n");
             return false;
         }
 
         // merging intermediate indexes
         if (!Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, true)) {
-            System.out.println("Error: merging failed\n");
+            if(verboseMode)
+                System.out.println("Error: merging failed\n");
             return false;
         }
 
@@ -230,22 +258,21 @@ public class MergerTest {
 
         // check if expected results are equal to actual results
         if(!checkResults(mergedLists, expectedResults1)){
-            System.out.println("\nERROR: TEST 1 FAILED\n");
-            System.out.println("EXPECTED RESULTS:");
-            printIndex(expectedResults1);
+            if(verboseMode){
+                System.out.println("EXPECTED RESULTS:");
+                printIndex(expectedResults1);
 
-            System.out.println("\nACTUAL RESULTS:");
-            printIndex(mergedLists);
+                System.out.println("\nACTUAL RESULTS:");
+                printIndex(mergedLists);
+            }
+
             return false;
         }
 
-        System.out.println("\nTEST 1 ENDED SUCCESSFULLY\n");
         return true;
     }
 
     private static boolean test2(boolean compressionMode){
-        System.out.println("\n----------- TEST 2 ------------\n");
-
         System.out.println("""
                 \tThe aim of this test is to apply merger with just two simple intermediate indexes.
                 """);
@@ -268,15 +295,32 @@ public class MergerTest {
         intermediateIndexes.add(index1);
         intermediateIndexes.add(index2);
 
+
+        // write the docIndex entry to disk
+        ArrayList<DocumentIndexEntry> docIndex = new ArrayList<>();
+        docIndex.add( new DocumentIndexEntry("examplePID", 1, 4));
+        docIndex.add( new DocumentIndexEntry("examplePID", 2, 4));
+        docIndex.add( new DocumentIndexEntry("examplePID", 3, 9));
+        docIndex.add( new DocumentIndexEntry("examplePID", 4, 3));
+        docIndex.add( new DocumentIndexEntry("examplePID", 5, 3));
+
+        writeDocumentIndexToDisk(docIndex);
+
+        if(DocumentIndex.getInstance().isEmpty())
+            DocumentIndex.getInstance().loadFromDisk();
+
+
         // write intermediate indexes to disk so that SPIMI can be executed
         if (!writeIntermediateIndexesToDisk(intermediateIndexes)) {
-            System.out.println("\nError while writing intermediate indexes to disk\n");
+            if(verboseMode)
+                System.out.println("\nError while writing intermediate indexes to disk\n");
             return false;
         }
 
         // merging intermediate indexes
         if (!Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, true)) {
-            System.out.println("Error: merging failed\n");
+            if(verboseMode)
+                System.out.println("Error: merging failed\n");
             return false;
         }
 
@@ -314,16 +358,16 @@ public class MergerTest {
 
         // check if expected results are equal to actual results
         if(!checkResults(mergedLists, expectedResults)){
-            System.out.println("\nERROR: TEST 2 FAILED\n");
-            System.out.println("EXPECTED RESULTS:");
-            printIndex(expectedResults);
+            if(verboseMode){
+                System.out.println("EXPECTED RESULTS:");
+                printIndex(expectedResults);
 
-            System.out.println("\nACTUAL RESULTS:");
-            printIndex(mergedLists);
+                System.out.println("\nACTUAL RESULTS:");
+                printIndex(mergedLists);
+            }
             return false;
         }
 
-        System.out.println("\nTEST 2 ENDED SUCCESSFULLY\n");
         return true;
     }
 
@@ -333,8 +377,7 @@ public class MergerTest {
 
         System.out.println("""
                 \tThe aim of this test is to apply merger with just two simple intermediate indexes
-                and to test wether if the
-                resulting vocabulary is correct or not.
+                and to test whether if the resulting vocabulary is correct or not.
                 """);
 
         // building partial index 1
@@ -355,15 +398,31 @@ public class MergerTest {
         intermediateIndexes.add(index1);
         intermediateIndexes.add(index2);
 
+        // write the docIndex entry to disk
+        ArrayList<DocumentIndexEntry> docIndex = new ArrayList<>();
+        docIndex.add( new DocumentIndexEntry("examplePID", 1, 4));
+        docIndex.add( new DocumentIndexEntry("examplePID", 2, 4));
+        docIndex.add( new DocumentIndexEntry("examplePID", 3, 9));
+        docIndex.add( new DocumentIndexEntry("examplePID", 4, 3));
+        docIndex.add( new DocumentIndexEntry("examplePID", 5, 3));
+
+        writeDocumentIndexToDisk(docIndex);
+
+        if(DocumentIndex.getInstance().isEmpty())
+            DocumentIndex.getInstance().loadFromDisk();
+
+
         // write intermediate indexes to disk so that SPIMI can be executed
         if (!writeIntermediateIndexesToDisk(intermediateIndexes)) {
-            System.out.println("\nError while writing intermediate indexes to disk\n");
+            if(verboseMode)
+                System.out.println("\nError while writing intermediate indexes to disk\n");
             return false;
         }
 
         // merging intermediate indexes
         if (!Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, true)) {
-            System.out.println("Error: merging failed\n");
+            if(verboseMode)
+                System.out.println("Error: merging failed\n");
             return false;
         }
 
@@ -403,35 +462,34 @@ public class MergerTest {
 
         // check if expected results are equal to actual results
         if(!checkResults(mergedLists, expectedResults)){
-            System.out.println("\nERROR: TEST 2 FAILED\n");
-            System.out.println("EXPECTED RESULTS:");
-            printIndex(expectedResults);
+            if(verboseMode){
+                System.out.println("EXPECTED RESULTS:");
+                printIndex(expectedResults);
 
-            System.out.println("\nACTUAL RESULTS:");
-            printIndex(mergedLists);
+                System.out.println("\nACTUAL RESULTS:");
+                printIndex(mergedLists);
+            }
             return false;
         }
 
         Vocabulary v = Vocabulary.getInstance();
         v.readFromDisk();
 
-        /*
-        for(VocabularyEntry vocabularyEntry: Vocabulary.getInstance().values()){
-            System.out.println("vocabulary entry: "+vocabularyEntry);
-        }
-         */
 
-        // TODO: handle max bm25
+        if(verboseMode)
+            for(VocabularyEntry vocabularyEntry: Vocabulary.getInstance().values()){
+                System.out.println("vocabulary entry: "+vocabularyEntry);
+            }
 
-/*
         // building expected vocabulary entries
         ArrayList<VocabularyEntry> expectedVocabulary = new ArrayList<>();
         VocabularyEntry vocabularyEntry = new VocabularyEntry("alberobello");
         vocabularyEntry.setDf(2);
         vocabularyEntry.setIdf(Math.log10(5/(double)2));
         vocabularyEntry.setMaxTf(3);
-        vocabularyEntry.setMaxDl(2);
-        vocabularyEntry.setMaxBM25();
+        vocabularyEntry.setMaxDl(3);
+        vocabularyEntry.setMaxTFIDF(0.5878056449127935);
+        vocabularyEntry.setMaxBM25(0.20662689545380758);
         vocabularyEntry.setMemoryOffset(0);
         vocabularyEntry.setFrequencyOffset(0);
         vocabularyEntry.setDocidSize(0);
@@ -446,9 +504,9 @@ public class MergerTest {
         vocabularyEntry.setDf(3);
         vocabularyEntry.setIdf(Math.log10(5/(double)3));
         vocabularyEntry.setMaxTf(5);
-        vocabularyEntry.setMaxDl(3);
-        vocabularyEntry.setMaxBM25();
-
+        vocabularyEntry.setMaxDl(9);
+        vocabularyEntry.setMaxTFIDF(0.37691437109764137);
+        vocabularyEntry.setMaxBM25(0.10768228412582119);
         vocabularyEntry.setMemoryOffset(2);
         vocabularyEntry.setFrequencyOffset(2);
         vocabularyEntry.setDocidSize(0);
@@ -463,8 +521,8 @@ public class MergerTest {
         vocabularyEntry.setIdf(Math.log10(5/(double)3));
         vocabularyEntry.setMaxTf(2);
         vocabularyEntry.setMaxDl(3);
-        vocabularyEntry.setMaxBM25();
-
+        vocabularyEntry.setMaxTFIDF(0.28863187775142785);
+        vocabularyEntry.setMaxBM25(0.10815541628241576);
 
         vocabularyEntry.setMemoryOffset(5);
         vocabularyEntry.setFrequencyOffset(4);
@@ -480,8 +538,8 @@ public class MergerTest {
         vocabularyEntry.setIdf(Math.log10(5/(double)2));
         vocabularyEntry.setMaxTf(2);
         vocabularyEntry.setMaxDl(3);
-        vocabularyEntry.setMaxBM25();
-
+        vocabularyEntry.setMaxTFIDF(0.5177318877571058);
+        vocabularyEntry.setMaxBM25(0.1474655073008096);
         vocabularyEntry.setMemoryOffset(8);
         vocabularyEntry.setFrequencyOffset(6);
         vocabularyEntry.setDocidSize(0);
@@ -492,9 +550,9 @@ public class MergerTest {
         expectedVocabulary.add(vocabularyEntry);
 
         if(expectedVocabulary.size() != Vocabulary.getInstance().size()){
-            System.out.println("\nERROR: TEST 3 FAILED\n");
             System.out.println("\texpected vocabulary size: "+expectedVocabulary.size());
             System.out.println("\tactual vocabulary size: "+Vocabulary.getInstance().size());
+            return false;
         }
 
         for(VocabularyEntry expectedVocEntry: expectedVocabulary){
@@ -512,7 +570,7 @@ public class MergerTest {
                 expectedVocEntry.getNumBlocks() != actualVocEntry.getNumBlocks() ||
                 expectedVocEntry.getBlockOffset() != actualVocEntry.getBlockOffset()
             ){
-                System.out.println("\nERROR: TEST 3 FAILED\n");
+
                 System.out.println("\texpected: "+expectedVocEntry);
                 if(actualVocEntry==null)
                     System.out.println("\tfounded: null");
@@ -521,49 +579,90 @@ public class MergerTest {
                 return false;
             }
         }
-*/
-        System.out.println("\nTEST 3 ENDED SUCCESSFULLY\n");
+
+
         return true;
+    }
+
+    private static void writeDocumentIndexToDisk(ArrayList<DocumentIndexEntry> docIndex) {
+        for(DocumentIndexEntry documentIndexEntry: docIndex){
+            // write the docIndex entry to disk
+            documentIndexEntry.writeToDisk();
+        }
+        CollectionSize.updateCollectionSize(docIndex.size());
     }
 
     public static void main(String[] args) {
         verboseMode = false;
-/*
-        // initialize files and directories needed
-        initializeFiles();
 
-        // test 1: merging of 1 index without compression
-        if(!test1(false))
-            return;
+        Scanner sc= new Scanner(System.in);
 
-        // initialize files and directories needed
-        initializeFiles();
 
-        // test 2: merging of 2 indexes without compression
-        if(!test2(false))
-            return;
+        while(true){
+            System.out.println("Which test would you like to run?");
+            System.out.println("\t1) merging of 1 index without compression");
+            System.out.println("\t2) merging of 2 indexes without compression");
+            System.out.println("\t3) merging of 2 indexes with compression");
+            System.out.println("\t4) merging of 2 indexes with compression and with test of vocabulary");
 
-        // initialize files and directories needed
-        initializeFiles();
+            String testNumber = sc.nextLine();
 
-        Flags.saveFlags(true, true);
-        Flags.initializeFlags();
+            if(testNumber.equals("1")) {
+                System.out.println("\n----------- TEST 1 ------------\n");
 
-        // test 3: merging of 3 indexes with compression
-        if(!test2(true))
-            return;
-        */
-        // initialize files and directories needed
-        initializeFiles();
+                // initialize files and directories needed
+                initializeFiles();
 
-        Flags.saveFlags(true, true);
-        Flags.initializeFlags();
+                // test 1: merging of 1 index without compression
+                if(!test1(false)){
+                    System.out.println("\nERROR: TEST 1 FAILED\n");
+                    return;
+                }
+                System.out.println("\nTEST 1 ENDED SUCCESSFULLY\n");
+            }
+            if(testNumber.equals("2")){
+                System.out.println("\n----------- TEST 2 ------------\n");
 
-        if(!test3(true)){
-          return;
+                // initialize files and directories needed
+                initializeFiles();
+
+                // test 2: merging of 2 indexes without compression
+                if(!test2(false)){
+                    System.out.println("\nERROR: TEST 2 FAILED\n");
+                    return;
+                }
+                System.out.println("\nTEST 2 ENDED SUCCESSFULLY\n");
+            }
+            if(testNumber.equals("3")){
+                System.out.println("\n----------- TEST 3 ------------\n");
+
+                // initialize files and directories needed
+                initializeFiles();
+
+                Flags.saveFlags(true, true);
+                Flags.initializeFlags();
+
+                // test 3: merging of 3 indexes with compression
+                if(!test2(true)){
+                    System.out.println("\nERROR: TEST 3 FAILED\n");
+                    return;
+                }
+                System.out.println("\nTEST 3 ENDED SUCCESSFULLY\n");
+            }
+            else if(testNumber.equals("4")){
+                System.out.println("\n----------- TEST 4 ------------\n");
+                // initialize files and directories needed
+                initializeFiles();
+
+                Flags.saveFlags(true, true);
+                Flags.initializeFlags();
+
+                if(!test3(true)){
+                    System.out.println("\nERROR: TEST 4 FAILED\n");
+                    return;
+                }
+            }
         }
 
     }
-
-
 }

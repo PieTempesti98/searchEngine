@@ -8,6 +8,10 @@ import java.util.*;
 
 public class MaxScore {
 
+    /**
+     * method to open and to perform the first "next()" operation on posting lists to be initialized to be then scored
+     * @param queryPostings: posting lists to be initialized
+     */
     private static void initialize(ArrayList<PostingList> queryPostings){
 
         for(PostingList postingList: queryPostings) {
@@ -17,6 +21,10 @@ public class MaxScore {
 
     }
 
+    /**
+     * method to close the posting lists after the computations ended
+     * @param queryPostings: posting lists to be closed
+     */
     private static void cleanUp(ArrayList<PostingList> queryPostings) {
 
         for(PostingList postingList: queryPostings)
@@ -45,7 +53,7 @@ public class MaxScore {
         // sort by increasing term upper bound posting lists to be scored
         ArrayList<Map.Entry<PostingList, Double>> sortedLists = sortPostingListsByTermUpperBound(queryPostings, scoringFunction);
 
-        /*
+        /* DEBUG
         System.out.println("sorted lists:");
 
         for(Map.Entry<PostingList, Double> i : sortedLists){
@@ -100,7 +108,7 @@ public class MaxScore {
             }
 
             // search for minimum docid to be scored among essential posting lists
-            int docToProcess = nextDocToProcess(sortedLists, firstEssentialPLIndex);
+            int docToProcess = nextDocToProcess(sortedLists, firstEssentialPLIndex, conjunctiveMode);
 
             //System.out.println("next doc to process: "+docToProcess);
 
@@ -109,7 +117,7 @@ public class MaxScore {
                 break;
 
             if(conjunctiveMode){
-                docToProcess = nextGEQ(sortedLists, firstEssentialPLIndex, docToProcess);
+                docToProcess = nextGEQ(sortedLists, docToProcess);
             }
 
             // process DAAT the essential posting lists for docToProcess
@@ -234,7 +242,7 @@ public class MaxScore {
             if(postingList == null)
                 continue;
 
-            Posting pointedPosting = postingList.getCurrentPosting();;
+            Posting pointedPosting = postingList.getCurrentPosting();
 
             if(pointedPosting != null){
                 // check if minimum docid to be scored in current posting list is the one to be processed
@@ -287,9 +295,10 @@ public class MaxScore {
      * Notice that the search is performed only for posting lists having index >= firstEssentialPLIndex in the arrayList given as input.
      * @param sortedLists: sorted posting lists on which to perform the search
      * @param firstEssentialPLIndex: first index from which to search
-     * @return integer corresponding to next docid to be processed, -1 if none
+     * @param conjunctiveMode: if true, conjunctive mode is enabled (maximum is returned), else disjunctive mode is enabled (minimum is returned)
+     * @return integer corresponding to next docid to be processed (maximum if conjunctive mode is true, minimum else), -1 if none
      */
-    private static int nextDocToProcess(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex) {
+    private static int nextDocToProcess(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex, boolean conjunctiveMode) {
         int nextDocid = -1;
 
         // go through all posting list and search for minimum docid
@@ -297,38 +306,33 @@ public class MaxScore {
 
             Posting pointedPosting = sortedLists.get(i).getKey().getCurrentPosting();
 
-            // if current posting  is not null and next docid is the current minimum
-            if(pointedPosting!=null && (nextDocid==-1 || pointedPosting.getDocid() < nextDocid)){
+            if(pointedPosting==null)
+                continue;
+
+            if(conjunctiveMode){
+                // if current posting  is not null and next docid is the current minimum
+                if(nextDocid == -1 || pointedPosting.getDocid() > nextDocid){
                     nextDocid = pointedPosting.getDocid();
+                }
             }
+            else{
+                // if current posting  is not null and next docid is the current minimum
+                if(nextDocid == -1 || pointedPosting.getDocid() < nextDocid){
+                    nextDocid = pointedPosting.getDocid();
+                }
+            }
+
         }
         return nextDocid;
     }
 
-    /**
-     * find the next term to be processed among the given input posting lists as the docid having max docid among the essential posting lists.
-     * Notice that the search is performed only for posting lists having index >= firstEssentialPLIndex in the arrayList given as input.
-     * @param sortedLists: sorted posting lists on which to perform the search
-     * @param firstEssentialPLIndex: first index from which to search
-     * @return integer corresponding to next docid to be processed, -1 if none
+
+    /** method to move the iterators of postingsToScore to the given docid
+     * @param sortedLists: posting lists that must be moved towards the given docid
+     * @param docidToProcess: docid to which the iterators must be moved to
+     * @return -1 if there is at least a list for which there is no docid > docidToProcess
      */
-    private static int nextDocToProcessConjunctive(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex) {
-        int nextDocid = -1;
-        // TODO: handle also conjunctive queries
-        // go through all posting list and search for minimum docid
-        for(int i=firstEssentialPLIndex; i< sortedLists.size(); i++){
-
-            Posting pointedPosting = sortedLists.get(i).getKey().getCurrentPosting();
-
-            // if current posting  is not null and next docid is the current minimum
-            if(pointedPosting!=null && (nextDocid==-1 || pointedPosting.getDocid() > nextDocid)){
-                nextDocid = pointedPosting.getDocid();
-            }
-        }
-        return nextDocid;
-    }
-
-    private static int nextGEQ(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int firstEssentialPLIndex, int docidToProcess){
+    private static int nextGEQ(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int docidToProcess){
         // move the iterators for posting lists pointing to docids < docidToProcess
 
         //System.out.println("moving iterators towards docid: \t"+docidToProcess);

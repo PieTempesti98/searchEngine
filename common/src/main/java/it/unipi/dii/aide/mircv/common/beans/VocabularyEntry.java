@@ -111,13 +111,11 @@ public class VocabularyEntry {
         double b = 0.75;
         for(Posting posting: intermediatePostingList.getPostings()){
             double tf = (1 + Math.log10(posting.getFrequency()));
-            //System.out.println("tf: "+tf);
+
             int docLen = DocumentIndex.getInstance().getLength(posting.getDocid());
-            //System.out.println("docLen: "+docLen);
+
             double avgDocLen = (double) CollectionSize.getTotalDocLen()/CollectionSize.getCollectionSize();
-            //System.out.println("avgDocLen: "+avgDocLen);
-            //System.out.println("numerator: "+(idf * tf));
-            //System.out.println("denominator: "+( tf + k1 * (1 - b + b * (double)docLen/avgDocLen)));
+
             updateMaxBM25((idf * tf)  / ( tf + k1 * (1 - b + b * (double)docLen/avgDocLen)));
         }
 
