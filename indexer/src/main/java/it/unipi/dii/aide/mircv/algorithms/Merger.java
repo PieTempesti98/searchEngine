@@ -310,7 +310,7 @@ public class Merger {
                 }
 
                 // compute information about block descriptors for the posting list to be written
-                vocabularyEntry.computeBlocksInformation();
+                vocabularyEntry.computeBlocksInformation(mergedPostingList.getPostings().size());
 
                 // compute maximal number of postings that can be stored in a block
                 int maxNumPostings = vocabularyEntry.getMaxNumberOfPostingsInBlock();
@@ -318,8 +318,10 @@ public class Merger {
                 // create iterator over posting list to be written
                 Iterator<Posting> plIterator = mergedPostingList.getPostings().iterator();
 
+                int numBlocks = vocabularyEntry.getNumBlocks();
+
                 // save posting list on disk writing each block
-                for(int i=0; i<vocabularyEntry.getNumBlocks(); i++){
+                for(int i=0; i< numBlocks; i++){
 
                     // create a new block descriptor and update its information
                     BlockDescriptor blockDescriptor = new BlockDescriptor();
@@ -437,11 +439,12 @@ public class Merger {
                 /* DEBUG
                 System.out.println("new offsets:\tdocs:"+(docsMemOffset + docsBuffer.position())+" freqs:"+(freqsMemOffset + freqsBuffer.position()));
                 */
-                    // save vocabulary entry on disk
-                    vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
-                    vocSize++;
 
                 }
+                // save vocabulary entry on disk
+                vocMemOffset = vocabularyEntry.writeEntryToDisk(vocMemOffset, vocabularyChan);
+                vocSize++;
+
                 if(debugMode){
                     mergedPostingList.debugSaveToDisk("debugDOCIDS.txt", "debugFREQS.txt");
                     vocabularyEntry.debugSaveToDisk("debugVOCABULARY.txt");

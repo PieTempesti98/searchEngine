@@ -138,6 +138,22 @@ public class VocabularyEntry {
     public VocabularyEntry() {
     }
 
+    public VocabularyEntry(String term, int df, double idf, int maxTf, int maxDl, double maxTFIDF, double maxBM25, long docidOffset, long frequencyOffset, int docidSize, int frequencySize, int numBlocks, long blockOffset) {
+        this.term = term;
+        this.df = df;
+        this.idf = idf;
+        this.maxTf = maxTf;
+        this.maxDl = maxDl;
+        this.maxTFIDF = maxTFIDF;
+        this.maxBM25 = maxBM25;
+        this.docidOffset = docidOffset;
+        this.frequencyOffset = frequencyOffset;
+        this.docidSize = docidSize;
+        this.frequencySize = frequencySize;
+        this.numBlocks = numBlocks;
+        this.blockOffset = blockOffset;
+    }
+
     /**
      * Constructor for the vocabulary entry for the term passed as parameter
      * Assign the termid to the term and initializes all the statistics and memory information
@@ -335,10 +351,11 @@ public class VocabularyEntry {
     /**
      * method that computes the number of blocks of postings in which the posting list will be divided
      * @return the number of blocks
+     * @param size size of posting list
      */
-    public int computeBlocksInformation(){
+    public int computeBlocksInformation(int size){
         this.blockOffset = BlockDescriptor.getMemoryOffset();
-        this.numBlocks = (int)Math.ceil(Math.sqrt(df));
+        this.numBlocks = (int)Math.ceil(Math.sqrt(size));
         return numBlocks;
     }
 
@@ -456,15 +473,33 @@ public class VocabularyEntry {
         }
     }
 
+   /* @Override
+    public String toString() {
+        return  term + " -> " +
+                "frequency = " + df +
+                ", idf = " + idf +
+                ", docidOffset = " + docidOffset +
+                ", frequencyOffset = " + frequencyOffset +
+                ", docidSize = " + docidSize +
+                ", frequencySize = " + frequencySize;
+    }*/
+
     @Override
     public String toString() {
-        return  "term:'" + term + '\'' +
-                ", df=" + df +
-                ", idf=" + idf +
-                ", docidOffset=" + docidOffset +
-                ", frequencyOffset=" + frequencyOffset +
-                ", docidSize=" + docidSize +
-                ", frequencySize=" + frequencySize;
+        return
+                " \""+term+"\"" +
+                ","+df +
+                ","+ idf +
+                ","+ + maxTf +
+                ","+ maxDl +
+                "," + maxTFIDF +
+                "," + maxBM25 +
+                "," + docidOffset +
+                "," + frequencyOffset +
+                "," + docidSize +
+                "," + frequencySize +
+                "," + numBlocks +
+                "," + blockOffset;
     }
 
     // TODO: if npostings <1024 non c'è suddivisione in blocchi, va gestita questa situazione (sia qui, sia nel merger)
@@ -503,4 +538,13 @@ public class VocabularyEntry {
             return null;
         }
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof VocabularyEntry entry)) return false;
+        return termid == entry.termid && df == entry.df && Double.compare(entry.idf, idf) == 0 && maxTf == entry.maxTf && maxDl == entry.maxDl && Double.compare(entry.maxTFIDF, maxTFIDF) == 0 && Double.compare(entry.maxBM25, maxBM25) == 0 && docidOffset == entry.docidOffset && frequencyOffset == entry.frequencyOffset && docidSize == entry.docidSize && frequencySize == entry.frequencySize && numBlocks == entry.numBlocks && blockOffset == entry.blockOffset && term.equals(entry.term);
+    }
+
+
 }
