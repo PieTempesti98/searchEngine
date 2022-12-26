@@ -27,7 +27,6 @@ public class Scorer {
     }
 
     private static double computeTFIDF(Posting posting, double idf){
-        System.out.println("tfidf: "+idf*(1+Math.log10(posting.getFrequency())));
         //return score
         return idf * (1 + Math.log10(posting.getFrequency())) ;
     }

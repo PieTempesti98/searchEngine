@@ -80,7 +80,7 @@ public class MaxScoreTest {
             return false;
         }
 
-        PriorityQueue<Map.Entry<Double, Integer>> results = MaxScore.scoreQuery(queryPostings, k, scoringFunction);
+        PriorityQueue<Map.Entry<Double, Integer>> results = MaxScore.scoreQuery(queryPostings, k, scoringFunction, false);
 
         if(verbose)
               printResults(results, k);
@@ -88,11 +88,12 @@ public class MaxScoreTest {
         return checkResults(results, expectedResults, verbose);
     }
 
-    private static boolean test2(boolean verbose, String scoringFunction){
+    private static boolean test2(boolean verbose, String scoringFunction, boolean conjunctiveMode){
+        String mode = (conjunctiveMode)? "conjunctive" : "disjunctive";
 
         System.out.println("""
                 \tThe aim of this test is to test the query containing just the tokens {"example", "another"} over the collection of documents saved in "small_collection.tsv".
-                \tUsing\040""" + scoringFunction +" as scoring function, MaxScore as scoring algorithm, disjunctive mode, and returning the top 3 documents.");
+                \tUsing\040""" + scoringFunction +" as scoring function, MaxScore as scoring algorithm, " +mode+" mode, and returning the top 3 documents.");
 
         String[] query = {"example", "another"};
 
@@ -102,11 +103,13 @@ public class MaxScoreTest {
 
         if(scoringFunction.equals("tfidf")) {
             expectedResults.add(new AbstractMap.SimpleEntry<>(0.8061799739838872, 1));
-            expectedResults.add(new AbstractMap.SimpleEntry<>(0.30150996489407533, 5));
+            if(!conjunctiveMode)
+                expectedResults.add(new AbstractMap.SimpleEntry<>(0.30150996489407533, 5));
             expectedResults.add(new AbstractMap.SimpleEntry<>(0.9874180905628003, 7));
         }
         else {
-            expectedResults.add(new AbstractMap.SimpleEntry<>(0.1123005090598549, 2));
+            if(!conjunctiveMode)
+                expectedResults.add(new AbstractMap.SimpleEntry<>(0.1123005090598549, 2));
             expectedResults.add(new AbstractMap.SimpleEntry<>(0.38158664142011345, 1));
             expectedResults.add(new AbstractMap.SimpleEntry<>(0.2582940702253402, 7));
         }
@@ -120,7 +123,7 @@ public class MaxScoreTest {
             return false;
         }
 
-        PriorityQueue<Map.Entry<Double, Integer>> results = MaxScore.scoreQuery(queryPostings, k, scoringFunction);
+        PriorityQueue<Map.Entry<Double, Integer>> results = MaxScore.scoreQuery(queryPostings, k, scoringFunction, conjunctiveMode);
 
         if(verbose)
             printResults(results, k);
@@ -151,7 +154,7 @@ public class MaxScoreTest {
 
         System.out.println("\n----------- TEST 2 ------------\n");
 
-        if(!test1(true, "bm25"))
+        if(!test1(false, "bm25"))
             System.out.println("\nERROR: TEST 2 FAILED\n");
         else
             System.out.println("\nTEST 2 ENDED SUCCESSFULLY\n");
@@ -159,19 +162,31 @@ public class MaxScoreTest {
 
         System.out.println("\n----------- TEST 3 ------------\n");
 
-        if(!test2(false, "tfidf"))
+        if(!test2(false, "tfidf", false))
             System.out.println("\nERROR: TEST 3 FAILED\n");
         else
             System.out.println("\nTEST 3 ENDED SUCCESSFULLY\n");
 
         System.out.println("\n----------- TEST 4 ------------\n");
 
-        if(!test2(false, "bm25"))
+        if(!test2(false, "bm25", false))
             System.out.println("\nERROR: TEST 4 FAILED\n");
         else
             System.out.println("\nTEST 4 ENDED SUCCESSFULLY\n");
 
+        System.out.println("\n----------- TEST 5 ------------\n");
 
+        if(!test2(false, "tfidf", true))
+            System.out.println("\nERROR: TEST 5 FAILED\n");
+        else
+            System.out.println("\nTEST 5 ENDED SUCCESSFULLY\n");
+
+        System.out.println("\n----------- TEST 6 ------------\n");
+
+        if(!test2(false, "bm25", true))
+            System.out.println("\nERROR: TEST 6 FAILED\n");
+        else
+            System.out.println("\nTEST 6 ENDED SUCCESSFULLY\n");
 
 
 
