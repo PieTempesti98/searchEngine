@@ -319,7 +319,7 @@ public class Merger {
                 Iterator<Posting> plIterator = mergedPostingList.getPostings().iterator();
 
                 // save posting list on disk writing each block
-                for(int i=0; i<vocabularyEntry.getNumBlocks(); i++){
+                for(int i=0; i < vocabularyEntry.getNumBlocks(); i++){
 
                     // create a new block descriptor and update its information
                     BlockDescriptor blockDescriptor = new BlockDescriptor();
@@ -443,7 +443,7 @@ public class Merger {
 
                 }
                 if(debugMode){
-                    mergedPostingList.debugSaveToDisk("debugDOCIDS.txt", "debugFREQS.txt");
+                    mergedPostingList.debugSaveToDisk("debugDOCIDS.txt", "debugFREQS.txt", maxNumPostings);
                     vocabularyEntry.debugSaveToDisk("debugVOCABULARY.txt");
                 }
             }
