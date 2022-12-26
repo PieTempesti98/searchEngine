@@ -212,9 +212,11 @@ public class Merger {
 
         // compute the final idf
         vocabularyEntry.computeIDF();
-
+        // compute maxbm25
+        vocabularyEntry.updateMaxBM25(finalList);
         // compute the term upper bounds
         vocabularyEntry.computeUpperBounds();
+
         return finalList;
     }
 

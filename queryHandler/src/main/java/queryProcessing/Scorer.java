@@ -9,7 +9,6 @@ public class Scorer {
     private static final double b = 0.75;
 
     public static double scoreDocument(Posting posting, double idf, String scoringFunction) {
-
         return ((scoringFunction.equals("bm25"))? computeBM25(posting, idf) : computeTFIDF(posting, idf));
     }
 
@@ -28,6 +27,7 @@ public class Scorer {
     }
 
     private static double computeTFIDF(Posting posting, double idf){
+        System.out.println("tfidf: "+idf*(1+Math.log10(posting.getFrequency())));
         //return score
         return idf * (1 + Math.log10(posting.getFrequency())) ;
     }

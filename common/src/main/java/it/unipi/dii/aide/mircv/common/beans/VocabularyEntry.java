@@ -89,6 +89,40 @@ public class VocabularyEntry {
             maxDl = dl;
     }
 
+    /**
+     * method to update the max bm25 for the term
+     *
+     * @param bm25 the new bm25
+     */
+    private void updateMaxBM25(double bm25) {
+        //System.out.println("update BM25 to: "+bm25);
+        if (bm25 > maxBM25)
+            maxBM25 = bm25;
+        //System.out.println("max BM25 : "+maxBM25);
+    }
+
+    /**
+     * method to update the maxBM25 for the term
+     * @param intermediatePostingList: posting list for which we have to compute maxBM25
+     */
+    public void updateMaxBM25(PostingList intermediatePostingList) {
+        // TODO: reuse function in Scorer
+        double k1 = 1.5;
+        double b = 0.75;
+        for(Posting posting: intermediatePostingList.getPostings()){
+            double tf = (1 + Math.log10(posting.getFrequency()));
+            //System.out.println("tf: "+tf);
+            int docLen = DocumentIndex.getInstance().getLength(posting.getDocid());
+            //System.out.println("docLen: "+docLen);
+            double avgDocLen = (double) CollectionSize.getTotalDocLen()/CollectionSize.getCollectionSize();
+            //System.out.println("avgDocLen: "+avgDocLen);
+            //System.out.println("numerator: "+(idf * tf));
+            //System.out.println("denominator: "+( tf + k1 * (1 - b + b * (double)docLen/avgDocLen)));
+            updateMaxBM25((idf * tf)  / ( tf + k1 * (1 - b + b * (double)docLen/avgDocLen)));
+        }
+
+    }
+
     /* --- MEMORY INFORMATION --- */
     /**
      * starting point of the term's posting list in the inverted index in bytes
@@ -329,7 +363,9 @@ public class VocabularyEntry {
         this.maxTFIDF = (1 + Math.log10(this.maxTf)) * this.idf;
 
         // compute term upper bound for BM25
-        //TODO: implement after merge with BM25
+
+        // TODO: update
+
     }
 
     /**
@@ -456,16 +492,7 @@ public class VocabularyEntry {
         }
     }
 
-    @Override
-    public String toString() {
-        return  "term:'" + term + '\'' +
-                ", df=" + df +
-                ", idf=" + idf +
-                ", docidOffset=" + docidOffset +
-                ", frequencyOffset=" + frequencyOffset +
-                ", docidSize=" + docidSize +
-                ", frequencySize=" + frequencySize;
-    }
+
 
     // TODO: if npostings <1024 non c'è suddivisione in blocchi, va gestita questa situazione (sia qui, sia nel merger)
     /**
@@ -496,11 +523,31 @@ public class VocabularyEntry {
                 block.setMaxDocid(buffer.getInt());
                 block.setNumPostings(buffer.getInt());
                 blocks.add(block);
+
             }
             return blocks;
         }catch(Exception e){
             e.printStackTrace();
             return null;
         }
+    }
+
+    @Override
+    public String toString() {
+        return "VocabularyEntry{" +
+                "term='" + term + '\'' +
+                ", df=" + df +
+                ", idf=" + idf +
+                ", maxTf=" + maxTf +
+                ", maxDl=" + maxDl +
+                ", maxTFIDF=" + maxTFIDF +
+                ", maxBM25=" + maxBM25 +
+                ", docidOffset=" + docidOffset +
+                ", frequencyOffset=" + frequencyOffset +
+                ", docidSize=" + docidSize +
+                ", frequencySize=" + frequencySize +
+                ", numBlocks=" + numBlocks +
+                ", blockOffset=" + blockOffset +
+                '}';
     }
 }

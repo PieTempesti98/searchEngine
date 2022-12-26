@@ -109,7 +109,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
             //get entry from disk
             entry.readFromDisk(mid * entrySize, VOCABULARY_PATH);
             key = entry.getTerm();
-            System.out.println(key);
+            //System.out.println(key);
 
             //check if the search was successful
             if (key.equals(term))

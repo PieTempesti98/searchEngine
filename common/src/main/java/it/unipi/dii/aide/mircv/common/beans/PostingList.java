@@ -143,8 +143,11 @@ public class PostingList{
         // no postings in memory: load new block
         if(!postingIterator.hasNext()) {
             // no new blocks: end of list
-            if (!blocksIterator.hasNext())
+            if (!blocksIterator.hasNext()){
+                currentPosting = null;
                 return null;
+            }
+
             // load the new block and update the postings iterator
             currentBlock = blocksIterator.next();
             postings.removeAll(postings);
@@ -195,7 +198,8 @@ public class PostingList{
             if (currentPosting.getDocid() >= docid)
                 return currentPosting;
         }
-        return null;
+        currentPosting = null;
+        return currentPosting;
     }
 
     public void closeList(){

@@ -336,7 +336,7 @@ public class MergerTest {
                 and to test wether if the
                 resulting vocabulary is correct or not.
                 """);
-/*
+
         // building partial index 1
         ArrayList<PostingList> index1 = new ArrayList<>();
 
@@ -378,6 +378,8 @@ public class MergerTest {
         index2.add(new PostingList("alberobello\t4:3 5:1"));
         index2.add(new PostingList("pisa\t5:2"));
 
+
+
         ArrayList<Posting> postings1 = new ArrayList<>();
 
         postings1.add(new Posting(4,3));
@@ -398,37 +400,43 @@ public class MergerTest {
         postings1.add(new Posting(3,2));
         expectedResults.add(postings1);
 
-        System.out.println("EXPECTED RESULTS:");
-        printIndex(expectedResults);
-
-        System.out.println("\nACTUAL RESULTS:");
-        printIndex(mergedLists);
 
         // check if expected results are equal to actual results
         if(!checkResults(mergedLists, expectedResults)){
-            System.out.println("\nERROR: TEST 3 FAILED\n");
+            System.out.println("\nERROR: TEST 2 FAILED\n");
+            System.out.println("EXPECTED RESULTS:");
+            printIndex(expectedResults);
+
+            System.out.println("\nACTUAL RESULTS:");
+            printIndex(mergedLists);
             return false;
         }
-        // TODO: handle
 
+        Vocabulary v = Vocabulary.getInstance();
+        v.readFromDisk();
+
+        /*
+        for(VocabularyEntry vocabularyEntry: Vocabulary.getInstance().values()){
+            System.out.println("vocabulary entry: "+vocabularyEntry);
+        }
+         */
+
+        // TODO: handle max bm25
+
+/*
         // building expected vocabulary entries
         ArrayList<VocabularyEntry> expectedVocabulary = new ArrayList<>();
         VocabularyEntry vocabularyEntry = new VocabularyEntry("alberobello");
         vocabularyEntry.setDf(2);
         vocabularyEntry.setIdf(Math.log10(5/(double)2));
         vocabularyEntry.setMaxTf(3);
-        vocabularyEntry.setMaxDl();
+        vocabularyEntry.setMaxDl(2);
         vocabularyEntry.setMaxBM25();
         vocabularyEntry.setMemoryOffset(0);
         vocabularyEntry.setFrequencyOffset(0);
+        vocabularyEntry.setDocidSize(0);
+        vocabularyEntry.setFrequencySize(0);
 
-        if(compressionMode){
-            vocabularyEntry.setDocidSize();
-            vocabularyEntry.setFrequencySize(1);
-        } else {
-            vocabularyEntry.setDocidSize(4*2);
-            vocabularyEntry.setFrequencySize(4*2);
-        }
 
         vocabularyEntry.setNumBlocks(1);
         vocabularyEntry.setBlockOffset(0);
@@ -438,20 +446,13 @@ public class MergerTest {
         vocabularyEntry.setDf(3);
         vocabularyEntry.setIdf(Math.log10(5/(double)3));
         vocabularyEntry.setMaxTf(5);
-        vocabularyEntry.setMaxDl();
+        vocabularyEntry.setMaxDl(3);
         vocabularyEntry.setMaxBM25();
 
-        if(compressionMode){
-            vocabularyEntry.setMemoryOffset();
-            vocabularyEntry.setFrequencyOffset(1);
-            vocabularyEntry.setDocidSize();
-            vocabularyEntry.setFrequencySize(2);
-        } else {
-            vocabularyEntry.setMemoryOffset(4*2);
-            vocabularyEntry.setFrequencyOffset(4*2);
-            vocabularyEntry.setDocidSize(4*3);
-            vocabularyEntry.setFrequencySize(4*3);
-        }
+        vocabularyEntry.setMemoryOffset(2);
+        vocabularyEntry.setFrequencyOffset(2);
+        vocabularyEntry.setDocidSize(0);
+        vocabularyEntry.setFrequencySize(0);
 
         vocabularyEntry.setNumBlocks(1);
         vocabularyEntry.setBlockOffset(BlockDescriptor.BLOCK_DESCRIPTOR_ENTRY_BYTES);
@@ -461,20 +462,14 @@ public class MergerTest {
         vocabularyEntry.setDf(3);
         vocabularyEntry.setIdf(Math.log10(5/(double)3));
         vocabularyEntry.setMaxTf(2);
-        vocabularyEntry.setMaxDl();
+        vocabularyEntry.setMaxDl(3);
         vocabularyEntry.setMaxBM25();
 
-        if(compressionMode){
-            vocabularyEntry.setMemoryOffset();
-            vocabularyEntry.setFrequencyOffset(3);
-            vocabularyEntry.setDocidSize();
-            vocabularyEntry.setFrequencySize(1);
-        } else {
-            vocabularyEntry.setMemoryOffset(4*2+4*3);
-            vocabularyEntry.setFrequencyOffset(4*2+4*3);
-            vocabularyEntry.setDocidSize(4*3);
-            vocabularyEntry.setFrequencySize(4*3);
-        }
+
+        vocabularyEntry.setMemoryOffset(5);
+        vocabularyEntry.setFrequencyOffset(4);
+        vocabularyEntry.setDocidSize(0);
+        vocabularyEntry.setFrequencySize(0);
 
         vocabularyEntry.setNumBlocks(1);
         vocabularyEntry.setBlockOffset(BlockDescriptor.BLOCK_DESCRIPTOR_ENTRY_BYTES*2);
@@ -484,24 +479,23 @@ public class MergerTest {
         vocabularyEntry.setDf(2);
         vocabularyEntry.setIdf(Math.log10(5/(double)2));
         vocabularyEntry.setMaxTf(2);
-        vocabularyEntry.setMaxDl();
+        vocabularyEntry.setMaxDl(3);
         vocabularyEntry.setMaxBM25();
 
-        if(compressionMode){
-            vocabularyEntry.setMemoryOffset();
-            vocabularyEntry.setFrequencyOffset(4);
-            vocabularyEntry.setDocidSize();
-            vocabularyEntry.setFrequencySize(1);
-        } else {
-            vocabularyEntry.setMemoryOffset(4*2+4*3+4*3);
-            vocabularyEntry.setFrequencyOffset(4*2+4*3+4*3);
-            vocabularyEntry.setDocidSize(4*2);
-            vocabularyEntry.setFrequencySize(4*2);
-        }
+        vocabularyEntry.setMemoryOffset(8);
+        vocabularyEntry.setFrequencyOffset(6);
+        vocabularyEntry.setDocidSize(0);
+        vocabularyEntry.setFrequencySize(0);
 
         vocabularyEntry.setNumBlocks(1);
         vocabularyEntry.setBlockOffset(BlockDescriptor.BLOCK_DESCRIPTOR_ENTRY_BYTES*3);
         expectedVocabulary.add(vocabularyEntry);
+
+        if(expectedVocabulary.size() != Vocabulary.getInstance().size()){
+            System.out.println("\nERROR: TEST 3 FAILED\n");
+            System.out.println("\texpected vocabulary size: "+expectedVocabulary.size());
+            System.out.println("\tactual vocabulary size: "+Vocabulary.getInstance().size());
+        }
 
         for(VocabularyEntry expectedVocEntry: expectedVocabulary){
             VocabularyEntry actualVocEntry = Vocabulary.getInstance().get(expectedVocEntry.getTerm());
@@ -519,15 +513,14 @@ public class MergerTest {
                 expectedVocEntry.getBlockOffset() != actualVocEntry.getBlockOffset()
             ){
                 System.out.println("\nERROR: TEST 3 FAILED\n");
+                System.out.println("\texpected: "+expectedVocEntry);
+                if(actualVocEntry==null)
+                    System.out.println("\tfounded: null");
+                else
+                    System.out.println("\tfounded: "+actualVocEntry);
                 return false;
             }
         }
-
-        for(){
-            VocabularyEntry expectedVocEntry =
-            if(v.getTerm().equals())
-        }
-
 */
         System.out.println("\nTEST 3 ENDED SUCCESSFULLY\n");
         return true;
@@ -535,14 +528,14 @@ public class MergerTest {
 
     public static void main(String[] args) {
         verboseMode = false;
-
+/*
         // initialize files and directories needed
         initializeFiles();
 
         // test 1: merging of 1 index without compression
         if(!test1(false))
             return;
-/*
+
         // initialize files and directories needed
         initializeFiles();
 
@@ -559,7 +552,7 @@ public class MergerTest {
         // test 3: merging of 3 indexes with compression
         if(!test2(true))
             return;
-
+        */
         // initialize files and directories needed
         initializeFiles();
 
@@ -569,7 +562,7 @@ public class MergerTest {
         if(!test3(true)){
           return;
         }
-        */
+
     }
 
 

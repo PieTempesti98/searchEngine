@@ -147,6 +147,8 @@ public class Spimi {
                         freqsBuffer.putInt(posting.getFrequency());
                     }
 
+                    // TODO: update MAXDL
+
                     vocEntry.updateStatistics(list);
                     vocEntry.setDocidSize((int) (numPostings*4));
                     vocEntry.setFrequencySize((int) (numPostings*4));
@@ -254,7 +256,7 @@ public class Spimi {
                     //create new document index entry and add it to file
                     DocumentIndexEntry docIndexEntry = new DocumentIndexEntry(
                             processedDocument.getPid(),
-                            docid++,
+                            docid,
                             documentLength
                     );
 
@@ -289,6 +291,7 @@ public class Spimi {
                         posting.updateMaxDocumentLength(documentLength);
 
                     }
+                    docid++;
                 }
 
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
