@@ -204,13 +204,15 @@ public class PostingList{
         // remove the term from the vocabulary
         Vocabulary.getInstance().remove(term);
     }
+    
+    // TODO: fix posting list toString()
 
     /**
      * function to write the posting list as plain text in the debug files
      * @param docidsPath: path of docids file where to write
      * @param freqsPath: path of freqs file where to write
      */
-    public void debugSaveToDisk(String docidsPath, String freqsPath){
+    public void debugSaveToDisk(String docidsPath, String freqsPath, int maxPostingsPerBlock){
         FileUtils.createDirectory("data/debug");
         FileUtils.createIfNotExists("data/debug/"+docidsPath);
         FileUtils.createIfNotExists("data/debug/"+freqsPath);
@@ -221,6 +223,23 @@ public class PostingList{
             BufferedWriter writerFreqs = new BufferedWriter(new FileWriter("data/debug/"+freqsPath, true));
             BufferedWriter all = new BufferedWriter(new FileWriter("data/debug/completeList.txt", true));
             String[] postingInfo = toStringPosting();
+            int postingsPerBlock = 0;
+            for(Posting p: postings){
+                writerDocids.write(p.getDocid()+" ");
+                writerFreqs.write(p.getFrequency()+" ");
+                postingsPerBlock ++;
+                // check if I reach the maximum number of terms per block
+                if(postingsPerBlock == maxPostingsPerBlock){
+                    // write the block separator on file
+                    writerDocids.write("| ");
+                    writerFreqs.write("| ");
+
+                    // reset tne number of postings to zero
+                    postingsPerBlock = 0;
+                }
+            }
+            writerDocids.write("\n");
+            writerFreqs.write("\n");
 
             writerDocids.write(postingInfo[0] + "\n");
             writerFreqs.write(postingInfo[1] + "\n");

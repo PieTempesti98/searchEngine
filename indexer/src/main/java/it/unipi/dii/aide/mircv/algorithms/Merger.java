@@ -447,7 +447,7 @@ public class Merger {
                 vocSize++;
 
                 if(debugMode){
-                    mergedPostingList.debugSaveToDisk("debugDOCIDS.txt", "debugFREQS.txt");
+                    mergedPostingList.debugSaveToDisk("debugDOCIDS.txt", "debugFREQS.txt", maxNumPostings);
                     vocabularyEntry.debugSaveToDisk("debugVOCABULARY.txt");
                 }
             }
