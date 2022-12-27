@@ -2,6 +2,7 @@ package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
+import org.junit.Ignore;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -92,11 +93,9 @@ public class DocumentIndexEntry{
 
     @Override
     public String toString() {
-        return "DocumentIndexEntry{" +
-                "pid='" + pid + '\'' +
-                ", docid=" + docid +
-                ", docLen=" + docLen +
-                '}';
+        return "Document: " + docid + " -> " +
+                "pid = " + pid +
+                ", document length = " + docLen;
     }
 
     /**
@@ -211,10 +210,26 @@ public class DocumentIndexEntry{
 
         try {
             BufferedWriter writer = new BufferedWriter(new FileWriter("data/debug/"+path, true));
-            writer.write(this+"\n");
+            writer.write(this.toString()+"\n");
             writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public boolean equals(Object o){
+
+        if(o == this)
+            return true;
+
+        if (!(o instanceof DocumentIndexEntry de)) {
+            return false;
+        }
+
+        return de.getDocid() == this.getDocid() && de.getPid().equals(this.getPid()) && de.getDocLen() == this.getDocLen();
+    }
+
+
+
 }

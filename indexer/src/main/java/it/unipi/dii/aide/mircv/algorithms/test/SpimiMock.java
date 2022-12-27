@@ -1,12 +1,19 @@
 package it.unipi.dii.aide.mircv.algorithms.test;
 
 import it.unipi.dii.aide.mircv.algorithms.Spimi;
-import it.unipi.dii.aide.mircv.common.beans.DocumentIndexEntry;
-import it.unipi.dii.aide.mircv.common.beans.PostingList;
-import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
+import it.unipi.dii.aide.mircv.common.beans.*;
 
+import java.io.IOException;
+import java.nio.MappedByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 
 public class SpimiMock extends Spimi {
@@ -30,27 +37,86 @@ public class SpimiMock extends Spimi {
                     posting = index.get(term);
                 }
 
-                //updateOrAddPosting(docid, posting); //insert or update new posting
+                updateOrAddPosting(docid, posting); //insert or update new posting
             }
 
             docid++;
         }
 
+        index = index.entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (e1, e2) -> e1, LinkedHashMap::new));
+
         return index;
     }
 
-    public static HashMap<Integer,DocumentIndexEntry> buildDocumentIndex(ArrayList<ProcessedDocument> testDocuments){
+    public static DocumentIndex buildDocumentIndex(ArrayList<ProcessedDocument> testDocuments){
 
-        HashMap<Integer,DocumentIndexEntry> documentIndex = new HashMap<>();
+        DocumentIndex documentIndex = DocumentIndex.getInstance();
 
         int docid = 0;
 
         for(ProcessedDocument document: testDocuments){
-            docid++;
             documentIndex.put(docid,new DocumentIndexEntry(document.getPid(),docid,document.getTokens().size()));
+            docid++;
         }
 
         return documentIndex;
+
+    }
+
+    public static Vocabulary buildVocaulary(HashMap<String, PostingList> index){
+
+        try (
+                FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get("test/testDocumentDocids"),
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.READ,
+                        StandardOpenOption.CREATE
+                );
+                FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get("test/testDocumentFreqs"),
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.READ,
+                        StandardOpenOption.CREATE);
+        ) {
+
+            Vocabulary vocabulary = Vocabulary.getInstance();
+            // instantiation of MappedByteBuffer for integer list of docids
+            long numPostings = index.size();
+            MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
+
+            // instantiation of MappedByteBuffer for integer list of freqs
+            MappedByteBuffer freqsBuffer = freqsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
+
+            // check if MappedByteBuffers are correctly instantiated
+            if (docsBuffer != null && freqsBuffer != null) {
+                for (PostingList list : index.values()) {
+                    //create vocabulary entry
+                    VocabularyEntry vocEntry = new VocabularyEntry(list.getTerm());
+                    vocEntry.setMemoryOffset(docsBuffer.position());
+                    vocEntry.setFrequencyOffset(docsBuffer.position());
+
+                    // write postings to file
+                    for (Posting posting : list.getPostings()) {
+                        // encode docid
+                        docsBuffer.putInt(posting.getDocid());
+                        // encode freq
+                        freqsBuffer.putInt(posting.getFrequency());
+                    }
+
+                    vocEntry.updateStatistics(list);
+                    vocEntry.setDocidSize((int) (numPostings * 4));
+                    vocEntry.setFrequencySize((int) (numPostings * 4));
+
+                }
+            }return vocabulary;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
 
     }
 }

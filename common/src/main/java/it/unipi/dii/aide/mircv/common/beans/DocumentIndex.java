@@ -13,6 +13,8 @@ public class DocumentIndex extends LinkedHashMap<Integer, DocumentIndexEntry> {
      */
     private static DocumentIndex instance = null;
 
+    private DocumentIndex(){}
+
     /**
      * Method used to instantiate the singleton object
      * @return the singleton object
@@ -66,5 +68,7 @@ public class DocumentIndex extends LinkedHashMap<Integer, DocumentIndexEntry> {
         }
         return true;
     }
+
+
 
 }

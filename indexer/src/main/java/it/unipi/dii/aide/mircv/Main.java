@@ -24,6 +24,8 @@ public class Main {
         boolean stemStopRemovalEnable = false;
         //if set to true, debug mode is enabled
         boolean debugModeEnable = false;
+        //if set to true, maxScore is used, If not, DAAT is used
+        boolean maxScoreEnabled = false;
 
         //check input and initialize flags
         if(args.length > 1) {
@@ -58,6 +60,10 @@ public class Main {
                     debugModeEnable = true;
                     continue;
                 }
+                if(flag.equals("-maxscore")){
+                    maxScoreEnabled = true;
+                    continue;
+                }
 
                 System.out.println("Flag " + flag + " not recognised!");
                 return;
@@ -66,13 +72,15 @@ public class Main {
         }
 
         //save to file flags that will be useful for query handling
-        if(!Flags.saveFlags(compressedWritingEnable,stemStopRemovalEnable)){
+        if(!Flags.saveFlags(compressedWritingEnable,stemStopRemovalEnable,maxScoreEnabled)){
             System.out.println("Error in saving configuration modes");
             return;
         }
 
         //initialize files and directories needed for Spimi execution
         initializeFiles();
+
+        System.out.println(debugModeEnable);
 
         int numIndexes = Spimi.executeSpimi(compressedReadingEnable, debugModeEnable);
         if(numIndexes <= 0){

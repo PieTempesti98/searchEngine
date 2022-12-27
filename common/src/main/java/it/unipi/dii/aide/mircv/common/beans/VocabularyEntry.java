@@ -144,9 +144,9 @@ public class VocabularyEntry {
     private int frequencySize = 0;
 
     /**
-     * number of blocks in which the posting list is divided
+     * number of blocks in which the posting list is divided; 1 is the default value (all the postings in the same block)
      */
-    private int numBlocks = 0;
+    private int numBlocks = 1;
 
     /**
      * start offset of the block descriptors in the block descriptor file
@@ -168,6 +168,22 @@ public class VocabularyEntry {
      * create an empty class
      */
     public VocabularyEntry() {
+    }
+
+    public VocabularyEntry(String term, int df, double idf, int maxTf, int maxDl, double maxTFIDF, double maxBM25, long docidOffset, long frequencyOffset, int docidSize, int frequencySize, int numBlocks, long blockOffset) {
+        this.term = term;
+        this.df = df;
+        this.idf = idf;
+        this.maxTf = maxTf;
+        this.maxDl = maxDl;
+        this.maxTFIDF = maxTFIDF;
+        this.maxBM25 = maxBM25;
+        this.docidOffset = docidOffset;
+        this.frequencyOffset = frequencyOffset;
+        this.docidSize = docidSize;
+        this.frequencySize = frequencySize;
+        this.numBlocks = numBlocks;
+        this.blockOffset = blockOffset;
     }
 
     /**
@@ -367,13 +383,14 @@ public class VocabularyEntry {
     }
 
     /**
-     * method that computes the number of blocks of postings in which the posting list will be divided
-     * @return the number of blocks
+     * method that computes the number of blocks of postings in which the posting list will be divided.
+     * If the number of postings is < 1024 the posting list is stored in a single block.
      */
-    public int computeBlocksInformation(){
+    public void computeBlocksInformation(){
         this.blockOffset = BlockDescriptor.getMemoryOffset();
         this.numBlocks = (int)Math.ceil(Math.sqrt(df));
-        return numBlocks;
+        if(df >= 1024)
+            this.numBlocks = (int)Math.ceil(Math.sqrt(df));
     }
 
     public int getMaxNumberOfPostingsInBlock(){
@@ -490,9 +507,6 @@ public class VocabularyEntry {
         }
     }
 
-
-
-    // TODO: if npostings <1024 non c'è suddivisione in blocchi, va gestita questa situazione (sia qui, sia nel merger)
     /**
      * method to read from memory the block descriptors for the term
      * @return the arrayList of the block descriptors
@@ -532,8 +546,7 @@ public class VocabularyEntry {
 
     @Override
     public String toString() {
-        return "VocabularyEntry{" +
-                "term='" + term + '\'' +
+        return "term='" + term + '\'' +
                 ", df=" + df +
                 ", idf=" + idf +
                 ", maxTf=" + maxTf +
@@ -545,7 +558,11 @@ public class VocabularyEntry {
                 ", docidSize=" + docidSize +
                 ", frequencySize=" + frequencySize +
                 ", numBlocks=" + numBlocks +
-                ", blockOffset=" + blockOffset +
-                '}';
+                ", blockOffset=" + blockOffset;
+    }
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof VocabularyEntry entry)) return false;
+        return termid == entry.termid && df == entry.df && Double.compare(entry.idf, idf) == 0 && maxTf == entry.maxTf && maxDl == entry.maxDl && Double.compare(entry.maxTFIDF, maxTFIDF) == 0 && Double.compare(entry.maxBM25, maxBM25) == 0 && docidOffset == entry.docidOffset && frequencyOffset == entry.frequencyOffset && docidSize == entry.docidSize && frequencySize == entry.frequencySize && numBlocks == entry.numBlocks && blockOffset == entry.blockOffset && term.equals(entry.term);
     }
 }

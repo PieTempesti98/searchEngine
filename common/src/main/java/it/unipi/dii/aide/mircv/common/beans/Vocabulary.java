@@ -18,6 +18,9 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
      */
     private static final String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
 
+
+    private Vocabulary(){}
+
     /**
      * singleton pattern
      */
@@ -59,7 +62,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
     }
 
-    public boolean readFromDisk(){
+    public boolean readFromDisk(String path){
 
         long position = 0;
 
@@ -68,7 +71,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
             VocabularyEntry entry = new VocabularyEntry();
 
             //read entry and update position
-            position = entry.readFromDisk(position,VOCABULARY_PATH);
+            position = entry.readFromDisk(position,path);
 
             if(position == 0)
                 return  true;
@@ -94,30 +97,29 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
         VocabularyEntry entry = new VocabularyEntry(); //entry to be returned
 
         long start = 0; //index of first element of vocabulary portion on which search is performed
-        long end = CollectionSize.getVocabularySize(); //index of last element of vocabulary portion on which search is performed
+        long end = CollectionSize.getVocabularySize() -1; //index of last element of vocabulary portion on which search is performed
         long mid; //index of element of the vocabulary to be read
         String key; //term read from vocabulary
         long entrySize = VocabularyEntry.ENTRY_SIZE; //size of a vocabulary entry
 
-        //performing binary search to get vocabulary entry
-        while (start < end) {
 
+        //performing binary search to get vocabulary entry
+        while (start <= end) {
 
             // find new entry to read
-            mid = (start + end) / 2;
+            mid = start + (end - start) / 2;
 
             //get entry from disk
             entry.readFromDisk(mid * entrySize, VOCABULARY_PATH);
             key = entry.getTerm();
-            //System.out.println(key);
 
             //check if the search was successful
-            if (key.equals(term))
+            if (key.equals(term)) {
                 return entry;
+            }
 
             //update search portion parameters
             if (term.compareTo(key) > 0) {
-
                 start = mid + 1;
                 continue;
             }
@@ -126,6 +128,9 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
         }
         return null;
     }
+
+
+
 
 
 

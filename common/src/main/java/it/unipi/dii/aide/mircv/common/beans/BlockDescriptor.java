@@ -203,4 +203,16 @@ public class BlockDescriptor {
         }
 
     }
+
+    @Override
+    public String toString() {
+        return "Block info : " +
+                "docidOffset = " + docidOffset +
+                ", docidSize = " + docidSize +
+                ", freqOffset = " + freqOffset +
+                ", freqSize = " + freqSize +
+                ", maxDocid = " + maxDocid +
+                ", numPostings = " + numPostings;
+    }
+
 }

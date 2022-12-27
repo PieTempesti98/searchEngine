@@ -28,4 +28,12 @@ public class Posting {
     public void setFrequency(int frequency) {
         this.frequency = frequency;
     }
+
+    @Override
+    public String toString() {
+        return "Posting{" +
+                "docid=" + docid +
+                ", frequency=" + frequency +
+                '}';
+    }
 }
