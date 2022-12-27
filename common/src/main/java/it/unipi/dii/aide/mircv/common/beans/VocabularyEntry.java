@@ -351,11 +351,11 @@ public class VocabularyEntry {
     /**
      * method that computes the number of blocks of postings in which the posting list will be divided
      * @return the number of blocks
-     * @param size size of posting list
      */
-    public int computeBlocksInformation(int size){
+    public int computeBlocksInformation(){
         this.blockOffset = BlockDescriptor.getMemoryOffset();
-        this.numBlocks = (int)Math.ceil(Math.sqrt(size));
+        //this.numBlocks = (int)Math.ceil(Math.sqrt(size));
+        this.numBlocks = (int)Math.ceil(Math.sqrt(df));
         return numBlocks;
     }
 

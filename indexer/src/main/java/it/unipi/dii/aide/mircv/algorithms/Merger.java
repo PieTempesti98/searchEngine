@@ -310,7 +310,8 @@ public class Merger {
                 }
 
                 // compute information about block descriptors for the posting list to be written
-                vocabularyEntry.computeBlocksInformation(mergedPostingList.getPostings().size());
+                //vocabularyEntry.computeBlocksInformation(mergedPostingList.getPostings().size());
+                vocabularyEntry.computeBlocksInformation();
 
                 // compute maximal number of postings that can be stored in a block
                 int maxNumPostings = vocabularyEntry.getMaxNumberOfPostingsInBlock();
