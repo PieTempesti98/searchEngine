@@ -190,7 +190,7 @@ public class Merger {
                     return null;
 
                 // update max docLen
-                vocabularyEntry.updateMaxDl(nextTerms[i].getMaxDl());
+                vocabularyEntry.updateBM25Statistics(nextTerms[i].getBM25Tf(), nextTerms[i].getBM25Dl());
 
                 //update vocabulary statistics
                 vocabularyEntry.updateStatistics(intermediatePostingList);
@@ -212,8 +212,6 @@ public class Merger {
 
         // compute the final idf
         vocabularyEntry.computeIDF();
-        // compute maxbm25
-        vocabularyEntry.updateMaxBM25(finalList);
         // compute the term upper bounds
         vocabularyEntry.computeUpperBounds();
 

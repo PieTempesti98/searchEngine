@@ -62,7 +62,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
     }
 
-    public boolean readFromDisk(String path){
+    public boolean readFromDisk(){
 
         long position = 0;
 
@@ -71,7 +71,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
             VocabularyEntry entry = new VocabularyEntry();
 
             //read entry and update position
-            position = entry.readFromDisk(position,path);
+            position = entry.readFromDisk(position,VOCABULARY_PATH);
 
             if(position == 0)
                 return  true;

@@ -39,7 +39,7 @@ class DAATTest {
         CollectionSize.updateDocumentsLenght(64);
         CollectionSize.updateCollectionSize(11);
 
-        v.readFromDisk("../data/testData/testVoc");
+        v.readFromDisk();
 
 
     }

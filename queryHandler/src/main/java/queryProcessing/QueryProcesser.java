@@ -44,7 +44,7 @@ public class QueryProcesser {
      * @param isConjunctive
      * @return the list of the query terms' posting lists
      */
-    private static ArrayList<PostingList> getQueryPostings(ProcessedDocument query, boolean isConjunctive){
+    public static ArrayList<PostingList> getQueryPostings(ProcessedDocument query, boolean isConjunctive){
         // ArrayList with all the posting lists
         ArrayList<PostingList> queryPostings = new ArrayList<>();
 

@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Objects;
 
 
 /**
@@ -59,7 +60,9 @@ public class VocabularyEntry {
     /**
      * maximum document length across the documents in which the term is present
      */
-    private int maxDl = 0;
+    private int BM25Dl = 1;
+
+    private int BM25Tf = 0;
 
     /**
      * maximum value of TFIDF for the term
@@ -71,12 +74,20 @@ public class VocabularyEntry {
      */
     private double maxBM25 = 0;
 
-    public int getMaxDl() {
-        return maxDl;
+    public int getBM25Dl() {
+        return BM25Dl;
     }
 
-    public void setMaxDl(int maxDl) {
-        this.maxDl = maxDl;
+    public void setBM25Dl(int BM25Dl) {
+        this.BM25Dl = BM25Dl;
+    }
+
+    public int getBM25Tf() {
+        return BM25Tf;
+    }
+
+    public void setBM25Tf(int BM25Tf) {
+        this.BM25Tf = BM25Tf;
     }
 
     /**
@@ -84,41 +95,13 @@ public class VocabularyEntry {
      *
      * @param dl the new document length to process
      */
-    public void updateMaxDl(int dl) {
-        if (dl > maxDl)
-            maxDl = dl;
-    }
-
-    /**
-     * method to update the max bm25 for the term
-     *
-     * @param bm25 the new bm25
-     */
-    private void updateMaxBM25(double bm25) {
-        //System.out.println("update BM25 to: "+bm25);
-        if (bm25 > maxBM25)
-            maxBM25 = bm25;
-        //System.out.println("max BM25 : "+maxBM25);
-    }
-
-    /**
-     * method to update the maxBM25 for the term
-     * @param intermediatePostingList: posting list for which we have to compute maxBM25
-     */
-    public void updateMaxBM25(PostingList intermediatePostingList) {
-        // TODO: reuse function in Scorer
-        double k1 = 1.5;
-        double b = 0.75;
-        for(Posting posting: intermediatePostingList.getPostings()){
-            double tf = (1 + Math.log10(posting.getFrequency()));
-
-            int docLen = DocumentIndex.getInstance().getLength(posting.getDocid());
-
-            double avgDocLen = (double) CollectionSize.getTotalDocLen()/CollectionSize.getCollectionSize();
-
-            updateMaxBM25((idf * tf)  / ( tf + k1 * (1 - b + b * (double)docLen/avgDocLen)));
+    public void updateBM25Statistics(int tf, int dl) {
+        double currentRatio = (double) this.BM25Tf / (double) (this.BM25Dl + this.BM25Tf);
+        double newRatio = (double) tf / (double) (dl + tf);
+        if(newRatio > currentRatio){
+            this.BM25Tf = tf;
+            this.BM25Dl = dl;
         }
-
     }
 
     /* --- MEMORY INFORMATION --- */
@@ -159,31 +142,15 @@ public class VocabularyEntry {
     public static final int TERM_SIZE = 64;
 
     /**
-     * we have to store the term size plus 6 ints, 3 double and 3 longs, total 136 bytes
+     * we have to store the term size plus 7 ints, 3 double and 3 longs, total 136 bytes
      */
-    public static final long ENTRY_SIZE = TERM_SIZE + 72;
+    public static final long ENTRY_SIZE = TERM_SIZE + 76;
 
     /**
      * Constructor for the vocabulary entry
      * create an empty class
      */
     public VocabularyEntry() {
-    }
-
-    public VocabularyEntry(String term, int df, double idf, int maxTf, int maxDl, double maxTFIDF, double maxBM25, long docidOffset, long frequencyOffset, int docidSize, int frequencySize, int numBlocks, long blockOffset) {
-        this.term = term;
-        this.df = df;
-        this.idf = idf;
-        this.maxTf = maxTf;
-        this.maxDl = maxDl;
-        this.maxTFIDF = maxTFIDF;
-        this.maxBM25 = maxBM25;
-        this.docidOffset = docidOffset;
-        this.frequencyOffset = frequencyOffset;
-        this.docidSize = docidSize;
-        this.frequencySize = frequencySize;
-        this.numBlocks = numBlocks;
-        this.blockOffset = blockOffset;
     }
 
     /**
@@ -279,7 +246,8 @@ public class VocabularyEntry {
 
             // write term upper bound information
             buffer.putInt(maxTf);
-            buffer.putInt(maxDl);
+            buffer.putInt(BM25Dl);
+            buffer.putInt(BM25Tf);
             buffer.putDouble(maxTFIDF);
             buffer.putDouble(maxBM25);
 
@@ -346,7 +314,8 @@ public class VocabularyEntry {
 
             // read term upper bound information
             maxTf = buffer.getInt();
-            maxDl = buffer.getInt();
+            BM25Dl = buffer.getInt();
+            BM25Tf = buffer.getInt();
             maxTFIDF = buffer.getDouble();
             maxBM25 = buffer.getDouble();
 
@@ -376,9 +345,11 @@ public class VocabularyEntry {
         // compute term upper bound for TFIDF
         this.maxTFIDF = (1 + Math.log10(this.maxTf)) * this.idf;
 
-        // compute term upper bound for BM25
+        double k1 = 1.5;
+        double b = 0.75;
+        double avgDocLen = (double) CollectionSize.getTotalDocLen()/CollectionSize.getCollectionSize();
 
-        // TODO: update
+        this.maxBM25 = (idf * BM25Tf)  / ( BM25Tf + k1 * (1 - b + b * (double)BM25Dl/avgDocLen));
 
     }
 
@@ -388,7 +359,6 @@ public class VocabularyEntry {
      */
     public void computeBlocksInformation(){
         this.blockOffset = BlockDescriptor.getMemoryOffset();
-        this.numBlocks = (int)Math.ceil(Math.sqrt(df));
         if(df >= 1024)
             this.numBlocks = (int)Math.ceil(Math.sqrt(df));
     }
@@ -546,11 +516,13 @@ public class VocabularyEntry {
 
     @Override
     public String toString() {
-        return "term='" + term + '\'' +
+        return  "termid=" + termid +
+                ", term='" + term + '\'' +
                 ", df=" + df +
                 ", idf=" + idf +
                 ", maxTf=" + maxTf +
-                ", maxDl=" + maxDl +
+                ", BM25Dl=" + BM25Dl +
+                ", BM25Tf=" + BM25Tf +
                 ", maxTFIDF=" + maxTFIDF +
                 ", maxBM25=" + maxBM25 +
                 ", docidOffset=" + docidOffset +
@@ -560,9 +532,12 @@ public class VocabularyEntry {
                 ", numBlocks=" + numBlocks +
                 ", blockOffset=" + blockOffset;
     }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof VocabularyEntry entry)) return false;
-        return termid == entry.termid && df == entry.df && Double.compare(entry.idf, idf) == 0 && maxTf == entry.maxTf && maxDl == entry.maxDl && Double.compare(entry.maxTFIDF, maxTFIDF) == 0 && Double.compare(entry.maxBM25, maxBM25) == 0 && docidOffset == entry.docidOffset && frequencyOffset == entry.frequencyOffset && docidSize == entry.docidSize && frequencySize == entry.frequencySize && numBlocks == entry.numBlocks && blockOffset == entry.blockOffset && term.equals(entry.term);
+        if (o == null || getClass() != o.getClass()) return false;
+        VocabularyEntry that = (VocabularyEntry) o;
+        return df == that.df && Double.compare(that.idf, idf) == 0 && maxTf == that.maxTf && BM25Dl == that.BM25Dl && BM25Tf == that.BM25Tf && Double.compare(that.maxTFIDF, maxTFIDF) == 0 && Double.compare(that.maxBM25, maxBM25) == 0 && docidOffset == that.docidOffset && frequencyOffset == that.frequencyOffset && docidSize == that.docidSize && frequencySize == that.frequencySize && numBlocks == that.numBlocks && blockOffset == that.blockOffset && Objects.equals(term, that.term);
     }
 }

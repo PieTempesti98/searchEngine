@@ -72,7 +72,7 @@ public class MaxScoreTest {
 
 
         // load the posting lists of the tokens
-        ArrayList<PostingList> queryPostings = getQueryPostings(new ProcessedDocument("query", query));
+        ArrayList<PostingList> queryPostings = getQueryPostings(new ProcessedDocument("query", query), false);
 
         if(queryPostings.isEmpty()){
             if(verbose)
@@ -115,7 +115,7 @@ public class MaxScoreTest {
         }
 
         // load the posting lists of the tokens
-        ArrayList<PostingList> queryPostings = getQueryPostings(new ProcessedDocument("query", query));
+        ArrayList<PostingList> queryPostings = getQueryPostings(new ProcessedDocument("query", query), conjunctiveMode);
 
         if(queryPostings.isEmpty()){
             if(verbose)
@@ -137,7 +137,7 @@ public class MaxScoreTest {
      * with COMPRESSION NOT ENABLED and STOPWORDS REMOVAL NOT ENABLED
      */
     public static void main(String[] args){
-        Flags.saveFlags(false, false);
+        Flags.saveFlags(false, false, true);
         boolean setupSuccess = QueryProcesser.setupProcesser();
 
         if(!setupSuccess){

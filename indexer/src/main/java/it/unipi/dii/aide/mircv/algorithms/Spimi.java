@@ -145,16 +145,15 @@ public class Spimi {
                         // encode freq
                         freqsBuffer.putInt(posting.getFrequency());
                     }
-
-                    // TODO: update MAXDL
-
                     vocEntry.updateStatistics(list);
+                    vocEntry.setBM25Dl(list.getBM25Dl());
+                    vocEntry.setBM25Tf(list.getBM25Tf());
                     vocEntry.setDocidSize((int) (numPostings*4));
                     vocEntry.setFrequencySize((int) (numPostings*4));
 
                     vocOffset = vocEntry.writeEntryToDisk(vocOffset, vocabularyFchan);
                     if(debugMode){
-                        list.debugSaveToDisk("partialDOCIDS_"+numIndex+".txt", "partialFREQS_"+numIndex+".txt");
+                        list.debugSaveToDisk("partialDOCIDS_"+numIndex+".txt", "partialFREQS_"+numIndex+".txt", (int) numPostings);
                         vocEntry.debugSaveToDisk("partialVOC_"+numIndex+".txt");
                     }
                 }
@@ -287,7 +286,7 @@ public class Spimi {
 
                         //insert or update new posting
                         updateOrAddPosting(docid, posting);
-                        posting.updateMaxDocumentLength(documentLength);
+                        posting.updateBM25Parameters(documentLength, posting.getPostings().size());
 
                     }
                     docid++;

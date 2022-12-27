@@ -48,7 +48,9 @@ public class PostingList{
     /**
      * variable used for computing the max dl to insert in the vocabulary
      */
-    private int maxDl = 0;
+    private int BM25Dl = 1;
+
+    private int BM25Tf = 0;
 
     /**
      * constructor that create a posting list from a string
@@ -102,9 +104,13 @@ public class PostingList{
      * Update the max document length
      * @param length the candidate max document length
      */
-    public void updateMaxDocumentLength(int length){
-        if(length > this.maxDl)
-            this.maxDl = length;
+    public void updateBM25Parameters(int length, int tf){
+        double currentRatio = (double) this.BM25Tf / (double) (this.BM25Dl + this.BM25Tf);
+        double newRatio = (double) tf / (double) (length + tf);
+        if(newRatio > currentRatio){
+            this.BM25Tf = tf;
+            this.BM25Dl = length;
+        }
     }
 
     /**
@@ -319,5 +325,13 @@ public class PostingList{
         result.append('\n');
 
         return result.toString();
+    }
+
+    public int getBM25Dl() {
+        return BM25Dl;
+    }
+
+    public int getBM25Tf(){
+        return BM25Tf;
     }
 }
