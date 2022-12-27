@@ -467,7 +467,6 @@ public class VocabularyEntry {
                 ", frequencySize=" + frequencySize;
     }
 
-    // TODO: if npostings <1024 non c'è suddivisione in blocchi, va gestita questa situazione (sia qui, sia nel merger)
     /**
      * method to read from memory the block descriptors for the term
      * @return the arrayList of the block descriptors
