@@ -34,10 +34,6 @@ public class Main {
             for(String flag: args){
 
                 if(flag.equals("-c")){
-                    if(debugModeEnable){
-                        System.out.println("Cannot enable both debug mode and integer compression at the same time");
-                        return;
-                    }
                     compressedWritingEnable = true;
                     continue;
                 }
@@ -53,11 +49,6 @@ public class Main {
                 }
 
                 if(flag.equals("-d")){
-
-                    if(compressedWritingEnable){
-                        System.out.println("Cannot enable both debug mode and integer compression at the same time");
-                        return;
-                    }
                     debugModeEnable = true;
                     continue;
                 }
