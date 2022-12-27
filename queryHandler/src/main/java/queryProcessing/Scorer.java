@@ -22,8 +22,9 @@ public class Scorer {
         //get average document length
         double avgDocLen = (double) CollectionSize.getTotalDocLen()/CollectionSize.getCollectionSize();
 
+        //TODO: il k+1 non c'è sulle slides ma in rete si
         //return score
-        return idf * tf  / ( tf + k1 * (1 - b + b * docLen/avgDocLen));
+        return idf * tf * (k1 + 1) / ( tf + k1 * (1 - b + b * docLen/avgDocLen));
 
     }
 

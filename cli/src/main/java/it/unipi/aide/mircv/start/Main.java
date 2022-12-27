@@ -1,8 +1,4 @@
 package it.unipi.aide.mircv.start;
-
-import it.unipi.dii.aide.mircv.common.beans.Vocabulary;
-import it.unipi.dii.aide.mircv.common.beans.VocabularyEntry;
-import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import queryProcessing.QueryProcesser;
 
 import java.util.Locale;
@@ -93,7 +89,8 @@ public class Main {
             long start = System.currentTimeMillis();
             String[] documents = QueryProcesser.processQuery(queryInfo[0],k,queryInfo[1].equals("c"),scoringFunction);
             long stop = System.currentTimeMillis();
-            if(documents == null){
+
+            if(documents == null || documents[0] == null){
                 System.out.println("Unfortunately, no documents satisfy your request.");
                 continue;
             }

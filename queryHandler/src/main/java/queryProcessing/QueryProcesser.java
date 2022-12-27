@@ -1,7 +1,5 @@
 package queryProcessing;
 
-
-import indexLoading.IndexLoader;
 import it.unipi.dii.aide.mircv.common.beans.*;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
@@ -9,9 +7,7 @@ import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.config.Flags;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -20,7 +16,6 @@ import java.util.stream.Collectors;
  */
 public class QueryProcesser {
 
-    //TODO: add flags for query processing
 
     /**
      * Vocabulary (already loaded in memory)
@@ -55,9 +50,10 @@ public class QueryProcesser {
     /**
      * load from disk the posting lists of the query tokens
      * @param query the query document
+     * @param isConjunctive
      * @return the list of the query terms' posting lists
      */
-    private static ArrayList<PostingList> getQueryPostings(ProcessedDocument query){
+    private static ArrayList<PostingList> getQueryPostings(ProcessedDocument query, boolean isConjunctive){
 
         // ArrayList with all the posting lists
         ArrayList<PostingList> queryPostings = new ArrayList<>();
@@ -70,7 +66,13 @@ public class QueryProcesser {
 
         for(String queryTerm: queryTerms){
             VocabularyEntry entry = vocabulary.getEntry(queryTerm);
+
             if(entry == null){
+                //if query is in conjunctive mode and a query term is not present
+                //in the collection, no document will satisfy the request
+                if(isConjunctive)
+                    return null;
+
                 continue;
             }
             vocabulary.put(queryTerm, entry);
@@ -106,10 +108,11 @@ public class QueryProcesser {
      * @return an array with the top-k document pids
      */
     public static String[] processQuery(String query, int k, boolean isConjunctive, String scoringFunction){
+
         ProcessedDocument processedQuery = Preprocesser.processDocument(new TextDocument("query", query));
         // load the posting lists of the tokens
-        ArrayList<PostingList> queryPostings = getQueryPostings(processedQuery);
-        if(queryPostings.isEmpty()){
+        ArrayList<PostingList> queryPostings = getQueryPostings(processedQuery,isConjunctive);
+        if(queryPostings == null || queryPostings.isEmpty()){
             return null;
         }
         PriorityQueue<Map.Entry<Double, Integer>> priorityQueue = DAAT.scoreQuery(queryPostings, isConjunctive, k,scoringFunction);

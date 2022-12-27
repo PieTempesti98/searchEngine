@@ -58,7 +58,7 @@ class PreprocesserTest {
     @ParameterizedTest
     @MethodSource("getTextToProcessAndProcessed")
     void processDocument_ShouldReturnDocumentAppropiatelyProcessed(String textToProcess, String textProcessed) {
-        ProcessedDocument actualDocument = Preprocesser.processDocument(new TextDocument("_",textToProcess), true);
+        ProcessedDocument actualDocument = Preprocesser.processDocument(new TextDocument("_",textToProcess));
         assertEquals(actualDocument.getTokens(), List.of(textProcessed.split(" ")));
     }
 }

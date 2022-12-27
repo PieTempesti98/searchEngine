@@ -131,7 +131,7 @@ public class Preprocesser {
         text = text.replaceAll(NON_DIGIT_MATCHER, "\s");
 
         //collapse 3+ repeating characters in just 2
-        text = text.replaceAll(CONSECUTIVE_LETTERS_MATCHER,"$1$1");
+        text = text.replaceAll(CONSECUTIVE_LETTERS_MATCHER,"$1");
 
         //remove consecutive multiple whitespaces with a single one
         text = text.replaceAll(MULTIPLE_SPACE_MATCHER, "\s");
@@ -142,7 +142,6 @@ public class Preprocesser {
         return text;
     }
 
-    //TODO: enable or disable stemming according to flags. Add boolean
 
     /**
      * @param tokens: set of tokens

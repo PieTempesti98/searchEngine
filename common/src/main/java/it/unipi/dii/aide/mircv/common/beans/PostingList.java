@@ -5,6 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 
 public class PostingList{
@@ -97,14 +98,6 @@ public class PostingList{
         postings.addAll(newPostings);
     }
 
-    @Override
-    public String toString() {
-        return "PostingList{" +
-                "term='" + term + '\'' +
-                ", postings=" + postings +
-                '}';
-    }
-
     /**
      * Update the max document length
      * @param length the candidate max document length
@@ -139,14 +132,17 @@ public class PostingList{
      * @return the next posting in the list
      */
     public Posting next(){
-
         // no postings in memory: load new block
         if(!postingIterator.hasNext()) {
             // no new blocks: end of list
-            if (!blocksIterator.hasNext())
+            if (!blocksIterator.hasNext()) {
+                currentPosting = null;
                 return null;
+            }
             // load the new block and update the postings iterator
             currentBlock = blocksIterator.next();
+            //remove previous postings
+            postings.clear();
             postings.addAll(currentBlock.getBlockPostings());
             postingIterator = postings.iterator();
         }
@@ -208,6 +204,8 @@ public class PostingList{
         // remove the term from the vocabulary
         Vocabulary.getInstance().remove(term);
     }
+    
+    // TODO: fix posting list toString()
 
     /**
      * function to write the posting list as plain text in the debug files
@@ -218,10 +216,13 @@ public class PostingList{
         FileUtils.createDirectory("data/debug");
         FileUtils.createIfNotExists("data/debug/"+docidsPath);
         FileUtils.createIfNotExists("data/debug/"+freqsPath);
+        FileUtils.createIfNotExists("data/debug/completeList.txt");
 
         try {
             BufferedWriter writerDocids = new BufferedWriter(new FileWriter("data/debug/"+docidsPath, true));
             BufferedWriter writerFreqs = new BufferedWriter(new FileWriter("data/debug/"+freqsPath, true));
+            BufferedWriter all = new BufferedWriter(new FileWriter("data/debug/completeList.txt", true));
+            String[] postingInfo = toStringPosting();
             int postingsPerBlock = 0;
             for(Posting p: postings){
                 writerDocids.write(p.getDocid()+" ");
@@ -240,10 +241,82 @@ public class PostingList{
             writerDocids.write("\n");
             writerFreqs.write("\n");
 
+            writerDocids.write(postingInfo[0] + "\n");
+            writerFreqs.write(postingInfo[1] + "\n");
+            all.write(this.toString());
             writerDocids.close();
             writerFreqs.close();
+            all.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public String[] toStringPosting() {
+
+        StringBuilder resultDocids = new StringBuilder();
+        StringBuilder resultFreqs = new StringBuilder();
+
+        resultDocids.append(term).append(" -> ");
+        resultFreqs.append(term).append(" -> ");
+
+        int curBlock = 0;
+        int curPosting = 0;
+        int numPostings = postings.size();
+        int numBlocks = 1;
+
+        if(postings.size() > 1024) {
+            numBlocks = (int) Math.ceil(Math.sqrt(postings.size()));
+            numPostings = (int) Math.ceil( postings.size() / (double) numBlocks);
+        }
+
+
+        while(curBlock < numBlocks){
+
+            //The number of postings in the last block may be greater from the actual number of postings it contains
+            int n = Math.min(numPostings,postings.size() - curPosting);
+
+            for(int i = 0; i < n; i++){
+                resultDocids.append(postings.get(curPosting).getDocid());
+                resultFreqs.append(postings.get(curPosting).getFrequency());
+
+                if(i != n - 1) {
+                    resultDocids.append(", ");
+                    resultFreqs.append(", ");
+                }
+                curPosting++;
+
+            }
+
+            curBlock++;
+
+            //there are iterations left
+            if(curBlock != numBlocks ) {
+                resultDocids.append(" | ");
+                resultFreqs.append(" | ");
+            }
+
+
+        }
+
+        return new String[]{resultDocids.toString(),resultFreqs.toString()};
+    }
+
+
+
+    @Override
+    public String toString() {
+
+        StringBuilder result = new StringBuilder();
+        result.append("\"");
+        result.append(term);
+        result.append('\t');
+        for(Posting p: postings){
+            result.append(p.getDocid()).append(":").append(p.getFrequency()).append(" ");
+        }
+        result.append("\"");
+        result.append('\n');
+
+        return result.toString();
     }
 }

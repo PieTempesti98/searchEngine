@@ -95,7 +95,7 @@ public class Spimi {
     private static boolean saveIndexToDisk(HashMap<String, PostingList> index, boolean debugMode) {
 
         if (index.isEmpty()) //if the index is empty there is nothing to write on disk
-            return true;
+            return false;
 
         //sort index in lexicographic order
         index = index.entrySet()
@@ -137,7 +137,6 @@ public class Spimi {
                     VocabularyEntry vocEntry = new VocabularyEntry(list.getTerm());
                     vocEntry.setMemoryOffset(docsBuffer.position());
                     vocEntry.setFrequencyOffset(docsBuffer.position());
-
 
                     // write postings to file
                     for (Posting posting : list.getPostings()) {
@@ -182,7 +181,7 @@ public class Spimi {
      * @param docid:       docid of a certain document
      * @param postingList: posting list of a given term
      **/
-    private static void updateOrAddPosting(int docid, PostingList postingList) {
+    protected static void updateOrAddPosting(int docid, PostingList postingList) {
         if (postingList.getPostings().size() > 0) {
             // last document inserted:
             Posting posting = postingList.getPostings().get(postingList.getPostings().size() - 1);
@@ -234,7 +233,7 @@ public class Spimi {
                         break;
                     }
                     // if the line is empty we process the next line
-                    if (line.isEmpty())
+                    if (line.isBlank())
                         continue;
 
                     // split of the line in the format <pid>\t<text>
@@ -254,7 +253,7 @@ public class Spimi {
                     //create new document index entry and add it to file
                     DocumentIndexEntry docIndexEntry = new DocumentIndexEntry(
                             processedDocument.getPid(),
-                            docid++,
+                            docid,
                             documentLength
                     );
 
@@ -289,6 +288,8 @@ public class Spimi {
                         posting.updateMaxDocumentLength(documentLength);
 
                     }
+
+                    docid++;
                 }
 
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
@@ -312,7 +313,11 @@ public class Spimi {
             e.printStackTrace();
             return 0;
         }
+
+
     }
+
+
 
 
 }

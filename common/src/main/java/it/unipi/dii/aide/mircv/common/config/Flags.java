@@ -11,6 +11,7 @@ public class Flags {
 
     private static boolean compression;
     private static boolean stemStopRemoval;
+    private static boolean maxScore;
 
     public static boolean initializeFlags(){
 
@@ -19,9 +20,10 @@ public class Flags {
                 DataInputStream flagsDataStream = new DataInputStream(flagsInStream)
         ){
 
+            //read flags
             compression = flagsDataStream.readBoolean();
-
             stemStopRemoval = flagsDataStream.readBoolean();
+            maxScore = flagsDataStream.readBoolean();
 
             return true;
 
@@ -32,15 +34,21 @@ public class Flags {
 
     }
 
-    public static boolean saveFlags(boolean compression,boolean stemStopRemoval){
+    public static boolean saveFlags(boolean compressionFlag,boolean stemStopRemovalFlag,boolean maxScoreFlag){
 
         try(
                 FileOutputStream flagsOutStream = new FileOutputStream(FLAGS_FILE_PATH);
                 DataOutputStream flagsDataStream = new DataOutputStream(flagsOutStream)
         ){
+            //update flags
+            compression = compressionFlag;
+            stemStopRemoval = stemStopRemovalFlag;
+            maxScore = maxScoreFlag;
 
+            //write flags to disk
             flagsDataStream.writeBoolean(compression);
             flagsDataStream.writeBoolean(stemStopRemoval);
+            flagsDataStream.writeBoolean(maxScore);
             return true;
 
         }catch (Exception e) {
@@ -57,4 +65,6 @@ public class Flags {
     public static boolean isStemStopRemovalEnabled() {
         return stemStopRemoval;
     }
+
+    public static boolean isMaxScoreEnabled() {return maxScore;}
 }
