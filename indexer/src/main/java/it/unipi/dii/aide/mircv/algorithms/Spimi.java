@@ -31,7 +31,7 @@ public class Spimi {
     /**
      * path to the file on the disk storing the compressed collection
      */
-    private static final String PATH_COMPRESSED_COLLECTION = ConfigurationParameters.getCompressedCollectionPath();
+    protected static final String PATH_COMPRESSED_COLLECTION = ConfigurationParameters.getCompressedCollectionPath();
 
     /*
     path to the file on the disk storing the partial vocabulary
@@ -145,6 +145,8 @@ public class Spimi {
                         // encode freq
                         freqsBuffer.putInt(posting.getFrequency());
                     }
+
+                    // TODO: update MAXDL
 
                     vocEntry.updateStatistics(list);
                     vocEntry.setDocidSize((int) (numPostings*4));
@@ -288,7 +290,6 @@ public class Spimi {
                         posting.updateMaxDocumentLength(documentLength);
 
                     }
-
                     docid++;
                 }
 

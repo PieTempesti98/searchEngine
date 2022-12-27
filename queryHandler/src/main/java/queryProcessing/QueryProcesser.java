@@ -37,15 +37,6 @@ public class QueryProcesser {
      */
     private static final String INVERTED_INDEX_FREQS_PATH = ConfigurationParameters.getInvertedIndexFreqs();
 
-    /**
-     * path to file storing flags
-     */
-
-
-    /**
-     * if set to true, compression of inverted index is enabled
-     */
-
 
     /**
      * load from disk the posting lists of the query tokens
@@ -54,7 +45,6 @@ public class QueryProcesser {
      * @return the list of the query terms' posting lists
      */
     private static ArrayList<PostingList> getQueryPostings(ProcessedDocument query, boolean isConjunctive){
-
         // ArrayList with all the posting lists
         ArrayList<PostingList> queryPostings = new ArrayList<>();
 
@@ -88,12 +78,11 @@ public class QueryProcesser {
      * @param k number of documents to return
      * @return the ordered array of document pids
      */
-    private static String[] lookupPid(PriorityQueue<Map.Entry<Double, Integer>> priorityQueue, int k){
+    public static String[] lookupPid(PriorityQueue<Map.Entry<Double, Integer>> priorityQueue, int k){
         String[] output = new String[k];
         int i = priorityQueue.size() - 1;
-        while(!priorityQueue.isEmpty()){
-            int docid = priorityQueue.poll().getValue();
-            output[i] = documentIndex.getPid(docid);
+        for (Map.Entry<Double, Integer> resEntry : priorityQueue) {
+            output[i] = documentIndex.getPid(resEntry.getValue());
             i--;
         }
         return output;
@@ -104,7 +93,7 @@ public class QueryProcesser {
      * @param query The query string
      * @param k number of documents to retrieve
      * @param isConjunctive specifies if the query is conjunctive
-     * @param scoringFunction
+     * @param scoringFunction specifies which scoring function should be used to process the query ("tfidf" or "bm25")
      * @return an array with the top-k document pids
      */
     public static String[] processQuery(String query, int k, boolean isConjunctive, String scoringFunction){

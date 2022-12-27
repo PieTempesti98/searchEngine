@@ -2,6 +2,7 @@ package it.unipi.dii.aide.mircv;
 
 import it.unipi.dii.aide.mircv.algorithms.Merger;
 import it.unipi.dii.aide.mircv.algorithms.Spimi;
+import it.unipi.dii.aide.mircv.common.beans.DocumentIndex;
 import it.unipi.dii.aide.mircv.common.config.Flags;
 
 
@@ -88,6 +89,8 @@ public class Main {
         }
         System.out.println("Spimi done!");
 
+        if(DocumentIndex.getInstance().isEmpty())
+            DocumentIndex.getInstance().loadFromDisk();
 
         if(Merger.mergeIndexes(numIndexes,compressedWritingEnable,debugModeEnable)) {
             System.out.println("Inverted index correctly created.");

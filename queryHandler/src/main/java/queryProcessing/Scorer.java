@@ -9,7 +9,6 @@ public class Scorer {
     private static final double b = 0.75;
 
     public static double scoreDocument(Posting posting, double idf, String scoringFunction) {
-
         return ((scoringFunction.equals("bm25"))? computeBM25(posting, idf) : computeTFIDF(posting, idf));
     }
 

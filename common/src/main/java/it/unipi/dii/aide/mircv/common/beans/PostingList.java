@@ -190,7 +190,8 @@ public class PostingList{
             if (currentPosting.getDocid() >= docid)
                 return currentPosting;
         }
-        return null;
+        currentPosting = null;
+        return currentPosting;
     }
 
     public void closeList(){

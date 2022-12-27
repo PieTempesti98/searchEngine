@@ -8,29 +8,12 @@ import static it.unipi.dii.aide.mircv.common.utils.FileUtils.*;
 
 public class Utility {
     private static final String DOC_INDEX_PATH = ConfigurationParameters.getDocumentIndexPath();
-
     private static final String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
-
     private static final String PARTIAL_INDEX_DOCIDS = ConfigurationParameters.getDocidsDir();
     private static final String PARTIAL_INDEX_FREQS = ConfigurationParameters.getFrequencyDir();
-
     private static final String INVERTED_INDEX_DOCIDS = ConfigurationParameters.getInvertedIndexDocs();
     private static final String INVERTED_INDEX_FREQS = ConfigurationParameters.getInvertedIndexFreqs();
     private static final String PARTIAL_VOCABULARY_PATH = ConfigurationParameters.getPartialVocabularyDir();
-
-
-    /**
-     * Number of different intermediate indexes
-     */
-    private static int numIndexes = 0;
-
-    public static int getNumIndexes() {
-        return numIndexes;
-    }
-
-    public static void setNumIndexes(int numIndexes) {
-        Utility.numIndexes = numIndexes;
-    }
 
     public static void initializeFiles(){
 
