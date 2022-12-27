@@ -214,7 +214,7 @@ public class PostingList{
      * @param docidsPath: path of docids file where to write
      * @param freqsPath: path of freqs file where to write
      */
-    public void debugSaveToDisk(String docidsPath, String freqsPath){
+    public void debugSaveToDisk(String docidsPath, String freqsPath, int maxPostingsPerBlock){
         FileUtils.createDirectory("data/debug");
         FileUtils.createIfNotExists("data/debug/"+docidsPath);
         FileUtils.createIfNotExists("data/debug/"+freqsPath);
@@ -222,9 +222,20 @@ public class PostingList{
         try {
             BufferedWriter writerDocids = new BufferedWriter(new FileWriter("data/debug/"+docidsPath, true));
             BufferedWriter writerFreqs = new BufferedWriter(new FileWriter("data/debug/"+freqsPath, true));
+            int postingsPerBlock = 0;
             for(Posting p: postings){
                 writerDocids.write(p.getDocid()+" ");
                 writerFreqs.write(p.getFrequency()+" ");
+                postingsPerBlock ++;
+                // check if I reach the maximum number of terms per block
+                if(postingsPerBlock == maxPostingsPerBlock){
+                    // write the block separator on file
+                    writerDocids.write("| ");
+                    writerFreqs.write("| ");
+
+                    // reset tne number of postings to zero
+                    postingsPerBlock = 0;
+                }
             }
             writerDocids.write("\n");
             writerFreqs.write("\n");
