@@ -2,7 +2,6 @@ package it.unipi.dii.aide.mircv;
 
 import it.unipi.dii.aide.mircv.algorithms.Merger;
 import it.unipi.dii.aide.mircv.algorithms.Spimi;
-import it.unipi.dii.aide.mircv.common.beans.DocumentIndex;
 import it.unipi.dii.aide.mircv.common.config.Flags;
 
 
@@ -28,7 +27,9 @@ public class Main {
         boolean maxScoreEnabled = false;
 
         //check input and initialize flags
-        if(args.length > 1) {
+        if(args.length > 0) {
+
+            System.out.println(args[0]);
 
             for(String flag: args){
 
@@ -80,17 +81,12 @@ public class Main {
         //initialize files and directories needed for Spimi execution
         initializeFiles();
 
-        System.out.println(debugModeEnable);
-
         int numIndexes = Spimi.executeSpimi(compressedReadingEnable, debugModeEnable);
         if(numIndexes <= 0){
             System.out.println("An error occurred: no partial indexes.");
             return;
         }
         System.out.println("Spimi done!");
-
-        if(DocumentIndex.getInstance().isEmpty())
-            DocumentIndex.getInstance().loadFromDisk();
 
         if(Merger.mergeIndexes(numIndexes,compressedWritingEnable,debugModeEnable)) {
             System.out.println("Inverted index correctly created.");

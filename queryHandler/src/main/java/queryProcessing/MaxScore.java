@@ -67,11 +67,7 @@ public class MaxScore {
         boolean currThresholdHasBeenUpdated = true;
 
         int firstEssentialPLIndex = 0;
-        int iteration=0;
         while(true){
-            iteration++;
-            if(iteration==12)
-                break;
             //System.out.println("iteration: "+iteration);
             double partialScore = 0;
             double documentUpperBound = 0;
@@ -118,6 +114,8 @@ public class MaxScore {
 
             if(conjunctiveMode){
                 docToProcess = nextGEQ(sortedLists, docToProcess);
+                if(docToProcess == -1)
+                    break;
             }
 
             // process DAAT the essential posting lists for docToProcess

@@ -104,7 +104,11 @@ public class QueryProcesser {
         if(queryPostings == null || queryPostings.isEmpty()){
             return null;
         }
-        PriorityQueue<Map.Entry<Double, Integer>> priorityQueue = DAAT.scoreQuery(queryPostings, isConjunctive, k,scoringFunction);
+        PriorityQueue<Map.Entry<Double, Integer>> priorityQueue;
+        if(!Flags.isMaxScoreEnabled())
+             priorityQueue = DAAT.scoreQuery(queryPostings, isConjunctive, k,scoringFunction);
+        else
+            priorityQueue = MaxScore.scoreQuery(queryPostings,k,scoringFunction,isConjunctive);
 
         return lookupPid(priorityQueue, k);
     }
