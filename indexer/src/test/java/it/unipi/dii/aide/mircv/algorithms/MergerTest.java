@@ -1,9 +1,12 @@
 package it.unipi.dii.aide.mircv.algorithms;
 
 import it.unipi.dii.aide.mircv.common.beans.*;
-import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
+import it.unipi.dii.aide.mircv.common.config.CollectionSize;
+import it.unipi.dii.aide.mircv.common.config.Flags;
+import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -17,36 +20,65 @@ import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import static org.junit.jupiter.api.Assertions.*;
 
+import static it.unipi.dii.aide.mircv.common.utils.FileUtils.createDirectory;
+import static org.junit.jupiter.api.Assertions.*;
 
 class MergerTest {
 
-    private static final String TEST_DIRECTORY = ConfigurationParameters.getTestDir();
-    private static final String PATH_TO_PARTIAL_VOCABULARY = TEST_DIRECTORY+"/partial_vocabulary/partial_vocabulary_";
-    private static final String PATH_TO_PARTIAL_FREQUENCIES = TEST_DIRECTORY+"/partial_freqs/partial_freqs_";
-    private static final String PATH_TO_PARTIAL_INDEXES_DOCS = TEST_DIRECTORY+"/partial_docids/partial_docids_";
+
+    private static final String TEST_DIRECTORY = "data/test";
+    private static final String PATH_TO_PARTIAL_VOCABULARY = TEST_DIRECTORY+"/partial_vocabulary/partial_vocabulary";
+    private static final String PATH_TO_PARTIAL_FREQUENCIES = TEST_DIRECTORY+"/partial_freqs/partial_freqs";
+    private static final String PATH_TO_PARTIAL_INDEXES_DOCS = TEST_DIRECTORY+"/partial_docids/partial_docids";
     private static final String DOCINDEX_PATH = TEST_DIRECTORY+"/docIndex";
     private static final String VOCABULARY_PATH = TEST_DIRECTORY+"/vocabulary";
     private static final String INVERTED_INDEX_DOCIDS = TEST_DIRECTORY+"/docids";
     private static final String INVERTED_INDEX_FREQS = TEST_DIRECTORY+"/freqs";
+    private static final String BLOCK_DESCRIPTOR_PATH = TEST_DIRECTORY+"/block_descriptors";
+    private static final String COLLECTION_STATISTICS_PATH = TEST_DIRECTORY+"collection_statistics";
+
+    @BeforeAll
+    static void setPaths(){
+        System.out.println(TEST_DIRECTORY);
+        FileUtils.deleteDirectory(TEST_DIRECTORY);
+        FileUtils.createDirectory(TEST_DIRECTORY);
+        Merger.setPathToVocabulary(VOCABULARY_PATH);
+        Merger.setPathToInvertedIndexDocs(INVERTED_INDEX_DOCIDS);
+        Merger.setPathToInvertedIndexFreqs(INVERTED_INDEX_FREQS);
+        Merger.setPathToBlockDescriptors(BLOCK_DESCRIPTOR_PATH);
+        Merger.setPathToPartialIndexesDocs(PATH_TO_PARTIAL_INDEXES_DOCS);
+        Merger.setPathToPartialIndexesFreqs(PATH_TO_PARTIAL_FREQUENCIES);
+        Merger.setPathToPartialVocabularies(PATH_TO_PARTIAL_VOCABULARY);
+        VocabularyEntry.setBlockDescriptorsPath(BLOCK_DESCRIPTOR_PATH);
+        BlockDescriptor.setInvertedIndexDocs(INVERTED_INDEX_DOCIDS);
+        BlockDescriptor.setInvertedIndexFreqs(INVERTED_INDEX_FREQS);
+        CollectionSize.setCollectionStatisticsPath(COLLECTION_STATISTICS_PATH);
+        Vocabulary.setVocabularyPath(VOCABULARY_PATH);
+        if(Flags.isStemStopRemovalEnabled())
+            Preprocesser.readStopwords();
+    }
 
 
     @BeforeEach
     void setUp() {
-        System.out.println(TEST_DIRECTORY);
-        FileUtils.deleteDirectory(TEST_DIRECTORY);
-        FileUtils.createDirectory(TEST_DIRECTORY);
+        //create directories to store partial frequencies, docids and vocabularies
+        createDirectory(TEST_DIRECTORY+"/partial_freqs");
+        createDirectory(TEST_DIRECTORY+"/partial_docids");
+        createDirectory(TEST_DIRECTORY+"/partial_vocabulary");
     }
 
     @AfterEach
     void tearDown() {
+        //delete directories to store partial frequencies, docids and vocabularies
         FileUtils.deleteDirectory(TEST_DIRECTORY);
     }
     private static boolean writeIntermediateIndexesToDisk(ArrayList<ArrayList<PostingList>> intermediateIndexes) {
         for (ArrayList<PostingList> intermediateIndex : intermediateIndexes) {
 
             int i = intermediateIndexes.indexOf(intermediateIndex);
+
+            System.out.println("saving index "+i);
 
             try (
                     FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_INDEXES_DOCS + i),
@@ -67,6 +99,8 @@ class MergerTest {
                 long docidOffset = 0;
                 long freqOffset = 0;
                 for (PostingList postingList : intermediateIndex) {
+                    System.out.println("saving postinglist "+postingList);
+
                     int numPostings = intermediateIndex.size();
                     // instantiation of MappedByteBuffer for integer list of docids and for integer list of freqs
                     MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, docidOffset, numPostings * 4L);
@@ -79,28 +113,24 @@ class MergerTest {
                         vocEntry.setMemoryOffset(docsBuffer.position());
                         vocEntry.setFrequencyOffset(docsBuffer.position());
 
-                        int MaxDL = 0;
-
                         // write postings to file
                         for (Posting posting : postingList.getPostings()) {
+                            System.out.println("saving posting "+posting);
                             // encode docid and freq
                             docsBuffer.putInt(posting.getDocid());
                             freqsBuffer.putInt(posting.getFrequency());
 
-                            // TODO: update
-
-                            int dl = DocumentIndex.getInstance().getLength(posting.getDocid());
-                            if(dl>MaxDL)
-                                MaxDL = dl;
-
                         }
-
                         vocEntry.updateStatistics(postingList);
-                        vocEntry.setDocidSize(numPostings * 4);
-                        vocEntry.setFrequencySize(numPostings * 4);
+                        vocEntry.setBM25Dl(postingList.getBM25Dl());
+                        vocEntry.setBM25Tf(postingList.getBM25Tf());
+                        vocEntry.setDocidSize(numPostings*4);
+                        vocEntry.setFrequencySize(numPostings*4);
+
                         vocEntry.setMemoryOffset(docidOffset);
                         vocEntry.setFrequencyOffset(freqOffset);
-                        //vocEntry.setMaxDl(MaxDL);
+
+                        System.out.println("saving vocentry "+vocEntry);
 
                         vocOffset = vocEntry.writeEntryToDisk(vocOffset, vocabularyFchan);
 
@@ -129,13 +159,16 @@ class MergerTest {
         vocEntries.addAll(v.values());
 
         for(VocabularyEntry vocabularyEntry: vocEntries){
+            System.out.println("retrieving "+vocabularyEntry);
             PostingList p = new PostingList();
             p.setTerm(vocabularyEntry.getTerm());
             p.openList();
             ArrayList<Posting> postings = new ArrayList<>();
 
-            while(p.next()!=null)
+            while(p.next()!=null){
+                System.out.println("posting: ("+p.getCurrentPosting().getDocid()+","+p.getCurrentPosting().getFrequency()+")");
                 postings.add(p.getCurrentPosting());
+            }
 
             p.closeList();
 
@@ -238,7 +271,6 @@ class MergerTest {
         // merging intermediate indexes
         assertTrue(Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, true), "Error: merging failed");
 
-
         ArrayList<ArrayList<Posting>> mergedLists = retrieveIndexFromDisk();
 
         // build expected results
@@ -247,8 +279,8 @@ class MergerTest {
         ArrayList<Posting> postings = new ArrayList<>();
         postings.addAll(List.of(new Posting[]{
                 new Posting(0, 3),
-                new Posting(1, 4),
-                new Posting(2,7)
+                new Posting(1, 3),
+                new Posting(3,7)
         }));
         expectedResults.add(postings);
         postings = new ArrayList<>();
@@ -261,18 +293,18 @@ class MergerTest {
 
         postings = new ArrayList<>();
         postings.addAll(List.of(new Posting[]{
-                new Posting(1,1),
+                new Posting(0,1),
                 new Posting(4,3)
         }));
         expectedResults.add(postings);
 
-        assertEquals(mergedLists.toString(), expectedResults.toString(), "Error, expected results are different from actual results.");
+        assertEquals(expectedResults.toString(), mergedLists.toString(), "Error, expected results are different from actual results.");
     }
 
     @Test
     void testMergeIndexes() {
         test1(false);
+        System.out.println("test2");
         test1(true);
     }
-
 }

@@ -74,7 +74,6 @@ public class FileUtils {
      *  Deletes directory of given path
      * **/
     public static void deleteDirectory(String path){
-
         File directory = new File(path);
 
         if(!directory.exists())
