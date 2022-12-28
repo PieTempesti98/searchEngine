@@ -31,32 +31,34 @@ public class ConfigurationParameters {
 
             // create the document builder and parse the configuration file
             File file = new File("config/config.xml");
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(file);
+            if(file.exists()){
+                DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+                DocumentBuilder db = dbf.newDocumentBuilder();
+                Document doc = db.parse(file);
 
-            // with the "normalize" method the Text nodes are only separated by the structure
-            // There are neither adjacent text nodes nor empty text nodes
-            doc.getDocumentElement().normalize();
+                // with the "normalize" method the Text nodes are only separated by the structure
+                // There are neither adjacent text nodes nor empty text nodes
+                doc.getDocumentElement().normalize();
 
-            // retrieve the configuration information
-            rawCollectionPath = doc.getElementsByTagName("rawCollectionPath").item(0).getTextContent();
-            compressedCollectionPath = doc.getElementsByTagName("compressedCollectionPath").item(0).getTextContent();
-            stopwordsPath = doc.getElementsByTagName("stopwordsPath").item(0).getTextContent();
-            documentIndexPath = doc.getElementsByTagName("documentIndexPath").item(0).getTextContent();
-            vocabularyPath = doc.getElementsByTagName("vocabularyPath").item(0).getTextContent();
-            invertedIndexDocs = doc.getElementsByTagName("invertedIndexDocs").item(0).getTextContent();
-            invertedIndexFreqs = doc.getElementsByTagName("invertedIndexFreqs").item(0).getTextContent();
-            partialVocabularyDir = doc.getElementsByTagName("partialVocabularyDir").item(0).getTextContent();
-            frequencyFileName = doc.getElementsByTagName("frequencyFileName").item(0).getTextContent();
-            docidsFileName = doc.getElementsByTagName("docidsFileName").item(0).getTextContent();
-            vocabularyFileName = doc.getElementsByTagName("vocabularyFileName").item(0).getTextContent();
-            frequencyDir = doc.getElementsByTagName("frequencyDir").item(0).getTextContent();
-            docidsDir = doc.getElementsByTagName("docidsDir").item(0).getTextContent();
-            collectionStatisticsPath = doc.getElementsByTagName("collectionStatisticsPath").item(0).getTextContent();
-            blockDescriptorsPath = doc.getElementsByTagName("blockDescriptorsPath").item(0).getTextContent();
-            flagsFilePath = doc.getElementsByTagName("flagsFilePath").item(0).getTextContent();
-            testDir = doc.getElementsByTagName("testDir").item(0).getTextContent();
+                // retrieve the configuration information
+                rawCollectionPath = doc.getElementsByTagName("rawCollectionPath").item(0).getTextContent();
+                compressedCollectionPath = doc.getElementsByTagName("compressedCollectionPath").item(0).getTextContent();
+                stopwordsPath = doc.getElementsByTagName("stopwordsPath").item(0).getTextContent();
+                documentIndexPath = doc.getElementsByTagName("documentIndexPath").item(0).getTextContent();
+                vocabularyPath = doc.getElementsByTagName("vocabularyPath").item(0).getTextContent();
+                invertedIndexDocs = doc.getElementsByTagName("invertedIndexDocs").item(0).getTextContent();
+                invertedIndexFreqs = doc.getElementsByTagName("invertedIndexFreqs").item(0).getTextContent();
+                partialVocabularyDir = doc.getElementsByTagName("partialVocabularyDir").item(0).getTextContent();
+                frequencyFileName = doc.getElementsByTagName("frequencyFileName").item(0).getTextContent();
+                docidsFileName = doc.getElementsByTagName("docidsFileName").item(0).getTextContent();
+                vocabularyFileName = doc.getElementsByTagName("vocabularyFileName").item(0).getTextContent();
+                frequencyDir = doc.getElementsByTagName("frequencyDir").item(0).getTextContent();
+                docidsDir = doc.getElementsByTagName("docidsDir").item(0).getTextContent();
+                collectionStatisticsPath = doc.getElementsByTagName("collectionStatisticsPath").item(0).getTextContent();
+                blockDescriptorsPath = doc.getElementsByTagName("blockDescriptorsPath").item(0).getTextContent();
+                flagsFilePath = doc.getElementsByTagName("flagsFilePath").item(0).getTextContent();
+                testDir = doc.getElementsByTagName("testDir").item(0).getTextContent();
+            }
 
         } catch(Exception e){
             e.printStackTrace();

@@ -3,6 +3,7 @@ package it.unipi.dii.aide.mircv.utils;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.config.Flags;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
+import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
 import static it.unipi.dii.aide.mircv.common.utils.FileUtils.*;
 
@@ -34,6 +35,17 @@ public class Utility {
 
         if(Flags.isStemStopRemovalEnabled())
              Preprocesser.readStopwords();
+    }
+
+    public static void cleanUpFiles(){
+        // remove partial index docids directory
+        FileUtils.deleteDirectory(ConfigurationParameters.getDocidsDir());
+
+        // remove partial index frequencies directory
+        FileUtils.deleteDirectory(ConfigurationParameters.getFrequencyDir());
+
+        // remove partial vocabularies directory
+        FileUtils.deleteDirectory(ConfigurationParameters.getPartialVocabularyDir());
     }
 
 

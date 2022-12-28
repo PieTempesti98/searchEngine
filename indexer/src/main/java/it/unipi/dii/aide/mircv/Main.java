@@ -5,6 +5,7 @@ import it.unipi.dii.aide.mircv.algorithms.Spimi;
 import it.unipi.dii.aide.mircv.common.config.Flags;
 
 
+import static it.unipi.dii.aide.mircv.utils.Utility.cleanUpFiles;
 import static it.unipi.dii.aide.mircv.utils.Utility.initializeFiles;
 
 public class Main {
@@ -81,9 +82,11 @@ public class Main {
 
         if(Merger.mergeIndexes(numIndexes,compressedWritingEnable,debugModeEnable)) {
             System.out.println("Inverted index correctly created.");
+            cleanUpFiles();
             return;
         }
         System.out.println("An error occurred during merging.");
+        cleanUpFiles();
     }
 
 }

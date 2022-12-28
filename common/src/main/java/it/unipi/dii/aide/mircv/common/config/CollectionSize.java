@@ -24,7 +24,7 @@ public class CollectionSize{
     /**
      * Path to the collection size
      */
-    private final static String FILE_PATH = ConfigurationParameters.getCollectionStatisticsPath();
+    private static String COLLECTION_STATISTICS_PATH = ConfigurationParameters.getCollectionStatisticsPath();
 
     static{
         if(!readFile()){
@@ -39,7 +39,9 @@ public class CollectionSize{
      * @return true if the read is successful
      */
     private static boolean readFile(){
-        File file = new File(FILE_PATH);
+        if(COLLECTION_STATISTICS_PATH==null)
+            return false;
+        File file = new File(COLLECTION_STATISTICS_PATH);
         if(!file.exists()){
             return false;
         }
@@ -80,7 +82,7 @@ public class CollectionSize{
      * @return true if successful
      */
     private static boolean writeFile(){
-        File file = new File(FILE_PATH);
+        File file = new File(COLLECTION_STATISTICS_PATH);
         if(file.exists())
             if(!file.delete())
                 return false;
@@ -121,5 +123,12 @@ public class CollectionSize{
     public static boolean updateVocabularySize(long size){
         vocabularySize = size;
         return writeFile();
+    }
+
+    /** needed for testing purposes
+     * @param collectionStatisticsPath: path to be set
+     */
+    public static void setCollectionStatisticsPath(String collectionStatisticsPath) {
+        COLLECTION_STATISTICS_PATH = collectionStatisticsPath;
     }
 }
