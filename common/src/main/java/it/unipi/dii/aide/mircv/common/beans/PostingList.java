@@ -180,8 +180,11 @@ public class PostingList{
         // current block is null only if it's the first read
         while(currentBlock == null || currentBlock.getMaxDocid() < docid){
             // end of list, return null
-            if(!blocksIterator.hasNext())
+            if(!blocksIterator.hasNext()){
+                currentPosting = null;
                 return null;
+            }
+
             currentBlock = blocksIterator.next();
             blockChanged = true;
         }

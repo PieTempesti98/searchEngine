@@ -140,6 +140,9 @@ public class BlockDescriptor {
      */
     public ArrayList<Posting> getBlockPostings(){
 
+        System.out.println(INVERTED_INDEX_DOCS);
+        System.out.println(INVERTED_INDEX_FREQS);
+
         try(
             FileChannel docsFChan = (FileChannel) Files.newByteChannel(Paths.get(INVERTED_INDEX_DOCS),
                     StandardOpenOption.WRITE,
@@ -178,10 +181,19 @@ public class BlockDescriptor {
                 docBuffer.get(compressedDocids, 0, docidSize);
                 freqBuffer.get(compressedFreqs, 0, freqSize);
 
+                System.out.println("compressed docids:");
+                for(int a = 0; a<compressedDocids.length; a++){
+                    System.out.println(compressedDocids[a]);
+                }
+
                 // perform decompression of docids and frequencies
                 int[] decompressedDocids = VariableByteCompressor.integerArrayDecompression(compressedDocids, numPostings);
                 int[] decompressedFreqs = UnaryCompressor.integerArrayDecompression(compressedFreqs, numPostings);
 
+                System.out.println("decompressed docids:");
+                for(int a = 0; a<decompressedDocids.length; a++){
+                    System.out.println(decompressedDocids[a]);
+                }
                 // populate the array list of postings with the decompressed information about block postings
                 for(int i=0; i<numPostings; i++){
                     Posting posting = new Posting(decompressedDocids[i], decompressedFreqs[i]);
