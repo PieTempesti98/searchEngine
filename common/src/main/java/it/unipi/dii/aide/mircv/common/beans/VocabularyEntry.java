@@ -146,6 +146,8 @@ public class VocabularyEntry {
      */
     public static final long ENTRY_SIZE = TERM_SIZE + 76;
 
+    private static String BLOCK_DESCRIPTORS_PATH = ConfigurationParameters.getBlockDescriptorsPath();
+
     /**
      * Constructor for the vocabulary entry
      * create an empty class
@@ -484,7 +486,7 @@ public class VocabularyEntry {
     public ArrayList<BlockDescriptor> readBlocks(){
         try(
                 FileChannel fileChannel = (FileChannel) Files.newByteChannel(
-                        Paths.get(ConfigurationParameters.getBlockDescriptorsPath()),
+                        Paths.get(BLOCK_DESCRIPTORS_PATH),
                         StandardOpenOption.READ,
                         StandardOpenOption.WRITE,
                         StandardOpenOption.CREATE
@@ -539,5 +541,10 @@ public class VocabularyEntry {
         if (o == null || getClass() != o.getClass()) return false;
         VocabularyEntry that = (VocabularyEntry) o;
         return df == that.df && Double.compare(that.idf, idf) == 0 && maxTf == that.maxTf && BM25Dl == that.BM25Dl && BM25Tf == that.BM25Tf && Double.compare(that.maxTFIDF, maxTFIDF) == 0 && Double.compare(that.maxBM25, maxBM25) == 0 && docidOffset == that.docidOffset && frequencyOffset == that.frequencyOffset && docidSize == that.docidSize && frequencySize == that.frequencySize && numBlocks == that.numBlocks && blockOffset == that.blockOffset && Objects.equals(term, that.term);
+    }
+
+    protected static void setTestPaths(String test){
+        if(test.equals("blockDescriptorsTest"))
+            BLOCK_DESCRIPTORS_PATH = "../data/test/blockDescriptorsTest";
     }
 }
