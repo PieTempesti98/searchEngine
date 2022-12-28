@@ -41,12 +41,12 @@ public class DocumentIndexEntry{
     /**
      * Size of the pid on disk
      */
-    private static final int PID_SIZE = 64;
+    public static final int PID_SIZE = 64;
 
     /**
      * Size of the document index entry on disk
      */
-    private static final int ENTRY_SIZE = PID_SIZE + 4 + 4;
+    public static final int ENTRY_SIZE = PID_SIZE + 4 + 4;
 
     /**
      * Path to the documentIndex file

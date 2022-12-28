@@ -16,4 +16,5 @@
     <collectionStatisticsPath>config/collectionStatistics</collectionStatisticsPath>
     <blockDescriptorsPath>data/blockDescriptors</blockDescriptorsPath>
     <flagsFilePath>data/flags</flagsFilePath>
+    <testDir>data/test</testDir>
 </it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
