@@ -81,16 +81,16 @@ class MergerTest {
             System.out.println("saving index "+i);
 
             try (
-                    FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_INDEXES_DOCS + i),
+                    FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_INDEXES_DOCS + "_"+i),
                             StandardOpenOption.WRITE,
                             StandardOpenOption.READ,
                             StandardOpenOption.CREATE
                     );
-                    FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_FREQUENCIES + i),
+                    FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_FREQUENCIES +"_"+ i),
                             StandardOpenOption.WRITE,
                             StandardOpenOption.READ,
                             StandardOpenOption.CREATE);
-                    FileChannel vocabularyFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_VOCABULARY + i),
+                    FileChannel vocabularyFchan = (FileChannel) Files.newByteChannel(Paths.get(PATH_TO_PARTIAL_VOCABULARY +"_"+ i),
                             StandardOpenOption.WRITE,
                             StandardOpenOption.READ,
                             StandardOpenOption.CREATE)
@@ -164,6 +164,7 @@ class MergerTest {
             p.setTerm(vocabularyEntry.getTerm());
             p.openList();
             ArrayList<Posting> postings = new ArrayList<>();
+
 
             while(p.next()!=null){
                 System.out.println("posting: ("+p.getCurrentPosting().getDocid()+","+p.getCurrentPosting().getFrequency()+")");
@@ -268,8 +269,12 @@ class MergerTest {
         // write intermediate indexes to disk so that SPIMI can be executed
         assertTrue(writeIntermediateIndexesToDisk(intermediateIndexes), "Error while writing intermediate indexes to disk");
 
+        System.out.println("start merging");
+
         // merging intermediate indexes
         assertTrue(Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, true), "Error: merging failed");
+
+        System.out.println("merged");
 
         ArrayList<ArrayList<Posting>> mergedLists = retrieveIndexFromDisk();
 
@@ -301,10 +306,105 @@ class MergerTest {
         assertEquals(expectedResults.toString(), mergedLists.toString(), "Error, expected results are different from actual results.");
     }
 
+    private void test3(boolean compressionMode) {
+        // building partial index 1
+        ArrayList<PostingList> postings = new ArrayList<>();
+
+        postings.add(new PostingList("amburgo\t0:3 1:2: 2:5"));
+        postings.add(new PostingList("pisa\t1:1 2:2"));
+        postings.add(new PostingList("zurigo\t1:1 2:2"));
+
+        // building partial index 2
+        ArrayList<PostingList> index2 = new ArrayList<>();
+
+        index2.add(new PostingList("alberobello\t3:3 4:1"));
+        index2.add(new PostingList("pisa\t4:2"));
+
+        // insert partial index to array of partial indexes
+        ArrayList<ArrayList<PostingList>> intermediateIndexes = new ArrayList<>();
+        intermediateIndexes.add(postings);
+        intermediateIndexes.add(index2);
+
+        // build document index for intermediate indexes
+        LinkedHashMap<Integer, DocumentIndexEntry> docIndex = buildDocIndex(intermediateIndexes);
+
+        // write document index to disk
+        assertTrue(writeDocumentIndexToDisk(docIndex), "Error while writing document index to disk");
+
+        // write intermediate indexes to disk
+        assertTrue(writeIntermediateIndexesToDisk(intermediateIndexes), "Error while writing intermediate indexes to disk");
+
+        System.out.println("start merging");
+
+        // merging intermediate indexes
+        assertTrue(Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, true), "Error: merging failed");
+
+        System.out.println("merged");
+
+        ArrayList<ArrayList<Posting>> mergedLists = retrieveIndexFromDisk();
+
+
+        // build expected results
+        ArrayList<ArrayList<Posting>> expectedResults = new ArrayList<>(4);
+
+        ArrayList<Posting> expectedPostings = new ArrayList<>();
+        expectedPostings.addAll(List.of(new Posting[]{
+                new Posting(3,3),
+                new Posting(4,1),
+        }));
+        expectedResults.add(expectedPostings);
+        expectedPostings = new ArrayList<>();
+
+        expectedPostings.addAll(List.of(new Posting[]{
+                new Posting(0, 3),
+                new Posting(1, 2),
+                new Posting(2,5)
+        }));
+        expectedResults.add(expectedPostings);
+
+        expectedPostings = new ArrayList<>();
+        expectedPostings.addAll(List.of(new Posting[]{
+                new Posting(1,1),
+                new Posting(2,2),
+                new Posting(4,2)
+        }));
+        expectedResults.add(expectedPostings);
+        expectedPostings = new ArrayList<>();
+        expectedPostings.addAll(List.of(new Posting[]{
+                new Posting(1,1),
+                new Posting(2,2),
+        }));
+        expectedResults.add(expectedPostings);
+
+        assertEquals(expectedResults.toString(), mergedLists.toString(), "Error, expected results are different from actual results.");
+    }
+
+
+    @Test
+    void firstTest(){
+        Flags.setCompression(false);
+        test1(false);
+    }
+
+/*
     @Test
     void testMergeIndexes() {
-        test1(false);
+
         System.out.println("test2");
+
+        Flags.setCompression(true);
         test1(true);
     }
+*/
+
+    @Test
+    void ThirdTest() {
+
+        System.out.println("test3");
+
+        Flags.setCompression(false);
+        test3(false);
+    }
+
+
 }

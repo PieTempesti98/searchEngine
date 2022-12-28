@@ -63,16 +63,13 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
     }
 
     public boolean readFromDisk(){
-        System.out.println("vocab readFromDisk");
         long position = 0;
 
         //read whole vocabulary from
         while(position >= 0){
             VocabularyEntry entry = new VocabularyEntry();
-            System.out.println("new entry");
             //read entry and update position
             position = entry.readFromDisk(position,VOCABULARY_PATH);
-            System.out.println("new pos:"+position);
 
             if(position == 0)
                 return  true;
