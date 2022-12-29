@@ -266,7 +266,7 @@ class MergerTest {
         //System.out.println("start merging");
 
         // merging intermediate indexes
-        assertTrue(Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, true), "Error: merging failed");
+        assertTrue(Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, false), "Error: merging failed");
 
         //System.out.println("merged");
 
@@ -302,7 +302,7 @@ class MergerTest {
         assertEquals(expectedResults.toString(), mergedLists.toString(), "Error, expected results are different from actual results.");
     }
 
-    private void mergeTwoIndexes(boolean compressionMode) {
+    private void mergeTwoIndexes(boolean compressionMode, boolean vocabularyTest) {
         // building partial index 1
         ArrayList<PostingList> postings = new ArrayList<>();
 
@@ -333,54 +333,54 @@ class MergerTest {
         //System.out.println("start merging");
 
         // merging intermediate indexes
-        assertTrue(Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, true), "Error: merging failed");
+        assertTrue(Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, false), "Error: merging failed");
 
-        //System.out.println("merged");
+        if(vocabularyTest){
+            // TODO: implement
+        } else {
+            //System.out.println("merged");
 
-        ArrayList<ArrayList<Posting>> mergedLists = retrieveIndexFromDisk();
+            ArrayList<ArrayList<Posting>> mergedLists = retrieveIndexFromDisk();
 
 
-        // build expected results
-        ArrayList<ArrayList<Posting>> expectedResults = new ArrayList<>(4);
+            // build expected results
+            ArrayList<ArrayList<Posting>> expectedResults = new ArrayList<>(4);
 
-        ArrayList<Posting> expectedPostings = new ArrayList<>();
-        expectedPostings.addAll(List.of(new Posting[]{
-                new Posting(4,3),
-                new Posting(5,1),
-        }));
-        expectedResults.add(expectedPostings);
-        expectedPostings = new ArrayList<>();
+            ArrayList<Posting> expectedPostings = new ArrayList<>();
+            expectedPostings.addAll(List.of(new Posting[]{
+                    new Posting(4,3),
+                    new Posting(5,1),
+            }));
+            expectedResults.add(expectedPostings);
+            expectedPostings = new ArrayList<>();
 
-        expectedPostings.addAll(List.of(new Posting[]{
-                new Posting(1, 3),
-                new Posting(2, 2),
-                new Posting(3,5)
-        }));
-        expectedResults.add(expectedPostings);
+            expectedPostings.addAll(List.of(new Posting[]{
+                    new Posting(1, 3),
+                    new Posting(2, 2),
+                    new Posting(3,5)
+            }));
+            expectedResults.add(expectedPostings);
 
-        expectedPostings = new ArrayList<>();
-        expectedPostings.addAll(List.of(new Posting[]{
-                new Posting(2,1),
-                new Posting(3,2),
-                new Posting(5,2)
-        }));
-        expectedResults.add(expectedPostings);
-        expectedPostings = new ArrayList<>();
-        expectedPostings.addAll(List.of(new Posting[]{
-                new Posting(2,1),
-                new Posting(3,2),
-        }));
-        expectedResults.add(expectedPostings);
+            expectedPostings = new ArrayList<>();
+            expectedPostings.addAll(List.of(new Posting[]{
+                    new Posting(2,1),
+                    new Posting(3,2),
+                    new Posting(5,2)
+            }));
+            expectedResults.add(expectedPostings);
+            expectedPostings = new ArrayList<>();
+            expectedPostings.addAll(List.of(new Posting[]{
+                    new Posting(2,1),
+                    new Posting(3,2),
+            }));
+            expectedResults.add(expectedPostings);
 
-        assertEquals(expectedResults.toString(), mergedLists.toString(), "Error, expected results are different from actual results.");
+            assertEquals(expectedResults.toString(), mergedLists.toString(), "Error, expected results are different from actual results.");
+        }
+
+
+
     }
-
-    private void testVocabulary(boolean compressed) {
-        // TODO: implement
-        
-
-    }
-
 
     @Test
     void singleIndexMergeWithoutCompression(){
@@ -399,19 +399,19 @@ class MergerTest {
     @Test
     void twoIndexesMergeWithoutCompression() {
         Flags.setCompression(false);
-        mergeTwoIndexes(false);
+        mergeTwoIndexes(false, false);
     }
 
     @Test
     void twoIndexesMergeWithCompression() {
         Flags.setCompression(true);
-        mergeTwoIndexes(true);
+        mergeTwoIndexes(true, false);
     }
 
     @Test
     void vocabularyTest(){
         Flags.setCompression(false);
-        testVocabulary(false);
+        mergeTwoIndexes(false, true);
     }
 
 
