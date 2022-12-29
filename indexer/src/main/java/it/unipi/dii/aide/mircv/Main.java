@@ -72,18 +72,31 @@ public class Main {
         //initialize files and directories needed for Spimi execution
         initializeFiles();
 
+        long start = System.currentTimeMillis();
         int numIndexes = Spimi.executeSpimi(compressedReadingEnable, debugModeEnable);
         if(numIndexes <= 0){
             System.out.println("An error occurred: no partial indexes.");
             return;
         }
-        System.out.println("Spimi done!");
+        long spimiTime = System.currentTimeMillis();
+        formatTime(start, spimiTime, "Spimi");
 
         if(Merger.mergeIndexes(numIndexes,compressedWritingEnable,debugModeEnable)) {
-            System.out.println("Inverted index correctly created.");
+            long stop = System.currentTimeMillis();
+            formatTime(spimiTime, stop, "Merging");
+            formatTime(start, stop, "Creation of inverted index");
             return;
         }
         System.out.println("An error occurred during merging.");
+    }
+
+    private static void formatTime(long start, long end, String operation) {
+        int minutes = (int) ((end - start) / (1000 * 60));
+        int seconds = (int) ((end - start) / 1000) % 60;
+        if(seconds < 10)
+            System.out.println(operation + " done in " + minutes + ":0" + seconds + " minutes");
+        else
+            System.out.println(operation + " done in " + minutes + ":" + seconds + " minutes");
     }
 
 }

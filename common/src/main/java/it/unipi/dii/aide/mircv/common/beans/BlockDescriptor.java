@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * Descriptor of a block of postings in a posting list, used to implement the skipping
@@ -215,4 +216,11 @@ public class BlockDescriptor {
                 ", numPostings = " + numPostings;
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BlockDescriptor that = (BlockDescriptor) o;
+        return docidOffset == that.docidOffset && docidSize == that.docidSize && freqOffset == that.freqOffset && freqSize == that.freqSize && maxDocid == that.maxDocid && numPostings == that.numPostings;
+    }
 }
