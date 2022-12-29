@@ -19,4 +19,5 @@ class VariableByteCompressorTest {
         assertArrayEquals(new int[]{824}, VariableByteCompressor.integerArrayDecompression(new byte[]{(byte) 6, (byte) 184}, 1));
         assertArrayEquals(new int[]{824, 5}, VariableByteCompressor.integerArrayDecompression(new byte[]{(byte) 6, (byte) 184,(byte) 133}, 2));
     }
+
 }

@@ -24,6 +24,8 @@ import java.util.Objects;
  */
 public class VocabularyEntry {
 
+    private static String BLOCK_DESCRIPTORS_PATH = ConfigurationParameters.getBlockDescriptorsPath();
+
     /* --- TERM INFORMATION --- */
     /**
      * incremental counter of the terms, used to assign the termid
@@ -89,6 +91,12 @@ public class VocabularyEntry {
     public void setBM25Tf(int BM25Tf) {
         this.BM25Tf = BM25Tf;
     }
+
+    /** needed for testing purposes **/
+    public static void setBlockDescriptorsPath(String blockDescriptorsPath) {
+        BLOCK_DESCRIPTORS_PATH = blockDescriptorsPath;
+    }
+
 
     /**
      * method to update the max document length for the term
@@ -301,7 +309,6 @@ public class VocabularyEntry {
                 return 0;
 
             this.term = encodedTerm[0];
-
 
             // Instantiate the buffer for reading other information
             buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset + TERM_SIZE, ENTRY_SIZE - TERM_SIZE);

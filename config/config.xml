@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>
-    <rawCollectionPath>data/sampled_collection.tsv</rawCollectionPath>
+    <rawCollectionPath>data/small_collection.tsv</rawCollectionPath>
     <compressedCollectionPath>data/collection.tar.gz</compressedCollectionPath>
     <stopwordsPath>config/stopwords.txt</stopwordsPath>
     <documentIndexPath>data/documentIndex</documentIndexPath>
@@ -16,4 +16,5 @@
     <collectionStatisticsPath>config/collectionStatistics</collectionStatisticsPath>
     <blockDescriptorsPath>data/blockDescriptors</blockDescriptorsPath>
     <flagsFilePath>data/flags</flagsFilePath>
+    <testDir>data/test</testDir>
 </it.unipi.dii.aide.mircv.searchEngine.config.ConfigurationParameters>

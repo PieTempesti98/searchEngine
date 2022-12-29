@@ -67,4 +67,17 @@ public class Flags {
     }
 
     public static boolean isMaxScoreEnabled() {return maxScore;}
+
+    public static void setCompression(boolean compression) {
+        Flags.compression = compression;
+    }
+
+    public static void setStemStopRemoval(boolean stemStopRemoval) {
+        Flags.stemStopRemoval = stemStopRemoval;
+    }
+
+    public static void setMaxScore(boolean maxScore) {
+        Flags.maxScore = maxScore;
+    }
+
 }
