@@ -198,6 +198,7 @@ public class DocumentIndexEntry{
      */
     protected static void setTestPath(){
         DocumentIndexEntry.DOCINDEX_PATH = "../data/test/testDocIndex";
+        DocumentIndexEntry.memOffset = 0;
     }
 
     /**
