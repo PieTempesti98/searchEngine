@@ -211,8 +211,7 @@ public class Spimi {
     public static int executeSpimi(boolean compressedReadingEnable,boolean debug) {
 
         try (
-                BufferedReader br = initBuffer(compressedReadingEnable)
-
+            BufferedReader br = initBuffer(compressedReadingEnable)
         ) {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
 
@@ -268,7 +267,6 @@ public class Spimi {
                         docIndexEntry.debugWriteToDisk("debugDOCINDEX.txt");
                     }
 
-
                     for (String term : processedDocument.getTokens()) {
 
                         if(term.isBlank())
@@ -290,6 +288,9 @@ public class Spimi {
 
                     }
                     docid++;
+                    if((docid%1000000)==0){
+                        System.out.println("at docid: "+docid);
+                    }
                 }
 
                 //either if there is no  memory available or all documents were read, flush partial index onto disk
@@ -297,6 +298,7 @@ public class Spimi {
 
                 //error during data structures creation. Rollback previous operations and end algorithm
                 if(!writeSuccess){
+                    System.out.println("Couldn't write index to disk.");
                     rollback();
                     return -1;
                 }
@@ -304,8 +306,11 @@ public class Spimi {
 
             }
             // update the size of the document index and save it to disk
-            if(!CollectionSize.updateCollectionSize(docid) || !CollectionSize.updateDocumentsLenght(docsLen))
+            if(!CollectionSize.updateCollectionSize(docid) || !CollectionSize.updateDocumentsLenght(docsLen)){
+                System.out.println("Couldn't update collection statistics.");
                 return 0;
+            }
+
 
             return numIndex;
 
