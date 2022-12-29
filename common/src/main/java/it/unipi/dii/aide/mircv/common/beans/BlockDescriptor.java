@@ -56,6 +56,9 @@ public class BlockDescriptor {
 
     private static long memoryOffset = 0;
 
+    private static String INVERTED_INDEX_DOCS = ConfigurationParameters.getInvertedIndexDocs();
+    private static String INVERTED_INDEX_FREQS = ConfigurationParameters.getInvertedIndexFreqs();
+
     public static long getMemoryOffset() {
         return memoryOffset;
     }
@@ -139,12 +142,12 @@ public class BlockDescriptor {
     public ArrayList<Posting> getBlockPostings(){
 
         try(
-            FileChannel docsFChan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexDocs()),
+            FileChannel docsFChan = (FileChannel) Files.newByteChannel(Paths.get(INVERTED_INDEX_DOCS),
                     StandardOpenOption.WRITE,
                     StandardOpenOption.READ,
                     StandardOpenOption.CREATE
             );
-            FileChannel freqsFChan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexFreqs()),
+            FileChannel freqsFChan = (FileChannel) Files.newByteChannel(Paths.get(INVERTED_INDEX_FREQS),
                     StandardOpenOption.WRITE,
                     StandardOpenOption.READ,
                     StandardOpenOption.CREATE);
@@ -214,6 +217,20 @@ public class BlockDescriptor {
                 ", maxDocid = " + maxDocid +
                 ", numPostings = " + numPostings;
     }
+    
+    /** needed for testing purposes
+     * @param invertedIndexDocs: path to be set
+     */
+    public static void setInvertedIndexDocs(String invertedIndexDocs) {
+        INVERTED_INDEX_DOCS = invertedIndexDocs;
+    }
+
+    /** needed for testing purposes
+     * @param invertedIndexFreqs: path to be set
+     */
+    public static void setInvertedIndexFreqs(String invertedIndexFreqs) {
+        INVERTED_INDEX_FREQS = invertedIndexFreqs;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -222,4 +239,5 @@ public class BlockDescriptor {
         BlockDescriptor that = (BlockDescriptor) o;
         return docidOffset == that.docidOffset && docidSize == that.docidSize && freqOffset == that.freqOffset && freqSize == that.freqSize && maxDocid == that.maxDocid && numPostings == that.numPostings;
     }
+
 }

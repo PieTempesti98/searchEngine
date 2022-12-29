@@ -25,12 +25,16 @@ public class ConfigurationParameters {
     private static String flagsFilePath;
     private static String testDir;
 
+    private static String testDir;
+
     static {
         try{
 
             // create the document builder and parse the configuration file
             File file = new File("config/config.xml");
-            if(file.exists()) {
+
+            if(file.exists()){
+            
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
                 DocumentBuilder db = dbf.newDocumentBuilder();
                 Document doc = db.parse(file);
@@ -59,7 +63,7 @@ public class ConfigurationParameters {
                 testDir = doc.getElementsByTagName("testDir").item(0).getTextContent();
             }
 
-        } catch(Exception e){
+        } catch(Exception e) {
             e.printStackTrace();
         }
     }
