@@ -25,8 +25,6 @@ public class ConfigurationParameters {
     private static String flagsFilePath;
     private static String testDir;
 
-    private static String testDir;
-
     static {
         try{
 
