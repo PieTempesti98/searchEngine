@@ -375,8 +375,10 @@ class MergerTest {
         assertEquals(expectedResults.toString(), mergedLists.toString(), "Error, expected results are different from actual results.");
     }
 
-    private void testVocabulary(boolean b) {
+    private void testVocabulary(boolean compressed) {
         // TODO: implement
+        
+
     }
 
 
