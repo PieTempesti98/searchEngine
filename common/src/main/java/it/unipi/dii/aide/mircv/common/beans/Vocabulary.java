@@ -16,7 +16,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
     /**
      * path to file storing the vocabulary
      */
-    private static final String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
+    protected static String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
 
 
     private Vocabulary(){}
@@ -131,7 +131,10 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
 
 
+    public void setVocabularyPath(String path){
 
+        VOCABULARY_PATH = path;
+    }
 
 
 }

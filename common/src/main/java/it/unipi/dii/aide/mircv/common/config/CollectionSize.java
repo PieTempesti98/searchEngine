@@ -39,6 +39,8 @@ public class CollectionSize{
      * @return true if the read is successful
      */
     private static boolean readFile(){
+        if(FILE_PATH == null)
+            return false;
         File file = new File(FILE_PATH);
         if(!file.exists()){
             return false;
@@ -121,5 +123,17 @@ public class CollectionSize{
     public static boolean updateVocabularySize(long size){
         vocabularySize = size;
         return writeFile();
+    }
+
+    public static void setCollectionSize(long collectionSize) {
+        CollectionSize.collectionSize = collectionSize;
+    }
+
+    public static void setVocabularySize(long vocabularySize) {
+        CollectionSize.vocabularySize = vocabularySize;
+    }
+
+    public static void setTotalDocLen(long totalDocLen) {
+        CollectionSize.totalDocLen = totalDocLen;
     }
 }

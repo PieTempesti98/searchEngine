@@ -239,7 +239,7 @@ public class Spimi {
 
                     // split of the line in the format <pid>\t<text>
                     split = line.split("\t");
-
+                    
                     // Creation of the text document for the line
                     TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
                     // Perform text preprocessing on the document

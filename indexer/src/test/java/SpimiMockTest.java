@@ -1,6 +1,3 @@
-package it.unipi.dii.aide.mircv.algorithms.test;
-
-
 import it.unipi.dii.aide.mircv.common.beans.*;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -37,11 +34,28 @@ class SpimiMockTest {
 
 
         PostingList pl = new PostingList("adam\t1:1");
+        pl.setBM25Dl(5);
+        pl.setBM25Tf(1);
+
         PostingList pl1 = new PostingList("apple\t0:1 1:1");
+        pl.setBM25Dl(5);
+        pl.setBM25Tf(1);
+
         PostingList pl2 = new PostingList("apricot\t0:1");
+        pl.setBM25Dl(5);
+        pl.setBM25Tf(1);
+
         PostingList pl3 = new PostingList("eve\t1:1");
+        pl.setBM25Dl(3);
+        pl.setBM25Tf(1);
+
         PostingList pl4 = new PostingList("fruit\t0:2");
+        pl.setBM25Dl(5);
+        pl.setBM25Tf(2);
+
         PostingList pl5 = new PostingList("salad\t0:1");
+        pl.setBM25Dl(5);
+        pl.setBM25Tf(1);
 
         index.put("adam",pl);
         index.put("apple",pl1);
@@ -53,6 +67,68 @@ class SpimiMockTest {
 
         documentIndex.put(0,new DocumentIndexEntry("document1",0,5));
         documentIndex.put(1,new DocumentIndexEntry("document2",1,3));
+
+        VocabularyEntry e = new VocabularyEntry("adam");
+        e.setDf(1);
+        e.setMemoryOffset(0);
+        e.setFrequencyOffset(0);
+        e.setMaxTf(1);
+        e.setBM25Dl(5);
+        e.setDocidSize(4);
+        e.setFrequencySize(4);
+
+        VocabularyEntry e1 = new VocabularyEntry("apple");
+        e.setDf(1);
+        e.setMemoryOffset(140);
+        e.setFrequencyOffset(140);
+        e.setMaxTf(1);
+        e.setBM25Dl(5);
+        e.setDocidSize(4);
+        e.setFrequencySize(4);
+
+        VocabularyEntry e2 = new VocabularyEntry("apricot");
+        e.setDf(1);
+        e.setMemoryOffset(280);
+        e.setFrequencyOffset(280);
+        e.setMaxTf(1);
+        e.setBM25Dl(5);
+        e.setDocidSize(8);
+        e.setFrequencySize(8);
+
+        VocabularyEntry e3 = new VocabularyEntry("eve");
+        e.setDf(1);
+        e.setMemoryOffset(420);
+        e.setFrequencyOffset(420);
+        e.setMaxTf(1);
+        e.setBM25Dl(3);
+        e.setDocidSize(4);
+        e.setFrequencySize(4);
+
+        VocabularyEntry e4 = new VocabularyEntry("fruit");
+        e.setDf(1);
+        e.setMemoryOffset(560);
+        e.setFrequencyOffset(560);
+        e.setMaxTf(2);
+        e.setBM25Dl(5);
+        e.setDocidSize(4);
+        e.setFrequencySize(4);
+
+        VocabularyEntry e5 = new VocabularyEntry("salad");
+        e.setDf(1);
+        e.setMemoryOffset(700);
+        e.setFrequencyOffset(700);
+        e.setMaxTf(1);
+        e.setBM25Dl(5);
+        e.setDocidSize(4);
+        e.setFrequencySize(4);
+
+
+        vocabulary.put("adam",e);
+        vocabulary.put("apple",e1);
+        vocabulary.put("apricot",e2);
+        vocabulary.put("eve",e3);
+        vocabulary.put("fruit",e4);
+        vocabulary.put("salad",e5);
 
     }
 

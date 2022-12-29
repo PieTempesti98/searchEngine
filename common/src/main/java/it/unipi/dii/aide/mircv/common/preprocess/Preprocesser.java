@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Locale;
 
 public class Preprocesser {
@@ -38,7 +39,7 @@ public class Preprocesser {
     /**
      * regEx to match at least 3 consecutive letters
      */
-    private static final String CONSECUTIVE_LETTERS_MATCHER = "(.)\\1{3,}";
+    private static final String CONSECUTIVE_LETTERS_MATCHER = "(.)\\1{2,}";
 
     /**
      * regEx to match strings in camel case
@@ -48,7 +49,8 @@ public class Preprocesser {
     /**
      * path to file storing stopwords
      */
-    private static final String PATH_TO_STOPWORDS = ConfigurationParameters.getStopwordsPath();
+    protected static String PATH_TO_STOPWORDS = ConfigurationParameters.getStopwordsPath();
+
 
     /**
      * list of stopwords
@@ -131,7 +133,7 @@ public class Preprocesser {
         text = text.replaceAll(NON_DIGIT_MATCHER, "\s");
 
         //collapse 3+ repeating characters in just 2
-        text = text.replaceAll(CONSECUTIVE_LETTERS_MATCHER,"$1");
+        text = text.replaceAll(CONSECUTIVE_LETTERS_MATCHER,"$1$1");
 
         //remove consecutive multiple whitespaces with a single one
         text = text.replaceAll(MULTIPLE_SPACE_MATCHER, "\s");
@@ -207,5 +209,8 @@ public class Preprocesser {
     }
 
 
+    protected static void setTestPath() {
+        PATH_TO_STOPWORDS = "../config/stopwords.txt";
+    }
 }
 

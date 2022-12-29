@@ -138,6 +138,10 @@ public class QueryProcesser {
 
     }
 
+    /**
+     * used for testing purposes only
+     */
+    public void setTestPath(){}
 
 
 }

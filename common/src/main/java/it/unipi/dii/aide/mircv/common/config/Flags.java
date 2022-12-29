@@ -67,4 +67,12 @@ public class Flags {
     }
 
     public static boolean isMaxScoreEnabled() {return maxScore;}
+
+    public static void setMaxScore(boolean enable){ maxScore = enable;}
+
+
+    /**
+     * used for testing purposes only
+     */
+    public static void setStemStopRemoval(boolean stemStopRemoval) {Flags.stemStopRemoval = stemStopRemoval;}
 }

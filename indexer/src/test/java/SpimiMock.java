@@ -1,4 +1,3 @@
-package it.unipi.dii.aide.mircv.algorithms.test;
 
 import it.unipi.dii.aide.mircv.algorithms.Spimi;
 import it.unipi.dii.aide.mircv.common.beans.*;
@@ -23,6 +22,7 @@ public class SpimiMock extends Spimi {
         HashMap<String, PostingList> index = new HashMap<>();
 
         int docid = 0;
+        int documentLength = 0;
 
         for(ProcessedDocument document: testDocuments){
 
@@ -36,11 +36,15 @@ public class SpimiMock extends Spimi {
                     //term is present, we can get its posting list
                     posting = index.get(term);
                 }
+                documentLength += document.getTokens().size();
 
                 updateOrAddPosting(docid, posting); //insert or update new posting
+                posting.updateBM25Parameters(documentLength, posting.getPostings().size());
+                posting.debugSaveToDisk("mydoc","myfreq",posting.getPostings().size());
             }
 
             docid++;
+
         }
 
         index = index.entrySet()
@@ -72,20 +76,23 @@ public class SpimiMock extends Spimi {
     public static Vocabulary buildVocaulary(HashMap<String, PostingList> index){
 
         try (
-                FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get("test/testDocumentDocids"),
+                FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get("testDocumentDocids"),
                         StandardOpenOption.WRITE,
                         StandardOpenOption.READ,
                         StandardOpenOption.CREATE
                 );
-                FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get("test/testDocumentFreqs"),
+                FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get("testDocumentFreqs"),
                         StandardOpenOption.WRITE,
                         StandardOpenOption.READ,
                         StandardOpenOption.CREATE);
         ) {
 
+            int numPostings = 0;
+            for(PostingList pl: index.values())
+                numPostings += pl.getPostings().size();
+
             Vocabulary vocabulary = Vocabulary.getInstance();
             // instantiation of MappedByteBuffer for integer list of docids
-            long numPostings = index.size();
             MappedByteBuffer docsBuffer = docsFchan.map(FileChannel.MapMode.READ_WRITE, 0, numPostings * 4L);
 
             // instantiation of MappedByteBuffer for integer list of freqs
@@ -110,6 +117,9 @@ public class SpimiMock extends Spimi {
                     vocEntry.updateStatistics(list);
                     vocEntry.setDocidSize((int) (numPostings * 4));
                     vocEntry.setFrequencySize((int) (numPostings * 4));
+                    vocEntry.setBM25Tf(list.getBM25Tf());
+                    vocEntry.setDocidSize((int) (numPostings*4));
+                    vocEntry.setFrequencySize((int) (numPostings*4));
 
                 }
             }return vocabulary;
@@ -119,4 +129,6 @@ public class SpimiMock extends Spimi {
         }
 
     }
+
+
 }

@@ -2,7 +2,6 @@ package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
-import org.junit.Ignore;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -165,6 +164,8 @@ public class DocumentIndexEntry{
 
             // Read from file into the charBuffer, then pass to the string
             CharBuffer charBuffer = StandardCharsets.UTF_8.decode(buffer);
+            if(charBuffer.toString().split("\0").length == 0)
+                return true;
             this.pid = charBuffer.toString().split("\0")[0];
 
             // Instantiate the buffer for reading other information
@@ -199,6 +200,11 @@ public class DocumentIndexEntry{
     protected static void setTestPath(){
         DocumentIndexEntry.DOCINDEX_PATH = "../data/test/testDocIndex";
     }
+
+    public static void setDocindexPath(String path ){
+        DocumentIndexEntry.DOCINDEX_PATH = path;
+    }
+
 
     /**
      * function to write a summarization of the most important data about a document index entry as plain text in the debug file
