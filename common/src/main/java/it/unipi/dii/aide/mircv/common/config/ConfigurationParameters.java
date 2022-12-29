@@ -23,6 +23,7 @@ public class ConfigurationParameters {
     private static String collectionStatisticsPath;
     private static String blockDescriptorsPath;
     private static String flagsFilePath;
+    private static String testDir;
 
     static {
         try{
