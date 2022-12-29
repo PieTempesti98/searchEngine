@@ -93,9 +93,14 @@ public class Spimi {
      * @param index: partial index that must be saved onto file
      */
     private static boolean saveIndexToDisk(HashMap<String, PostingList> index, boolean debugMode) {
+        System.out.println("saving index: "+numIndex+" of size: "+index.size());
 
-        if (index.isEmpty()) //if the index is empty there is nothing to write on disk
-            return false;
+        if (index.isEmpty()){
+            //if the index is empty there is nothing to write on disk
+            System.out.println("empty index");
+            return true;
+        }
+
 
         //sort index in lexicographic order
         index = index.entrySet()
