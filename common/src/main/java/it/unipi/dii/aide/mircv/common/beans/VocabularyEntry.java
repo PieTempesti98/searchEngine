@@ -271,8 +271,6 @@ public class VocabularyEntry {
             buffer.putInt(numBlocks);
             buffer.putLong(blockOffset);
 
-            System.out.println("written "+this + " to disk");
-
             // return position for which we have to start writing on file
             return position + ENTRY_SIZE;
         } catch (Exception e) {

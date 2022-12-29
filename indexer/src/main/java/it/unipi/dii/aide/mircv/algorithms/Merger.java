@@ -102,8 +102,6 @@ public class Merger {
         docidChannels = new FileChannel[numIndexes];
         frequencyChannels = new FileChannel[numIndexes];
 
-        System.out.println("num indexes: "+numIndexes);
-
         try {
             for (int i = 0; i < numIndexes; i++) {
                 nextTerms[i] = new VocabularyEntry();
@@ -111,8 +109,6 @@ public class Merger {
 
                 // read first entry of the vocabulary
                 long ret = nextTerms[i].readFromDisk(vocEntryMemOffset[i], PATH_TO_PARTIAL_VOCABULARIES + "_" + i);
-                System.out.println("partial vocab: "+PATH_TO_PARTIAL_VOCABULARIES + "_" + i);
-                System.out.println("read: "+nextTerms[i]);
 
                 if (ret == -1 || ret == 0) {
                     // error encountered during vocabulary entry reading operation
@@ -273,9 +269,6 @@ public class Merger {
         // next memory offset where to write the next vocabulary entry
         long vocMemOffset = 0;
 
-        System.out.println(PATH_TO_INVERTED_INDEX_DOCS);
-        System.out.println(PATH_TO_INVERTED_INDEX_FREQS);
-
         // open file channels for vocabulary writes, docid and frequency writes, and block descriptor writes
         try(FileChannel vocabularyChan = (FileChannel) Files.newByteChannel(
                 Paths.get(PATH_TO_VOCABULARY),
@@ -311,7 +304,7 @@ public class Merger {
 
                 // merge the posting lists for the term to be processed
                 PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
-                System.out.println("merged pl: "+mergedPostingList);
+
                 if(mergedPostingList == null){
                     throw new Exception("ERROR: the merged posting list for the term " + termToProcess + " is null");
                 }
@@ -363,11 +356,6 @@ public class Merger {
                                 byte[] compressedDocs = VariableByteCompressor.integerArrayCompression(docids);
                                 byte[] compressedFreqs = UnaryCompressor.integerArrayCompression(freqs);
 
-                                System.out.println("compressed docids in merger:");
-                                for(int a = 0; a<compressedDocs.length; a++){
-                                    System.out.println(compressedDocs[a]);
-                                }
-
                                 try{
                                     // instantiation of MappedByteBuffer for integer list of docids and for integer list of freqs
                                     MappedByteBuffer docsBuffer = docidChan.map(FileChannel.MapMode.READ_WRITE, docsMemOffset, compressedDocs.length);
@@ -376,11 +364,6 @@ public class Merger {
                                     // write compressed posting lists to disk
                                     docsBuffer.put(compressedDocs);
                                     freqsBuffer.put(compressedFreqs);
-
-                                    System.out.println("decompressed docids in merger:");
-                                    for(int a = 0; a<docids.length; a++){
-                                        System.out.println(docids[a]);
-                                    }
 
                                     // update the size of the block
                                     blockDescriptor.setDocidSize(compressedDocs.length);
