@@ -31,7 +31,9 @@ public class ConfigurationParameters {
 
             // create the document builder and parse the configuration file
             File file = new File("config/config.xml");
+
             if(file.exists()){
+            
                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
                 DocumentBuilder db = dbf.newDocumentBuilder();
                 Document doc = db.parse(file);
@@ -60,7 +62,7 @@ public class ConfigurationParameters {
                 testDir = doc.getElementsByTagName("testDir").item(0).getTextContent();
             }
 
-        } catch(Exception e){
+        } catch(Exception e) {
             e.printStackTrace();
         }
     }
