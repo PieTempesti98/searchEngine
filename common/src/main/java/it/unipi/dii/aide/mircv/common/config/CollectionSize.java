@@ -39,12 +39,15 @@ public class CollectionSize{
      * @return true if the read is successful
      */
     private static boolean readFile(){
+
         if(COLLECTION_STATISTICS_PATH==null)
             return false;
         File file = new File(COLLECTION_STATISTICS_PATH);
+
         if(!file.exists()){
             return false;
         }
+        
         try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))){
 
             collectionSize = ois.readLong();
@@ -125,10 +128,22 @@ public class CollectionSize{
         return writeFile();
     }
 
+    public static void setCollectionSize(long collectionSize) {
+        CollectionSize.collectionSize = collectionSize;
+    }
+
+    public static void setVocabularySize(long vocabularySize) {
+        CollectionSize.vocabularySize = vocabularySize;
+    }
+
+    public static void setTotalDocLen(long totalDocLen) {
+        CollectionSize.totalDocLen = totalDocLen;
+
     /** needed for testing purposes
      * @param collectionStatisticsPath: path to be set
      */
     public static void setCollectionStatisticsPath(String collectionStatisticsPath) {
         COLLECTION_STATISTICS_PATH = collectionStatisticsPath;
+
     }
 }

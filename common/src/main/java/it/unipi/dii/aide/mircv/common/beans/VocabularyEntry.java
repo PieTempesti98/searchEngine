@@ -554,4 +554,8 @@ public class VocabularyEntry {
         if(test.equals("blockDescriptorsTest"))
             BLOCK_DESCRIPTORS_PATH = "../data/test/blockDescriptorsTest";
     }
+
+    public static void setBlockDescriptorsPath(String path){
+        BLOCK_DESCRIPTORS_PATH = path;
+    }
 }

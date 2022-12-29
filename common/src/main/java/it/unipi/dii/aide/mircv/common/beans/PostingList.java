@@ -337,4 +337,8 @@ public class PostingList{
     public int getBM25Tf(){
         return BM25Tf;
     }
+
+    public void setBM25Dl(int BM25Dl) {this.BM25Dl = BM25Dl;}
+
+    public void setBM25Tf(int BM25Tf) {this.BM25Tf = BM25Tf;}
 }

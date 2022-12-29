@@ -1,4 +1,5 @@
 package it.unipi.aide.mircv.start;
+import it.unipi.dii.aide.mircv.common.config.Flags;
 import queryProcessing.QueryProcesser;
 
 import java.util.Locale;
@@ -21,6 +22,14 @@ public class Main {
         if(!setupSuccess){
             System.out.println("Error in setup of this service. Shutting down...");
             return;
+        }
+
+        if(args.length > 0){
+            if(args[0].equals("-maxscore")) {
+                Flags.setMaxScore(true);
+            }else{
+                System.out.println("Flag not recognized");
+            }
         }
 
 

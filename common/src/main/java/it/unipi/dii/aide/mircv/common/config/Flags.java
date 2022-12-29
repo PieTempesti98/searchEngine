@@ -68,6 +68,7 @@ public class Flags {
 
     public static boolean isMaxScoreEnabled() {return maxScore;}
 
+
     public static void setCompression(boolean compression) {
         Flags.compression = compression;
     }

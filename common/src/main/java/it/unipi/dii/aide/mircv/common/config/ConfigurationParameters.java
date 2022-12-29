@@ -102,5 +102,6 @@ public class ConfigurationParameters {
     public static String getBlockDescriptorsPath() {return blockDescriptorsPath;}
 
     public static String getFlagsFilePath() {return flagsFilePath;}
+
     public static String getTestDir(){return testDir;};
 }
