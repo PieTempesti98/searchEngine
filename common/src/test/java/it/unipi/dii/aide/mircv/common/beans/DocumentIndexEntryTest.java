@@ -1,5 +1,6 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
+import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -12,7 +13,7 @@ class DocumentIndexEntryTest {
         DocumentIndexEntry entry1 = new DocumentIndexEntry("test1", 0, 10);
 
         long offset1 = entry1.writeToDisk();
-        assertEquals(offset1, 144);
+        assertEquals(0, offset1);
 
         DocumentIndexEntry readEntry1 = new DocumentIndexEntry();
         assertTrue(readEntry1.readFromDisk(offset1));
@@ -27,9 +28,9 @@ class DocumentIndexEntryTest {
         DocumentIndexEntry entry2 = new DocumentIndexEntry("test2", 1, 15);
 
         long offset1 = entry1.writeToDisk();
-        assertEquals(offset1, 0);
+        assertEquals(0, offset1);
         long offset2 = entry2.writeToDisk();
-        assertEquals(offset2, 72);
+        assertEquals(72, offset2);
 
         DocumentIndexEntry readEntry1 = new DocumentIndexEntry();
         assertTrue(readEntry1.readFromDisk(offset1));

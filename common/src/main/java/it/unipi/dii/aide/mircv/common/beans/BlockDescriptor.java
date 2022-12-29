@@ -12,6 +12,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.Objects;
 
 /**
  * Descriptor of a block of postings in a posting list, used to implement the skipping
@@ -54,6 +55,9 @@ public class BlockDescriptor {
     public static final int BLOCK_DESCRIPTOR_ENTRY_BYTES = 4 * 4 + 2 * 8;
 
     private static long memoryOffset = 0;
+
+    private static String INVERTED_INDEX_DOCS = ConfigurationParameters.getInvertedIndexDocs();
+    private static String INVERTED_INDEX_FREQS = ConfigurationParameters.getInvertedIndexFreqs();
 
     public static long getMemoryOffset() {
         return memoryOffset;
@@ -138,12 +142,12 @@ public class BlockDescriptor {
     public ArrayList<Posting> getBlockPostings(){
 
         try(
-            FileChannel docsFChan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexDocs()),
+            FileChannel docsFChan = (FileChannel) Files.newByteChannel(Paths.get(INVERTED_INDEX_DOCS),
                     StandardOpenOption.WRITE,
                     StandardOpenOption.READ,
                     StandardOpenOption.CREATE
             );
-            FileChannel freqsFChan = (FileChannel) Files.newByteChannel(Paths.get(ConfigurationParameters.getInvertedIndexFreqs()),
+            FileChannel freqsFChan = (FileChannel) Files.newByteChannel(Paths.get(INVERTED_INDEX_FREQS),
                     StandardOpenOption.WRITE,
                     StandardOpenOption.READ,
                     StandardOpenOption.CREATE);
@@ -201,7 +205,6 @@ public class BlockDescriptor {
             e.printStackTrace();
             return null;
         }
-
     }
 
     @Override
@@ -213,6 +216,28 @@ public class BlockDescriptor {
                 ", freqSize = " + freqSize +
                 ", maxDocid = " + maxDocid +
                 ", numPostings = " + numPostings;
+    }
+    
+    /** needed for testing purposes
+     * @param invertedIndexDocs: path to be set
+     */
+    public static void setInvertedIndexDocs(String invertedIndexDocs) {
+        INVERTED_INDEX_DOCS = invertedIndexDocs;
+    }
+
+    /** needed for testing purposes
+     * @param invertedIndexFreqs: path to be set
+     */
+    public static void setInvertedIndexFreqs(String invertedIndexFreqs) {
+        INVERTED_INDEX_FREQS = invertedIndexFreqs;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BlockDescriptor that = (BlockDescriptor) o;
+        return docidOffset == that.docidOffset && docidSize == that.docidSize && freqOffset == that.freqOffset && freqSize == that.freqSize && maxDocid == that.maxDocid && numPostings == that.numPostings;
     }
 
 }

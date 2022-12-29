@@ -16,8 +16,8 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
     /**
      * path to file storing the vocabulary
      */
-    protected static String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
 
+    protected static String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
 
     private Vocabulary(){}
 
@@ -63,13 +63,11 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
     }
 
     public boolean readFromDisk(){
-
         long position = 0;
 
         //read whole vocabulary from
         while(position >= 0){
             VocabularyEntry entry = new VocabularyEntry();
-
             //read entry and update position
             position = entry.readFromDisk(position,VOCABULARY_PATH);
 
@@ -129,7 +127,10 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
         return null;
     }
 
-
+    /** needed for testing purposes
+     * @param path: path to be set
+     */
+    public static void setVocabularyPath(String path) {VOCABULARY_PATH = path;}
 
     public void setVocabularyPath(String path){
 

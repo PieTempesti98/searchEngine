@@ -40,37 +40,37 @@ public class Merger {
     /**
      * Standard pathname for partial index documents files
      */
-    private static final String PATH_TO_PARTIAL_INDEXES_DOCS = ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
+    private static String PATH_TO_PARTIAL_INDEXES_DOCS = ConfigurationParameters.getDocidsDir() + ConfigurationParameters.getDocidsFileName();
 
     /**
      * Standard pathname for partial index frequencies files
      */
-    private static final String PATH_TO_PARTIAL_INDEXES_FREQS = ConfigurationParameters.getFrequencyDir() + ConfigurationParameters.getFrequencyFileName();
+    private static String PATH_TO_PARTIAL_INDEXES_FREQS = ConfigurationParameters.getFrequencyDir() + ConfigurationParameters.getFrequencyFileName();
 
     /**
      * Standard pathname for partial vocabulary files
      */
-    private static final String PATH_TO_PARTIAL_VOCABULARIES = ConfigurationParameters.getPartialVocabularyDir() + ConfigurationParameters.getVocabularyFileName();
+    private static String PATH_TO_PARTIAL_VOCABULARIES = ConfigurationParameters.getPartialVocabularyDir() + ConfigurationParameters.getVocabularyFileName();
 
     /**
      * Path to the inverted index docs file
      */
-    private final static String PATH_TO_INVERTED_INDEX_DOCS = ConfigurationParameters.getInvertedIndexDocs();
+    private static String PATH_TO_INVERTED_INDEX_DOCS = ConfigurationParameters.getInvertedIndexDocs();
 
     /**
      * Path to the inverted index freqs file
      */
-    private final static String PATH_TO_INVERTED_INDEX_FREQS = ConfigurationParameters.getInvertedIndexFreqs();
+    private static String PATH_TO_INVERTED_INDEX_FREQS = ConfigurationParameters.getInvertedIndexFreqs();
 
     /**
      * Path to vocabulary
      */
-    private static final String PATH_TO_VOCABULARY = ConfigurationParameters.getVocabularyPath();
+    private static String PATH_TO_VOCABULARY = ConfigurationParameters.getVocabularyPath();
 
     /**
      * path to block descriptors file
      */
-    private static final String PATH_TO_BLOCK_DESCRIPTORS = ConfigurationParameters.getBlockDescriptorsPath();
+    private static String PATH_TO_BLOCK_DESCRIPTORS = ConfigurationParameters.getBlockDescriptorsPath();
 
     /**
      * Array used to point to the next vocabulary entry to process for each partial index
@@ -104,7 +104,6 @@ public class Merger {
 
         try {
             for (int i = 0; i < numIndexes; i++) {
-
                 nextTerms[i] = new VocabularyEntry();
                 vocEntryMemOffset[i] = 0;
 
@@ -305,6 +304,7 @@ public class Merger {
 
                 // merge the posting lists for the term to be processed
                 PostingList mergedPostingList = processTerm(termToProcess, vocabularyEntry);
+
                 if(mergedPostingList == null){
                     throw new Exception("ERROR: the merged posting list for the term " + termToProcess + " is null");
                 }
@@ -463,15 +463,6 @@ public class Merger {
      * - remove partial vocabularies
      */
     private static void cleanUp() {
-        // remove partial index docids directory
-        FileUtils.deleteDirectory(ConfigurationParameters.getDocidsDir());
-
-        // remove partial index frequencies directory
-        FileUtils.deleteDirectory(ConfigurationParameters.getFrequencyDir());
-
-        // remove partial vocabularies directory
-        FileUtils.deleteDirectory(ConfigurationParameters.getPartialVocabularyDir());
-
         try{
             for(int i = 0; i < numIndexes; i++){
                 if(docidChannels[i] != null){
@@ -487,7 +478,6 @@ public class Merger {
     }
 
     private static PostingList loadList(VocabularyEntry term, int index) {
-
         PostingList newList;
 
         try {
@@ -520,4 +510,49 @@ public class Merger {
         }
     }
 
+    /**
+     * needed for testing purposes
+     * @param pathToVocabulary: path to be set as vocabulary path
+     */
+    public static void setPathToVocabulary(String pathToVocabulary) {
+        PATH_TO_VOCABULARY = pathToVocabulary;
+    }
+
+    /**
+     * needed for testing purposes
+     * @param pathToInvertedIndexDocs: path to be set as inverted index's docs path
+     */
+    public static void setPathToInvertedIndexDocs(String pathToInvertedIndexDocs) {
+        PATH_TO_INVERTED_INDEX_DOCS = pathToInvertedIndexDocs;
+    }
+    
+    /**
+     * needed for testing purposes
+     * @param invertedIndexFreqs: path to be set as inverted index's freqs path
+     */
+    public static void setPathToInvertedIndexFreqs(String invertedIndexFreqs) { PATH_TO_INVERTED_INDEX_FREQS = invertedIndexFreqs;}
+
+    /**
+     * needed for testing purposes
+     * @param blockDescriptorsPath: path to be set as block descriptors' path
+     */
+    public static void setPathToBlockDescriptors(String blockDescriptorsPath) { PATH_TO_BLOCK_DESCRIPTORS = blockDescriptorsPath;}
+
+    /**
+     * needed for testing purposes
+     * @param pathToPartialIndexesDocs: path to be set
+     */
+    public static void setPathToPartialIndexesDocs(String pathToPartialIndexesDocs) { PATH_TO_PARTIAL_INDEXES_DOCS = pathToPartialIndexesDocs;}
+
+    /**
+     * needed for testing purposes
+     * @param pathToPartialIndexesFreqs: path to be set
+     */
+    public static void setPathToPartialIndexesFreqs(String pathToPartialIndexesFreqs) { PATH_TO_PARTIAL_INDEXES_FREQS = pathToPartialIndexesFreqs;}
+
+    /**
+     * needed for testing purposes
+     * @param pathToPartialVocabularies: path to be set
+     */
+    public static void setPathToPartialVocabularies(String pathToPartialVocabularies) { PATH_TO_PARTIAL_VOCABULARIES = pathToPartialVocabularies;}
 }
