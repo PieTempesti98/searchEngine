@@ -117,6 +117,7 @@ public class PostingList{
      * method that opens and initializes the posting list for the query processing
      */
     public void openList(){
+
         // load the block descriptors
         blocks = Vocabulary.getInstance().get(term).readBlocks();
 
@@ -130,6 +131,7 @@ public class PostingList{
 
         //initialize postings iterator
         postingIterator = postings.iterator();
+
 
     }
 
@@ -190,6 +192,7 @@ public class PostingList{
         }
         // block changed, load postings and update iterator
         if(blockChanged){
+            postings.clear();
             postings.addAll(currentBlock.getBlockPostings());
             postingIterator = postings.iterator();
         }
