@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 
 class QueryProcesserTest {
-
     private static final String VOCABULARY_PATH = "../data/vocabulary";
     private static final String BLOCK_DESCRIPTORS_PATH = "../data/blockDescriptors";
     private static final String DOCINDEX_PATH = "../data/documentIndex";
@@ -88,10 +87,10 @@ class QueryProcesserTest {
         pl = new PostingList("example");
         queryPostingsExample.add(pl);
 
-        return Stream.of(Arguments.arguments("bm25",3,queryPostingsAnotherExample,true,expectedResultsAnotherExampleConjBM25),
-                Arguments.arguments("bm25",3,queryPostingsAnotherExample,false,expectedResultsAnotherExampleDisBM25),
-                Arguments.arguments("bm25",3,queryPostingsExample,false,expectedResultsExampleDisBM25),
-                Arguments.arguments("bm25",3,queryPostingsExample,true,expectedResultsExampleConjBM25)
+        return Stream.of(Arguments.arguments(3,queryPostingsAnotherExample,true,expectedResultsAnotherExampleConjBM25),
+                Arguments.arguments(3,queryPostingsAnotherExample,false,expectedResultsAnotherExampleDisBM25),
+                Arguments.arguments(3,queryPostingsExample,false,expectedResultsExampleDisBM25),
+                Arguments.arguments(3,queryPostingsExample,true,expectedResultsExampleConjBM25)
         );
     }
 
@@ -120,44 +119,36 @@ class QueryProcesserTest {
         expectedResultsExampleConjTfidf.add(new AbstractMap.SimpleEntry<>(0.2041199826559248, 3));
         expectedResultsExampleConjTfidf.add(new AbstractMap.SimpleEntry<>(0.30150996489407533, 6));
 
-
-
         //postings for query "another example"
-        ArrayList<PostingList> queryPostingsAnotherExample = new ArrayList<>();
-        PostingList pl = new PostingList("example");
-        PostingList pl1 = new PostingList("another");
-        queryPostingsAnotherExample.add(pl);
-        queryPostingsAnotherExample.add(pl1);
+        ArrayList<PostingList> queryPostingsAnotherExample = new ArrayList<>(Arrays.stream(
+                new PostingList[]{new PostingList("example"), new PostingList("another")}).toList());
 
         //postings for query "example"
-        ArrayList<PostingList> queryPostingsExample = new ArrayList<>();
-        pl = new PostingList("example");
-        queryPostingsExample.add(pl);
+        ArrayList<PostingList> queryPostingsExample = new ArrayList<>(Arrays.stream(
+                new PostingList[]{new PostingList("example")}).toList());
 
-        return Stream.of(Arguments.arguments("tfidf",3,queryPostingsAnotherExample,true,expectedResultsAnotherExampleConjTfidf ),
-                Arguments.arguments("tfidf",3,queryPostingsAnotherExample,false,expectedResultsAnotherExampleDisTfidf),
-                Arguments.arguments("tfidf",3,queryPostingsExample,false,expectedResultsExampleDisTfidf),
-                Arguments.arguments("tfidf",3,queryPostingsExample,true,expectedResultsExampleConjTfidf)
+        return Stream.of(Arguments.arguments(3,queryPostingsAnotherExample,true,expectedResultsAnotherExampleConjTfidf ),
+                Arguments.arguments(3,queryPostingsAnotherExample,false,expectedResultsAnotherExampleDisTfidf),
+                Arguments.arguments(3,queryPostingsExample,false,expectedResultsExampleDisTfidf),
+                Arguments.arguments(3,queryPostingsExample,true,expectedResultsExampleConjTfidf)
         );
     }
 
     @ParameterizedTest
     @MethodSource("getMaxScoreTFIDFParameters")
-    void testMaxScoreTFIDF(String scoringFunction, int k, ArrayList<PostingList> postings, boolean isConjunctive, PriorityQueue<Map.Entry<Double, Integer>> expected ){
+    void testMaxScoreTFIDF(int k, ArrayList<PostingList> postings, boolean isConjunctive, PriorityQueue<Map.Entry<Double, Integer>> expected ){
         Flags.setMaxScore(true);
         Flags.setCompression(true);
         Flags.setStemStopRemoval(false);
-        assertEquals(expected.toString(), MaxScore.scoreQuery(postings,k,scoringFunction,isConjunctive).toString());
+        assertEquals(expected.toString(), MaxScore.scoreQuery(postings,k,"tfidf",isConjunctive).toString());
     }
 
     @ParameterizedTest
     @MethodSource("getMaxScoreBM25Parameters")
-    void testMaxScoreBM25(String scoringFunction, int k, ArrayList<PostingList> postings, boolean isConjunctive, PriorityQueue<Map.Entry<Double, Integer>> expected ){
+    void testMaxScoreBM25(int k, ArrayList<PostingList> postings, boolean isConjunctive, PriorityQueue<Map.Entry<Double, Integer>> expected ){
         Flags.setMaxScore(true);
         Flags.setCompression(true);
         Flags.setStemStopRemoval(false);
-        assertEquals(expected.toString(), MaxScore.scoreQuery(postings,k,scoringFunction,isConjunctive).toString());
+        assertEquals(expected.toString(), MaxScore.scoreQuery(postings,k,"bm25",isConjunctive).toString());
     }
-
-
 }
