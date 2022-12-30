@@ -102,6 +102,9 @@ public class Merger {
         docidChannels = new FileChannel[numIndexes];
         frequencyChannels = new FileChannel[numIndexes];
 
+        freqsMemOffset = 0;
+        docsMemOffset = 0;
+
         try {
             for (int i = 0; i < numIndexes; i++) {
                 nextTerms[i] = new VocabularyEntry();
@@ -310,7 +313,7 @@ public class Merger {
                 }
 
                 // compute information about block descriptors for the posting list to be written
-                //vocabularyEntry.computeBlocksInformation(mergedPostingList.getPostings().size());
+
                 vocabularyEntry.computeBlocksInformation();
 
                 // compute maximal number of postings that can be stored in a block
@@ -323,7 +326,6 @@ public class Merger {
 
                 // save posting list on disk writing each block
                 for(int i=0; i< numBlocks; i++){
-
                     // create a new block descriptor and update its information
                     BlockDescriptor blockDescriptor = new BlockDescriptor();
                     blockDescriptor.setDocidOffset(docsMemOffset);
@@ -424,7 +426,6 @@ public class Merger {
 
                                         // write the block descriptor on disk
                                         blockDescriptor.saveDescriptorOnDisk(descriptorChan);
-
                                         docsMemOffset+=nPostingsToBeWritten*4L;
                                         freqsMemOffset+=nPostingsToBeWritten*4L;
                                         break;

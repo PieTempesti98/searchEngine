@@ -5,10 +5,7 @@ import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.Flags;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 
 import java.nio.CharBuffer;
 import java.nio.MappedByteBuffer;
@@ -41,7 +38,7 @@ class MergerTest {
     @BeforeAll
     static void setPaths(){
         FileUtils.deleteDirectory(TEST_DIRECTORY);
-        FileUtils.createDirectory(TEST_DIRECTORY);
+        //FileUtils.createDirectory(TEST_DIRECTORY);
         Merger.setPathToVocabulary(VOCABULARY_PATH);
         Merger.setPathToInvertedIndexDocs(INVERTED_INDEX_DOCIDS);
         Merger.setPathToInvertedIndexFreqs(INVERTED_INDEX_FREQS);
@@ -62,9 +59,12 @@ class MergerTest {
     @BeforeEach
     void setUp() {
         //create directories to store partial frequencies, docids and vocabularies
+        FileUtils.createDirectory(TEST_DIRECTORY);
         createDirectory(TEST_DIRECTORY+"/partial_freqs");
         createDirectory(TEST_DIRECTORY+"/partial_docids");
         createDirectory(TEST_DIRECTORY+"/partial_vocabulary");
+        BlockDescriptor.setMemoryOffset(0);
+        Vocabulary.unsetInstance();
     }
 
     @AfterEach
@@ -125,8 +125,6 @@ class MergerTest {
                         vocEntry.setMemoryOffset(docidOffset);
                         vocEntry.setFrequencyOffset(freqOffset);
 
-                        //System.out.println("saving vocentry "+vocEntry);
-
                         vocOffset = vocEntry.writeEntryToDisk(vocOffset, vocabularyFchan);
 
                         docidOffset += numPostings * 4L;
@@ -154,12 +152,10 @@ class MergerTest {
         vocEntries.addAll(v.values());
 
         for(VocabularyEntry vocabularyEntry: vocEntries){
-            //System.out.println("retrieving "+vocabularyEntry);
             PostingList p = new PostingList();
             p.setTerm(vocabularyEntry.getTerm());
             p.openList();
             ArrayList<Posting> postings = new ArrayList<>();
-
 
             while(p.next()!=null){
                 postings.add(p.getCurrentPosting());
@@ -236,7 +232,8 @@ class MergerTest {
             return false;
         }
 
-        //CollectionSize.updateCollectionSize(docIndex.size());
+        CollectionSize.updateCollectionSize(docIndex.size());
+        CollectionSize.setTotalDocLen(22);
         return true;
     }
 
@@ -263,12 +260,8 @@ class MergerTest {
         // write intermediate indexes to disk so that SPIMI can be executed
         assertTrue(writeIntermediateIndexesToDisk(intermediateIndexes), "Error while writing intermediate indexes to disk");
 
-        //System.out.println("start merging");
-
         // merging intermediate indexes
         assertTrue(Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, false), "Error: merging failed");
-
-        //System.out.println("merged");
 
         ArrayList<ArrayList<Posting>> mergedLists = retrieveIndexFromDisk();
 
@@ -306,15 +299,24 @@ class MergerTest {
         // building partial index 1
         ArrayList<PostingList> postings = new ArrayList<>();
 
-        postings.add(new PostingList("amburgo\t1:3 2:2: 3:5"));
-        postings.add(new PostingList("pisa\t2:1 3:2"));
-        postings.add(new PostingList("zurigo\t2:1 3:2"));
+        PostingList pl = new PostingList("amburgo\t1:3 2:2: 3:5");
+        pl.updateBM25Parameters(1,3);
+        postings.add(pl);
+        pl = new PostingList("pisa\t2:1 3:2");
+        pl.updateBM25Parameters(4,1);
+        postings.add(pl);
+        pl = new PostingList("zurigo\t2:1 3:2");
+        pl.updateBM25Parameters(4,1);
+        postings.add(pl);
 
         // building partial index 2
         ArrayList<PostingList> index2 = new ArrayList<>();
-
-        index2.add(new PostingList("alberobello\t4:3 5:1"));
-        index2.add(new PostingList("pisa\t5:2"));
+        pl = new PostingList("alberobello\t4:3 5:1");
+        pl.updateBM25Parameters(1,3);
+        index2.add(pl);
+        pl = new PostingList("pisa\t5:2");
+        pl.updateBM25Parameters(3, 2);
+        index2.add(pl);
 
         // insert partial index to array of partial indexes
         ArrayList<ArrayList<PostingList>> intermediateIndexes = new ArrayList<>();
@@ -330,18 +332,127 @@ class MergerTest {
         // write intermediate indexes to disk
         assertTrue(writeIntermediateIndexesToDisk(intermediateIndexes), "Error while writing intermediate indexes to disk");
 
-        //System.out.println("start merging");
-
         // merging intermediate indexes
         assertTrue(Merger.mergeIndexes(intermediateIndexes.size(), compressionMode, false), "Error: merging failed");
 
         if(vocabularyTest){
-            // TODO: implement
+            ArrayList<VocabularyEntry> expectedVocabulary = new ArrayList<>();
+            VocabularyEntry vocEntry = new VocabularyEntry("alberobello");
+            if(compressionMode){
+                vocEntry.setDocidSize(0);
+                vocEntry.setFrequencySize(0);
+                vocEntry.setMemoryOffset(0);
+                vocEntry.setFrequencyOffset(0);
+            } else {
+                vocEntry.setDocidSize(0);
+                vocEntry.setFrequencySize(0);
+                vocEntry.setMemoryOffset(0);
+                vocEntry.setFrequencyOffset(0);
+            }
+            vocEntry.setTermid(0);
+            vocEntry.setNumBlocks(1);
+            vocEntry.setBlockOffset(0);
+            vocEntry.setDf(2);
+            vocEntry.setIdf(0.3979400086720376);
+            vocEntry.setMaxTf(3);
+            vocEntry.setMaxTFIDF(0.5878056449127935);
+            vocEntry.setBM25Tf(3);
+            vocEntry.setBM25Dl(1);
+            vocEntry.setMaxBM25(0.3288142794660968);
+
+            expectedVocabulary.add(vocEntry);
+
+
+            vocEntry = new VocabularyEntry("amburgo");
+            if(compressionMode){
+                vocEntry.setDocidSize(0);
+                vocEntry.setFrequencySize(0);
+                vocEntry.setMemoryOffset(2);
+                vocEntry.setFrequencyOffset(1);
+            } else {
+                vocEntry.setDocidSize(0);
+                vocEntry.setFrequencySize(0);
+                vocEntry.setMemoryOffset(8);
+                vocEntry.setFrequencyOffset(8);
+            }
+            vocEntry.setTermid(0);
+            vocEntry.setNumBlocks(1);
+            vocEntry.setBlockOffset(BlockDescriptor.BLOCK_DESCRIPTOR_ENTRY_BYTES);
+            vocEntry.setDf(3);
+            vocEntry.setIdf(0.2218487496163564);
+            vocEntry.setMaxTf(5);
+            vocEntry.setMaxTFIDF(0.37691437109764137);
+            vocEntry.setBM25Tf(3);
+            vocEntry.setBM25Dl(1);
+            vocEntry.setMaxBM25(0.18331164287548699);
+
+            expectedVocabulary.add(vocEntry);
+
+
+            vocEntry = new VocabularyEntry("pisa");
+            if(compressionMode){
+                vocEntry.setDocidSize(0);
+                vocEntry.setFrequencySize(0);
+                vocEntry.setMemoryOffset(5);
+                vocEntry.setFrequencyOffset(3);
+            } else {
+                vocEntry.setDocidSize(0);
+                vocEntry.setFrequencySize(0);
+                vocEntry.setMemoryOffset(20);
+                vocEntry.setFrequencyOffset(20);
+            }
+            vocEntry.setTermid(0);
+            vocEntry.setNumBlocks(1);
+            vocEntry.setBlockOffset(BlockDescriptor.BLOCK_DESCRIPTOR_ENTRY_BYTES*2);
+            vocEntry.setDf(3);
+            vocEntry.setIdf(0.2218487496163564);
+            vocEntry.setMaxTf(2);
+            vocEntry.setMaxTFIDF(0.28863187775142785);
+            vocEntry.setBM25Tf(2);
+            vocEntry.setBM25Dl(3);
+            vocEntry.setMaxBM25(0.14121294731457043);
+
+            expectedVocabulary.add(vocEntry);
+
+
+            vocEntry = new VocabularyEntry("zurigo");
+            if(compressionMode){
+                vocEntry.setDocidSize(0);
+                vocEntry.setFrequencySize(0);
+                vocEntry.setMemoryOffset(8);
+                vocEntry.setFrequencyOffset(4);
+            } else {
+                vocEntry.setDocidSize(0);
+                vocEntry.setFrequencySize(0);
+                vocEntry.setMemoryOffset(32);
+                vocEntry.setFrequencyOffset(32);
+            }
+
+            vocEntry.setTermid(0);
+            vocEntry.setNumBlocks(1);
+            vocEntry.setBlockOffset(BlockDescriptor.BLOCK_DESCRIPTOR_ENTRY_BYTES*3);
+            vocEntry.setDf(2);
+            vocEntry.setIdf(0.3979400086720376);
+            vocEntry.setMaxTf(2);
+            vocEntry.setMaxTFIDF(0.5177318877571058);
+            vocEntry.setBM25Tf(1);
+            vocEntry.setBM25Dl(4);
+            vocEntry.setMaxBM25(0.16596550124710574);
+
+            expectedVocabulary.add(vocEntry);
+
+            // read vocabulary from disk
+            Vocabulary v = Vocabulary.getInstance();
+            v.readFromDisk();
+
+            ArrayList<VocabularyEntry> retrievedVocabulary = new ArrayList<>();
+            retrievedVocabulary.addAll(v.values());
+
+            assertEquals(expectedVocabulary.toString(), retrievedVocabulary.toString(), "Vocabulary after merging is different from the expected vocabulary.");
+
         } else {
-            //System.out.println("merged");
 
             ArrayList<ArrayList<Posting>> mergedLists = retrieveIndexFromDisk();
-
 
             // build expected results
             ArrayList<ArrayList<Posting>> expectedResults = new ArrayList<>(4);
@@ -382,13 +493,25 @@ class MergerTest {
 
     }
 
+
+    /* test merging of a single index without compression
+     *      index tested:
+     *          - "alberobello" = {(1,3), (2,3), (4,7)}
+     *          - "newyork" = {(1,5), (3,2), (4,6)}
+     *          - "pisa" = {(1,1), (5,3)}
+     */
     @Test
     void singleIndexMergeWithoutCompression(){
         Flags.setCompression(false);
         mergeSingleIndex(false);
     }
 
-
+    /* test merging of a single index with compression
+     *      index tested:
+     *          - "alberobello" = {(1,3), (2,3), (4,7)}
+     *          - "newyork" = {(1,5), (3,2), (4,6)}
+     *          - "pisa" = {(1,1), (5,3)}
+     */
     @Test
     void singleIndexMergeWithCompression() {
         Flags.setCompression(true);
@@ -396,22 +519,64 @@ class MergerTest {
     }
 
 
+    /* test merging of two indexes without compression
+     *      index 1:
+     *          - "amburgo" = {(1,3), (2,2), (3,5)}
+     *          - "pisa" = {(2,1), (3,2)}
+     *          - "zurigo" = {(4,1)}
+     *      index 2:
+     *          - "alberobello" = {(4,3), (5,1)}
+     *          - "pisa" = {(5,2)}
+     */
     @Test
     void twoIndexesMergeWithoutCompression() {
         Flags.setCompression(false);
         mergeTwoIndexes(false, false);
     }
 
+    /* test merging of two indexes with compression
+     *      index 1:
+     *          - "amburgo" = {(1,3), (2,2), (3,5)}
+     *          - "pisa" = {(2,1), (3,2)}
+     *          - "zurigo" = {(4,1)}
+     *      index 2:
+     *          - "alberobello" = {(4,3), (5,1)}
+     *          - "pisa" = {(5,2)}
+     */
     @Test
     void twoIndexesMergeWithCompression() {
         Flags.setCompression(true);
         mergeTwoIndexes(true, false);
     }
 
+    /* test vocabulary after merging of two indexes without compression
+     *      index 1:
+     *          - "amburgo" = {(1,3), (2,2), (3,5)}
+     *          - "pisa" = {(2,1), (3,2)}
+     *          - "zurigo" = {(4,1)}
+     *      index 2:
+     *          - "alberobello" = {(4,3), (5,1)}
+     *          - "pisa" = {(5,2)}
+     */
     @Test
     void vocabularyTest(){
         Flags.setCompression(false);
         mergeTwoIndexes(false, true);
+    }
+
+    /* test vocabulary after merging of two indexes without compression
+     *      index 1:
+     *          - "amburgo" = {(1,3), (2,2), (3,5)}
+     *          - "pisa" = {(2,1), (3,2)}
+     *          - "zurigo" = {(4,1)}
+     *      index 2:
+     *          - "alberobello" = {(4,3), (5,1)}
+     *          - "pisa" = {(5,2)}
+     */
+    @Test
+    void vocabularyTest2(){
+        Flags.setCompression(true);
+        mergeTwoIndexes(true, true);
     }
 
 

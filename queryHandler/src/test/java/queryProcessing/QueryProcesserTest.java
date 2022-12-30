@@ -65,7 +65,7 @@ class QueryProcesserTest {
 
     @BeforeAll
     public static void init(){
-
+/*
         CollectionSize.setTotalDocLen(64);
         CollectionSize.setCollectionSize(11);
 
@@ -78,7 +78,7 @@ class QueryProcesserTest {
         DocumentIndexEntry.setDocindexPath("../data/documentIndex");
         success = docIndex.loadFromDisk();
         assertTrue(success);
-
+*/
 
     }
 

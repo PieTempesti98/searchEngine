@@ -131,4 +131,11 @@ public class CollectionSize{
     public static void setCollectionStatisticsPath(String collectionStatisticsPath) {
         COLLECTION_STATISTICS_PATH = collectionStatisticsPath;
     }
+
+    /** needed for testing purposes
+     * @param totalDocLen: path to be set
+     */
+    public static void setTotalDocLen(long totalDocLen) {
+        CollectionSize.totalDocLen = totalDocLen;
+    }
 }

@@ -154,8 +154,6 @@ public class VocabularyEntry {
      */
     public static final long ENTRY_SIZE = TERM_SIZE + 76;
 
-    private static String BLOCK_DESCRIPTORS_PATH = ConfigurationParameters.getBlockDescriptorsPath();
-
     /**
      * Constructor for the vocabulary entry
      * create an empty class

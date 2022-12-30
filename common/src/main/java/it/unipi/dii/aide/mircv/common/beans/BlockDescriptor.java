@@ -140,7 +140,6 @@ public class BlockDescriptor {
      * @return arraylist containing block's postings
      */
     public ArrayList<Posting> getBlockPostings(){
-
         try(
             FileChannel docsFChan = (FileChannel) Files.newByteChannel(Paths.get(INVERTED_INDEX_DOCS),
                     StandardOpenOption.WRITE,
@@ -238,6 +237,13 @@ public class BlockDescriptor {
         if (o == null || getClass() != o.getClass()) return false;
         BlockDescriptor that = (BlockDescriptor) o;
         return docidOffset == that.docidOffset && docidSize == that.docidSize && freqOffset == that.freqOffset && freqSize == that.freqSize && maxDocid == that.maxDocid && numPostings == that.numPostings;
+    }
+
+    /** needed for testing purposes
+     * @param memoryOffset: offest to be set
+     */
+    public static void setMemoryOffset(long memoryOffset) {
+        BlockDescriptor.memoryOffset = memoryOffset;
     }
 
 }
