@@ -73,19 +73,13 @@ class QueryProcesserTest {
         expectedResultsExampleConjBM25.add(new AbstractMap.SimpleEntry<>(0.1123005090598549, 3));
         expectedResultsExampleConjBM25.add(new AbstractMap.SimpleEntry<>(0.09661547190697509, 2));
 
-
-
         //postings for query "another example"
-        ArrayList<PostingList> queryPostingsAnotherExample = new ArrayList<>();
-        PostingList pl = new PostingList("example");
-        PostingList pl1 = new PostingList("another");
-        queryPostingsAnotherExample.add(pl);
-        queryPostingsAnotherExample.add(pl1);
+        ArrayList<PostingList> queryPostingsAnotherExample = new ArrayList<>(Arrays.stream(
+                new PostingList[]{new PostingList("example"), new PostingList("another")}).toList());
 
         //postings for query "example"
-        ArrayList<PostingList> queryPostingsExample = new ArrayList<>();
-        pl = new PostingList("example");
-        queryPostingsExample.add(pl);
+        ArrayList<PostingList> queryPostingsExample = new ArrayList<>(Arrays.stream(
+                new PostingList[]{new PostingList("example")}).toList());
 
         return Stream.of(Arguments.arguments(3,queryPostingsAnotherExample,true,expectedResultsAnotherExampleConjBM25),
                 Arguments.arguments(3,queryPostingsAnotherExample,false,expectedResultsAnotherExampleDisBM25),
