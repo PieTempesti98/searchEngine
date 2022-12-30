@@ -15,7 +15,6 @@ public class Main {
      * */
     public static void main(String[] args){
 
-
         //if set to true, reading from compressed file is enabled
         boolean compressedReadingEnable = false;
         //if set to true, compression of inverted index is enabled

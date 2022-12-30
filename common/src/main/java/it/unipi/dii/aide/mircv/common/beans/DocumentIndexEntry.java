@@ -69,6 +69,8 @@ public class DocumentIndexEntry{
         this.docLen = docLen;
     }
 
+    public static void setDocindexPath(String path) { DOCINDEX_PATH = path; }
+
     public String getPid() {return pid;}
 
     public void setPid(String pid) {

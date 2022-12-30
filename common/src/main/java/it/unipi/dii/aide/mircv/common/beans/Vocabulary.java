@@ -74,6 +74,11 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
             if(position == 0)
                 return  true;
 
+            if(entry.getTerm()==null){
+                // TODO: handle
+                return true;
+            }
+
             //populate vocabulary
             this.put(entry.getTerm(),entry);
 

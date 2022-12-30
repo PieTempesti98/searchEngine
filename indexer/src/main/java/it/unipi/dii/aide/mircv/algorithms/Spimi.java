@@ -311,7 +311,7 @@ public class Spimi {
 
             }
             // update the size of the document index and save it to disk
-            if(!CollectionSize.updateCollectionSize(docid) || !CollectionSize.updateDocumentsLenght(docsLen)){
+            if(!CollectionSize.updateCollectionSize(docid-1) || !CollectionSize.updateDocumentsLenght(docsLen)){
                 System.out.println("Couldn't update collection statistics.");
                 return 0;
             }
