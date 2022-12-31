@@ -478,6 +478,7 @@ public class Merger {
         }
     }
 
+
     private static PostingList loadList(VocabularyEntry term, int index) {
         PostingList newList;
 
@@ -509,6 +510,16 @@ public class Merger {
             e.printStackTrace();
             return null;
         }
+    }
+
+    /**
+     * method to print how much space does the inverted index takes in disk.
+     * This method is needed to compute performance statistics.
+     */
+    public static void printPerformanceStatistics(){
+        System.out.println("Inverted index's memory occupancy:");
+        System.out.println("\t> docids: "+docsMemOffset+ "bytes");
+        System.out.println("\t> freqs: "+freqsMemOffset+ "bytes");
     }
 
     /**

@@ -90,6 +90,8 @@ public class Main {
             formatTime(spimiTime, stop, "Merging");
             formatTime(start, stop, "Creation of inverted index");
 
+            Merger.printPerformanceStatistics();
+
             return;
         }
         System.out.println("An error occurred during merging.");

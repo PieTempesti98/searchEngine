@@ -234,6 +234,7 @@ public class Spimi {
                     // if we reach the end of file (br.readline() -> null)
                     if ((line = br.readLine()) == null) {
                         // we've processed all the documents
+                        System.out.println("all documents processed");
                         allDocumentsProcessed = true;
                         break;
                     }
