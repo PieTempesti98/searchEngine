@@ -78,6 +78,11 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
             if(position == 0)
                 return  true;
 
+            if(entry.getTerm()==null){
+                // TODO: handle
+                return true;
+            }
+
             //populate vocabulary
             this.put(entry.getTerm(),entry);
             entries.put(entry.getTerm(),entry);
@@ -142,7 +147,12 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
     public static void clearCache(){
 
         entries.clear();
-    }
 
+    /**
+     * needed for testing purposes
+     */
+    public static void unsetInstance(){
+            instance = null;
+    }
 
 }

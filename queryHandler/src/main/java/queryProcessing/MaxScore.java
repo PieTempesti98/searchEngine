@@ -13,12 +13,10 @@ public class MaxScore {
      * @param queryPostings: posting lists to be initialized
      */
     private static void initialize(ArrayList<PostingList> queryPostings){
-
         for(PostingList postingList: queryPostings) {
             postingList.openList();
             postingList.next();
         }
-
     }
 
     /**
@@ -39,27 +37,13 @@ public class MaxScore {
      * @return returns a priority queue (of at most K elements) in the format <SCORE (Double), DOCID (Integer)> ordered by increasing score value
      */
     public static PriorityQueue<Map.Entry<Double, Integer>> scoreQuery(ArrayList<PostingList> queryPostings, int k,String scoringFunction, boolean conjunctiveMode){
-
-        //System.out.println("query postings:\t"+ queryPostings);
-
         initialize(queryPostings);
-
-        // deep copy of the posting lists to be scored (avoid side effects and modification of queryPostings
-        //ArrayList<PostingList> copyPostings = deepCopy(queryPostings);
 
         // initialization of the MinHeap for the results
         PriorityQueue<Map.Entry<Double, Integer>> topKDocuments = new PriorityQueue<>(k, Map.Entry.comparingByKey());
 
         // sort by increasing term upper bound posting lists to be scored
         ArrayList<Map.Entry<PostingList, Double>> sortedLists = sortPostingListsByTermUpperBound(queryPostings, scoringFunction);
-
-        /* DEBUG
-        System.out.println("sorted lists:");
-
-        for(Map.Entry<PostingList, Double> i : sortedLists){
-            System.out.println("posting list:" + i.getKey() + " tub:"+i.getValue());
-        }
-        */
 
         // initialization of current threshold to enter the MinHeap of the results
         double currThreshold = -1;
@@ -68,10 +52,9 @@ public class MaxScore {
 
         int firstEssentialPLIndex = 0;
         while(true){
-            //System.out.println("iteration: "+iteration);
+
             double partialScore = 0;
             double documentUpperBound = 0;
-            //System.out.println("new iteration with curr_threshold: "+currThreshold);
 
             // variable to store the sum of term upper bounds of non-essential posting lists
             double nonEssentialTUBs = 0;
@@ -80,33 +63,13 @@ public class MaxScore {
             if(currThresholdHasBeenUpdated){
                 // divide posting lists to be scored in essential and non-essential posting lists
                 firstEssentialPLIndex = getFirstEssentialPostingListIndex(sortedLists, currThreshold);
-                //System.out.println("first essential PL index: "+firstEssentialPLIndex);
-                if(firstEssentialPLIndex==-1){
-                    //System.out.println("no essential PL found, stop");
 
-                    /* DEBUG
-                    for(Map.Entry<PostingList, Double> i: sortedLists){
-                        PostingList p = i.getKey();
-
-                        if(p.getCurrentPosting()!=null){
-                            System.out.println("posting: ("+p.getCurrentPosting().getDocid()+","+p.getCurrentPosting().getFrequency()+") score: "+Scorer.scoreDocument(p.getCurrentPosting(), Vocabulary.getInstance().getIdf(i.getKey().getTerm()), scoringFunction));
-                        }
-
-                        while(p.next()!=null){
-                            if(p.getCurrentPosting()!=null){
-                                System.out.println("posting: ("+p.getCurrentPosting().getDocid()+","+p.getCurrentPosting().getFrequency()+") score: "+Scorer.scoreDocument(p.getCurrentPosting(), Vocabulary.getInstance().getIdf(i.getKey().getTerm()), scoringFunction));
-                            }
-                        }
-                    }
-                    */
+                if(firstEssentialPLIndex==-1)
                     break;
-                }
             }
 
             // search for minimum docid to be scored among essential posting lists
             int docToProcess = nextDocToProcess(sortedLists, firstEssentialPLIndex, conjunctiveMode);
-
-            //System.out.println("next doc to process: "+docToProcess);
 
             // check if there is no docid to be processed
             if(docToProcess == -1)
@@ -121,45 +84,31 @@ public class MaxScore {
             // process DAAT the essential posting lists for docToProcess
             partialScore = processEssentialListsDAAT(sortedLists, firstEssentialPLIndex, docToProcess,scoringFunction);
 
-            //System.out.println("essential partial score: "+partialScore);
-
-
             // sum the term upper bounds for all non-essential posting lists and save them in nonEssentialTUBs
             for(int i=0; i<firstEssentialPLIndex; i++){
                 if(sortedLists.get(i)!=null)
                     nonEssentialTUBs += sortedLists.get(i).getValue();
             }
 
-            //System.out.println("non essential tubs: "+nonEssentialTUBs);
-
             // update document upper bound to PartialScore+sum(TermUpperBound of non-essential posting lists)
             documentUpperBound = partialScore + nonEssentialTUBs;
 
-            //System.out.println("document upper bound: "+documentUpperBound);
-
             // check if non-essential posting lists must be processed or not
             if(documentUpperBound > currThreshold){
-                //System.out.println("beats the threshold");
                 // process non-essential posting list skipping all documents up to docToProcess
                 double nonEssentialScores = processNonEssentialListsWithSkipping(sortedLists, firstEssentialPLIndex, docToProcess,scoringFunction);
 
-                //System.out.println("non essential score: "+nonEssentialScores);
                 // update document upper bound
                 documentUpperBound = documentUpperBound -nonEssentialTUBs + nonEssentialScores;
 
-                //System.out.println("actual score for document: "+documentUpperBound);
                 // check if the document can enter the MinHeap
                 if(documentUpperBound>currThreshold){
-                    //System.out.println("beats the threshold");
                     // the current document enters the MinHeap
                     // check if the MinHeap is full
                     if(topKDocuments.size()==k){
-                        //System.out.println("heap full");
                         // MinHeap is full, remove the root of the MinHeap (the lowest score in top K documents)
                         topKDocuments.poll();
                     }
-
-                    //System.out.println("inserted "+docToProcess);
 
                     // insert the document and its score in the MinHeap
                     topKDocuments.add(new AbstractMap.SimpleEntry<>(documentUpperBound, docToProcess));
@@ -175,7 +124,6 @@ public class MaxScore {
 
         }
 
-        //System.out.println("top K:\t"+topKDocuments);
         cleanUp(queryPostings);
         return topKDocuments;
     }
@@ -195,28 +143,17 @@ public class MaxScore {
             Map.Entry<PostingList, Double> postingList = sortedLists.get(i);
 
             if(postingList.getKey().getCurrentPosting()!= null && postingList.getKey().getCurrentPosting().getDocid()==docToProcess){
-                //System.out.println("GEQ in list "+i+" is current docid");
-                nonEssentialScore += Scorer.scoreDocument(postingList.getKey().getCurrentPosting(), Vocabulary.getInstance().getIdf(postingList.getKey().getTerm()), scoringFunction);
+                nonEssentialScore += Scorer.scoreDocument(postingList.getKey().getCurrentPosting(), Vocabulary.getInstance().get(postingList.getKey().getTerm()).getIdf(), scoringFunction);
                 postingList.getKey().next();
                 continue;
             }
 
             Posting posting = postingList.getKey().nextGEQ(docToProcess);
             if(posting != null && posting.getDocid() == docToProcess) {
-                //System.out.println("GEQ in list "+i+" : ("+posting.getDocid()+","+posting.getFrequency()+")");
-                nonEssentialScore += Scorer.scoreDocument(posting, Vocabulary.getInstance().getIdf(postingList.getKey().getTerm()), scoringFunction);
+                nonEssentialScore += Scorer.scoreDocument(posting, Vocabulary.getInstance().get(postingList.getKey().getTerm()).getIdf(), scoringFunction);
                 postingList.getKey().next();
-            }/*
-            else
-            {
-                if(posting != null)
-                    System.out.println("GEQ in list "+i+" : ("+posting.getDocid()+","+posting.getFrequency()+")");
-                else
-                    System.out.println("no GEQ in list: "+i);
             }
-*/
         }
-
         return nonEssentialScore;
     }
 
@@ -245,9 +182,8 @@ public class MaxScore {
             if(pointedPosting != null){
                 // check if minimum docid to be scored in current posting list is the one to be processed
                 if(pointedPosting.getDocid() == docToProcess){
-                    //System.out.println("scoring term:"+postingList.getTerm());
                     // process the current document
-                    partialScore += Scorer.scoreDocument(pointedPosting, Vocabulary.getInstance().getIdf(postingList.getTerm()), scoringFunction);
+                    partialScore += Scorer.scoreDocument(pointedPosting, Vocabulary.getInstance().get(postingList.getTerm()).getIdf(), scoringFunction);
                     postingList.next();
                 }
             }
@@ -268,17 +204,12 @@ public class MaxScore {
 
         // scan all the posting lists
         for(int i=0; i<sortedLists.size(); i++){
-            //System.out.println("list " +i+" has a tub of: " + sortedLists.get(i).getValue());
 
-            if(sortedLists.get(i).getKey().getCurrentPosting()==null){
-                //System.out.println("no documents to be processed in list: "+i);
+            if(sortedLists.get(i).getKey().getCurrentPosting()==null)
                 continue;
-            }
 
             // sum the term upper bound of the current posting list to sumScores
             sumScores = sumScores + sortedLists.get(i).getValue();
-
-            //System.out.println("sum scores:" + sumScores);
 
             // check if the sum of the term upper bounds up to now is greater equal than the current threshold
 
@@ -304,8 +235,11 @@ public class MaxScore {
 
             Posting pointedPosting = sortedLists.get(i).getKey().getCurrentPosting();
 
-            if(pointedPosting==null)
+            if(pointedPosting==null){
+                if(conjunctiveMode)
+                    return -1;
                 continue;
+            }
 
             if(conjunctiveMode){
                 // if current posting  is not null and next docid is the current minimum
@@ -333,8 +267,6 @@ public class MaxScore {
     private static int nextGEQ(ArrayList<Map.Entry<PostingList, Double>> sortedLists, int docidToProcess){
         // move the iterators for posting lists pointing to docids < docidToProcess
 
-        //System.out.println("moving iterators towards docid: \t"+docidToProcess);
-
         int nextGEQ = docidToProcess;
 
         for(int i=0; i<sortedLists.size(); i++){
@@ -345,18 +277,14 @@ public class MaxScore {
             if(currPostingList != null){
                 Posting pointedPosting = currPostingList.getCurrentPosting();
 
-                if(pointedPosting == null){
-                    //System.out.println("conjunctive mode end");
+                if(pointedPosting == null)
                     return -1;
-                }
 
                 if(pointedPosting.getDocid() < nextGEQ) {
                     pointedPosting = currPostingList.nextGEQ(nextGEQ);
                     // check if in the current posting list there is no docid >= docidToProcess to be processed
-                    if(pointedPosting == null){
-                        //System.out.println("conjunctive mode end");
+                    if(pointedPosting == null)
                         return -1;
-                    }
                 }
 
                 // check if in the current posting list is not present docidToProcess, but it is present a docid >
@@ -366,13 +294,9 @@ public class MaxScore {
                     // set nextGEQ to new value
                     nextGEQ = pointedPosting.getDocid();
                     i=-1;
-                    //System.out.println("nextGEQ updated to"+nextGEQ);
-
                 }
             }
         }
-
-        //System.out.println("conjunctive mode, next docid to be processed:\t"+docidToProcess);
         return nextGEQ;
     }
 
@@ -386,13 +310,9 @@ public class MaxScore {
 
         for (PostingList postingList : queryPostings) {
             // retrieve document upper bound
-            double termUpperBound;
-            if (scoringFunction.equals("tfidf")) {
-                termUpperBound = Vocabulary.getInstance().get(postingList.getTerm()).getMaxTFIDF();
-            } else
-                termUpperBound = Vocabulary.getInstance().get(postingList.getTerm()).getMaxBM25();
-
-            //System.out.println("term upper bound for pl " + queryPostings.indexOf(postingList)+": "+termUpperBound);
+            double termUpperBound = (scoringFunction.equals("tfidf")) ?
+                                    Vocabulary.getInstance().get(postingList.getTerm()).getMaxTFIDF() :
+                                    Vocabulary.getInstance().get(postingList.getTerm()).getMaxBM25();
 
             sortedPostingLists.add(new AbstractMap.SimpleEntry<>(postingList, termUpperBound));
         }

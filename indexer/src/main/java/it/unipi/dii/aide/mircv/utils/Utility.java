@@ -15,6 +15,7 @@ public class Utility {
     private static final String INVERTED_INDEX_DOCIDS = ConfigurationParameters.getInvertedIndexDocs();
     private static final String INVERTED_INDEX_FREQS = ConfigurationParameters.getInvertedIndexFreqs();
     private static final String PARTIAL_VOCABULARY_PATH = ConfigurationParameters.getPartialVocabularyDir();
+    private static final String BLOCK_DESCRIPTORS_PATH = ConfigurationParameters.getBlockDescriptorsPath();
 
     public static void initializeFiles(){
 
@@ -22,6 +23,7 @@ public class Utility {
         removeFile(VOCABULARY_PATH);
         removeFile(INVERTED_INDEX_DOCIDS);
         removeFile(INVERTED_INDEX_FREQS);
+        removeFile(BLOCK_DESCRIPTORS_PATH);
 
         deleteDirectory(PARTIAL_INDEX_DOCIDS);
         deleteDirectory(PARTIAL_INDEX_FREQS);

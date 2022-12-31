@@ -92,11 +92,6 @@ public class VocabularyEntry {
         this.BM25Tf = BM25Tf;
     }
 
-    /** needed for testing purposes **/
-    public static void setBlockDescriptorsPath(String blockDescriptorsPath) {
-        BLOCK_DESCRIPTORS_PATH = blockDescriptorsPath;
-    }
-
 
     /**
      * method to update the max document length for the term
@@ -153,8 +148,6 @@ public class VocabularyEntry {
      * we have to store the term size plus 7 ints, 3 double and 3 longs, total 136 bytes
      */
     public static final long ENTRY_SIZE = TERM_SIZE + 76;
-
-    private static String BLOCK_DESCRIPTORS_PATH = ConfigurationParameters.getBlockDescriptorsPath();
 
     /**
      * Constructor for the vocabulary entry

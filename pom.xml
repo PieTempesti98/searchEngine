@@ -12,6 +12,7 @@
         <module>indexer</module>
         <module>queryHandler</module>
         <module>cli</module>
+        <module>performanceTests</module>
     </modules>
 
     <properties>
