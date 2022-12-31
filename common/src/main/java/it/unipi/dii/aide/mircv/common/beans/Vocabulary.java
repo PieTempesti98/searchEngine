@@ -11,7 +11,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
     /**
      * cache used for most recently used vocabulary entries
      */
-    private final LruCache<String, VocabularyEntry> entries= new LruCache<>(10);
+    private final static LruCache<String, VocabularyEntry> entries= new LruCache<>(1000);
 
     /**
      * path to file storing the vocabulary
@@ -62,7 +62,11 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
     }
 
+    /**
+     *  used for testing purposes only
+     * */
     public boolean readFromDisk(){
+
         long position = 0;
 
         //read whole vocabulary from
@@ -76,6 +80,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
             //populate vocabulary
             this.put(entry.getTerm(),entry);
+            entries.put(entry.getTerm(),entry);
 
         }
 
@@ -132,9 +137,11 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
      */
     public static void setVocabularyPath(String path) {VOCABULARY_PATH = path;}
 
-    public void setVocabularyPath(String path){
+    /** needed for testing purposes
+     */
+    public static void clearCache(){
 
-        VOCABULARY_PATH = path;
+        entries.clear();
     }
 
 
