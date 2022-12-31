@@ -132,10 +132,6 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
      */
     public static void setVocabularyPath(String path) {VOCABULARY_PATH = path;}
 
-    public void setVocabularyPath(String path){
-
-        VOCABULARY_PATH = path;
-    }
 
 
 }

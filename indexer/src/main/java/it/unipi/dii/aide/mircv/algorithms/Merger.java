@@ -92,6 +92,8 @@ public class Merger {
      */
     private static boolean initialize() {
 
+        docsMemOffset = 0;
+        freqsMemOffset = 0;
         // initialization of array of next vocabulary entries tp be processed
         nextTerms = new VocabularyEntry[numIndexes];
 

@@ -237,6 +237,10 @@ public class DocumentIndexEntry{
         return de.getDocid() == this.getDocid() && de.getPid().equals(this.getPid()) && de.getDocLen() == this.getDocLen();
     }
 
+    public static void resetOffset(){
+        memOffset = 0;
+    }
+
 
 
 }

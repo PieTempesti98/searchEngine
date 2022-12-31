@@ -214,7 +214,8 @@ public class Spimi {
      * @param debug flag enabling debug mode
      */
     public static int executeSpimi(boolean compressedReadingEnable,boolean debug) {
-
+        numIndex = 0;
+        DocumentIndexEntry.resetOffset();
         try (
             BufferedReader br = initBuffer(compressedReadingEnable)
         ) {

@@ -138,7 +138,7 @@ public class CollectionSize{
 
     public static void setTotalDocLen(long totalDocLen) {
         CollectionSize.totalDocLen = totalDocLen;
-
+    }
     /** needed for testing purposes
      * @param collectionStatisticsPath: path to be set
      */
