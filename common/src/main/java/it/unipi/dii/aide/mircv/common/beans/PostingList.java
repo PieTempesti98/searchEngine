@@ -140,11 +140,13 @@ public class PostingList{
     public Posting next(){
         // no postings in memory: load new block
         if(!postingIterator.hasNext()) {
+
             // no new blocks: end of list
             if (!blocksIterator.hasNext()) {
                 currentPosting = null;
                 return null;
             }
+
             // load the new block and update the postings iterator
             currentBlock = blocksIterator.next();
             //remove previous postings
@@ -173,7 +175,6 @@ public class PostingList{
      * @return the first posting with docid greater or equal than the specified docid, null if this posting doesn't exist
      */
     public Posting nextGEQ(int docid){
-
         // flag to check if the block has changed
         boolean blockChanged = false;
         // move to the block with max docid >= docid
@@ -190,6 +191,8 @@ public class PostingList{
         }
         // block changed, load postings and update iterator
         if(blockChanged){
+            //remove previous postings
+            postings.clear();
             postings.addAll(currentBlock.getBlockPostings());
             postingIterator = postings.iterator();
         }
@@ -280,7 +283,6 @@ public class PostingList{
             numPostings = (int) Math.ceil( postings.size() / (double) numBlocks);
         }
 
-
         while(curBlock < numBlocks){
 
             //The number of postings in the last block may be greater from the actual number of postings it contains
@@ -295,7 +297,6 @@ public class PostingList{
                     resultFreqs.append(", ");
                 }
                 curPosting++;
-
             }
 
             curBlock++;
@@ -305,10 +306,7 @@ public class PostingList{
                 resultDocids.append(" | ");
                 resultFreqs.append(" | ");
             }
-
-
         }
-
         return new String[]{resultDocids.toString(),resultFreqs.toString()};
     }
 

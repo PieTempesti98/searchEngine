@@ -235,6 +235,7 @@ public class Spimi {
                     // if we reach the end of file (br.readline() -> null)
                     if ((line = br.readLine()) == null) {
                         // we've processed all the documents
+                        System.out.println("all documents processed");
                         allDocumentsProcessed = true;
                         break;
                     }
@@ -312,7 +313,7 @@ public class Spimi {
 
             }
             // update the size of the document index and save it to disk
-            if(!CollectionSize.updateCollectionSize(docid) || !CollectionSize.updateDocumentsLenght(docsLen)){
+            if(!CollectionSize.updateCollectionSize(docid-1) || !CollectionSize.updateDocumentsLenght(docsLen)){
                 System.out.println("Couldn't update collection statistics.");
                 return 0;
             }
