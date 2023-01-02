@@ -1,5 +1,8 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
+import it.unipi.dii.aide.mircv.common.utils.FileUtils;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -14,6 +17,11 @@ import java.util.concurrent.ThreadLocalRandom;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BlockDescriptorTest {
+
+    @BeforeAll
+    static void setTestPaths() {
+        VocabularyEntry.setBlockDescriptorsPath("src/test/data/blockDescriptorsTest");
+    }
 
     @Test
     void oneDescriptorBlockTest() {
@@ -33,7 +41,7 @@ class BlockDescriptorTest {
 
         try (
                 FileChannel blockChannel = (FileChannel) Files.newByteChannel(
-                        Paths.get("../data/test/blockDescriptorsTest"),
+                        Paths.get("src/test/data/blockDescriptorsTest"),
                         StandardOpenOption.WRITE,
                         StandardOpenOption.READ,
                         StandardOpenOption.CREATE)
@@ -47,7 +55,7 @@ class BlockDescriptorTest {
             blockDescriptor.setNumPostings(list.getPostings().size());
             assertTrue(blockDescriptor.saveDescriptorOnDisk(blockChannel));
 
-            VocabularyEntry.setTestPaths("blockDescriptorsTest");
+
 
             ArrayList<BlockDescriptor> blocks = voc.readBlocks();
             assertEquals(1, blocks.size());
@@ -84,7 +92,7 @@ class BlockDescriptorTest {
         Iterator<Posting> plIterator = list.getPostings().iterator();
         try (
                 FileChannel descriptorChan = (FileChannel) Files.newByteChannel(
-                        Paths.get("../data/test/blockDescriptorsTest"),
+                        Paths.get("src/test/data/blockDescriptorsTest"),
                         StandardOpenOption.WRITE,
                         StandardOpenOption.READ,
                         StandardOpenOption.CREATE)
@@ -135,16 +143,20 @@ class BlockDescriptorTest {
                     }
                 }
             }
-            VocabularyEntry.setTestPaths("blockDescriptorsTest");
 
             ArrayList<BlockDescriptor> blocks = voc.readBlocks();
             assertEquals(33, blocks.size());
 
-            for(int i = 0; i < blocks.size(); i++){
+            for (int i = 0; i < blocks.size(); i++) {
                 assertEquals(blockList.get(i), blocks.get(i));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @AfterAll
+    static void removeFile() {
+        FileUtils.removeFile("src/test/data/blockDescriptorsTest");
     }
 }

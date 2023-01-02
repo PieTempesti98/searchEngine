@@ -101,8 +101,6 @@ public class CollectionSize{
         }
     }
 
-    //TODO: save to disk only at the end??? [Pietro]
-
     /**
      * update the collection size and save the value on disk
      * @param size the new size
@@ -120,20 +118,12 @@ public class CollectionSize{
 
     /**
      * update the vocabulary size and save the value on disk
+     *
      * @param size the new size
-     * @return true if write is successful
      */
-    public static boolean updateVocabularySize(long size){
+    public static void updateVocabularySize(long size) {
         vocabularySize = size;
-        return writeFile();
-    }
-
-    public static void setCollectionSize(long collectionSize) {
-        CollectionSize.collectionSize = collectionSize;
-    }
-
-    public static void setVocabularySize(long vocabularySize) {
-        CollectionSize.vocabularySize = vocabularySize;
+        writeFile();
     }
 
     public static void setTotalDocLen(long totalDocLen) {

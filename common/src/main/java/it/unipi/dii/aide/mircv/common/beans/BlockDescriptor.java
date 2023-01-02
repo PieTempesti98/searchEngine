@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.Objects;
 
 /**
  * Descriptor of a block of postings in a posting list, used to implement the skipping
@@ -54,41 +53,34 @@ public class BlockDescriptor {
      */
     public static final int BLOCK_DESCRIPTOR_ENTRY_BYTES = 4 * 4 + 2 * 8;
 
+    /**
+     * memory offset reached while writing the block descriptor file
+     */
     private static long memoryOffset = 0;
 
+    /**
+     * path to the docid file of the inverted index
+     */
     private static String INVERTED_INDEX_DOCS = ConfigurationParameters.getInvertedIndexDocs();
+    /**
+     * path to the frequency file of the inverted index
+     */
     private static String INVERTED_INDEX_FREQS = ConfigurationParameters.getInvertedIndexFreqs();
 
     public static long getMemoryOffset() {
         return memoryOffset;
     }
 
-    public long getDocidOffset() {
-        return docidOffset;
-    }
-
     public void setDocidOffset(long docidOffset) {
         this.docidOffset = docidOffset;
-    }
-
-    public int getDocidSize() {
-        return docidSize;
     }
 
     public void setDocidSize(int docidSize) {
         this.docidSize = docidSize;
     }
 
-    public long getFreqOffset() {
-        return freqOffset;
-    }
-
     public void setFreqOffset(long freqOffset) {
         this.freqOffset = freqOffset;
-    }
-
-    public int getFreqSize() {
-        return freqSize;
     }
 
     public void setFreqSize(int freqSize) {
@@ -103,19 +95,21 @@ public class BlockDescriptor {
         this.maxDocid = maxDocid;
     }
 
-    public int getNumPostings() {
-        return numPostings;
-    }
-
     public void setNumPostings(int numPostings) {
         this.numPostings = numPostings;
     }
 
-    public boolean saveDescriptorOnDisk(FileChannel fChan){
+    /**
+     * method that saves on file the block descriptor
+     *
+     * @param fChan the file channel of the block descriptor file
+     * @return true if the storing was successful
+     */
+    public boolean saveDescriptorOnDisk(FileChannel fChan) {
         try {
             MappedByteBuffer buffer = fChan.map(FileChannel.MapMode.READ_WRITE, memoryOffset, BLOCK_DESCRIPTOR_ENTRY_BYTES);
 
-            if(buffer != null){
+            if (buffer != null) {
                 buffer.putLong(docidOffset);
                 buffer.putInt(docidSize);
                 buffer.putLong(freqOffset);

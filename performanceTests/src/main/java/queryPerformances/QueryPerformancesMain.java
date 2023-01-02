@@ -5,7 +5,6 @@ import it.unipi.dii.aide.mircv.common.beans.PostingList;
 import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 import it.unipi.dii.aide.mircv.common.beans.TextDocument;
 import it.unipi.dii.aide.mircv.common.preprocess.Preprocesser;
-import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 import queryProcessing.DAAT;
 import queryProcessing.MaxScore;
 import queryProcessing.QueryProcesser;
@@ -18,7 +17,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -26,29 +24,29 @@ import java.util.PriorityQueue;
 public class QueryPerformancesMain {
     /**
      * integer defining the top documents to return
-     * */
-    private static final int k = 10;
-    private static final String SCORING_FUNCTION = "bm25";
-    private static final String QUERIES_PATH = "data/queries/queries.dev.tsv";
-    private static final String TREC_EVAL_RESULTS_PATH = "data/queries/search_engine_results_" + SCORING_FUNCTION + "_withstopwords.txt";
-    private static final boolean maxScore = true;
-    private static final boolean isTrecEvalTest = true;
+     */
+    private static final int k = 100;
+    private static final String SCORING_FUNCTION = "tfidf";
+    private static final String QUERIES_PATH = "data/queries/queries.txt";
+    private static final String TREC_EVAL_RESULTS_PATH = "data/queries/search_engine_results_" + SCORING_FUNCTION + ".txt";
+    private static final boolean maxScore = false;
+    private static final boolean isTrecEvalTest = false;
     private static final String fixed = "Q0";
     private static final String runid = "RUN-01";
 
     private static boolean saveResultsForTrecEval(String topicId, PriorityQueue<Map.Entry<Double, Integer>> priorityQueue) {
-        int i = priorityQueue.size() - 1;
+        // int i = priorityQueue.size() - 1;
         DocumentIndex documentIndex = DocumentIndex.getInstance();
 
         try (
-            BufferedWriter statisticsBuffer = new BufferedWriter(new FileWriter(TREC_EVAL_RESULTS_PATH, true));
-        ){
-            String resultsLine = null;
+                BufferedWriter statisticsBuffer = new BufferedWriter(new FileWriter(TREC_EVAL_RESULTS_PATH, true))
+        ) {
+            String resultsLine;
 
-            for (Map.Entry<Double, Integer> resEntry : priorityQueue) {
-                resultsLine =  topicId+"\t" + fixed+"\t" + documentIndex.getPid(resEntry.getValue()) + "\t"+Integer.toString(i+1) + "\t" +resEntry.getKey()+"\t"+runid+"\n";
+            while (priorityQueue.peek() != null) {
+                Map.Entry<Double, Integer> resEntry = priorityQueue.poll();
+                resultsLine = topicId + "\t" + fixed + "\t" + documentIndex.getPid(resEntry.getValue()) + "\t" + 1 + "\t" + resEntry.getKey() + "\t" + runid + "\n";
                 statisticsBuffer.write(resultsLine);
-                i--;
             }
 
         } catch (IOException e) {
@@ -70,13 +68,14 @@ public class QueryPerformancesMain {
         }
 
         try (
-                BufferedReader br = Files.newBufferedReader(Paths.get(QUERIES_PATH), StandardCharsets.UTF_8);
+                BufferedReader br = Files.newBufferedReader(Paths.get(QUERIES_PATH), StandardCharsets.UTF_8)
         ){
             System.out.println("Starting processing queries");
 
             String line;
             long sumResponseTime = 0;
-            int nQueries= 0;
+            int nQueries = 0;
+            ArrayList<Long> responseTimes = new ArrayList<>();
 
             while(true){
                 // if we reach the end of file (br.readline() -> null)
@@ -108,24 +107,32 @@ public class QueryPerformancesMain {
                 PriorityQueue<Map.Entry<Double, Integer>> priorityQueue;
 
                 long start = System.currentTimeMillis();
-                if(!maxScore)
-                    priorityQueue = DAAT.scoreQuery(queryPostings, false, k,SCORING_FUNCTION);
+                if (!maxScore)
+                    priorityQueue = DAAT.scoreQuery(queryPostings, false, k, SCORING_FUNCTION);
                 else
-                    priorityQueue = MaxScore.scoreQuery(queryPostings,k,SCORING_FUNCTION,false);
+                    priorityQueue = MaxScore.scoreQuery(queryPostings, k, SCORING_FUNCTION, false);
                 long stop = System.currentTimeMillis();
 
-                System.out.println("response time for query "+ processedQuery.getPid() + " is: "+(stop-start)+" milliseconds");
+//                System.out.println("response time for query "+ processedQuery.getPid() + " is: "+(stop-start)+" milliseconds");
 
                 nQueries++;
-                sumResponseTime += (stop -start);
+                sumResponseTime += (stop - start);
+                responseTimes.add(stop - start);
 
-                if(isTrecEvalTest)
-                    if(!saveResultsForTrecEval(processedQuery.getPid(), priorityQueue))
+
+                if (isTrecEvalTest)
+                    if (!saveResultsForTrecEval(processedQuery.getPid(), priorityQueue))
                         System.out.println("Error encountered while writing trec_eval_results");
 
             }
 
-            System.out.println("mean query response time is: "+ sumResponseTime/nQueries+" milliseconds");
+            double mean = sumResponseTime / (double) nQueries;
+            double standardDeviation = 0.0;
+            for (long num : responseTimes) {
+                standardDeviation += Math.pow(num - mean, 2);
+            }
+            standardDeviation = Math.sqrt(standardDeviation / nQueries);
+            System.out.println("mean query response time is: " + sumResponseTime / nQueries + " milliseconds, with a std dev of " + standardDeviation);
 
         } catch (IOException e) {
             System.out.println("tests failed");

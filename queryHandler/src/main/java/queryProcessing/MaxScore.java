@@ -6,6 +6,9 @@ import it.unipi.dii.aide.mircv.common.beans.Vocabulary;
 
 import java.util.*;
 
+/**
+ * class that implements the max score algorithm
+ */
 public class MaxScore {
 
     /**
@@ -51,20 +54,20 @@ public class MaxScore {
         boolean currThresholdHasBeenUpdated = true;
 
         int firstEssentialPLIndex = 0;
-        while(true){
+        while(true) {
 
-            double partialScore = 0;
-            double documentUpperBound = 0;
+            double partialScore;
+            double documentUpperBound;
 
             // variable to store the sum of term upper bounds of non-essential posting lists
             double nonEssentialTUBs = 0;
 
             // check if we must update the division in essential and non-essential posting lists
-            if(currThresholdHasBeenUpdated){
+            if (currThresholdHasBeenUpdated) {
                 // divide posting lists to be scored in essential and non-essential posting lists
                 firstEssentialPLIndex = getFirstEssentialPostingListIndex(sortedLists, currThreshold);
 
-                if(firstEssentialPLIndex==-1)
+                if (firstEssentialPLIndex == -1)
                     break;
             }
 
@@ -158,7 +161,6 @@ public class MaxScore {
     }
 
 
-
     /**
      * given as input the posting lists sorted by term upper bound, the index of the first essential posting list,
      * and the docid of the document to be processed with DAAT, get the partial score of the document in the essential posting lists
@@ -246,8 +248,7 @@ public class MaxScore {
                 if(nextDocid == -1 || pointedPosting.getDocid() > nextDocid){
                     nextDocid = pointedPosting.getDocid();
                 }
-            }
-            else{
+            } else{
                 // if current posting  is not null and next docid is the current minimum
                 if(nextDocid == -1 || pointedPosting.getDocid() < nextDocid){
                     nextDocid = pointedPosting.getDocid();
@@ -311,8 +312,8 @@ public class MaxScore {
         for (PostingList postingList : queryPostings) {
             // retrieve document upper bound
             double termUpperBound = (scoringFunction.equals("tfidf")) ?
-                                    Vocabulary.getInstance().get(postingList.getTerm()).getMaxTFIDF() :
-                                    Vocabulary.getInstance().get(postingList.getTerm()).getMaxBM25();
+                    Vocabulary.getInstance().get(postingList.getTerm()).getMaxTFIDF() :
+                    Vocabulary.getInstance().get(postingList.getTerm()).getMaxBM25();
 
             sortedPostingLists.add(new AbstractMap.SimpleEntry<>(postingList, termUpperBound));
         }

@@ -7,6 +7,9 @@ import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
 import static it.unipi.dii.aide.mircv.common.utils.FileUtils.*;
 
+/**
+ * utility class for the indexing algorithms
+ */
 public class Utility {
     private static final String DOC_INDEX_PATH = ConfigurationParameters.getDocumentIndexPath();
     private static final String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
@@ -17,7 +20,11 @@ public class Utility {
     private static final String PARTIAL_VOCABULARY_PATH = ConfigurationParameters.getPartialVocabularyDir();
     private static final String BLOCK_DESCRIPTORS_PATH = ConfigurationParameters.getBlockDescriptorsPath();
 
-    public static void initializeFiles(){
+    /**
+     * deletes the older version of the inverted index and possible intermediate indexes,
+     * and creates new folders for the partial indexes
+     */
+    public static void initializeFiles() {
 
         removeFile(DOC_INDEX_PATH);
         removeFile(VOCABULARY_PATH);
@@ -35,11 +42,14 @@ public class Utility {
         createDirectory(ConfigurationParameters.getFrequencyDir());
         createDirectory(ConfigurationParameters.getPartialVocabularyDir());
 
-        if(Flags.isStemStopRemovalEnabled())
-             Preprocesser.readStopwords();
+        if (Flags.isStemStopRemovalEnabled())
+            Preprocesser.readStopwords();
     }
 
-    public static void cleanUpFiles(){
+    /**
+     * deletes the folders of the partial indexes when the indexing is done
+     */
+    public static void cleanUpFiles() {
         // remove partial index docids directory
         FileUtils.deleteDirectory(ConfigurationParameters.getDocidsDir());
 
@@ -49,8 +59,4 @@ public class Utility {
         // remove partial vocabularies directory
         FileUtils.deleteDirectory(ConfigurationParameters.getPartialVocabularyDir());
     }
-
-
-
-
 }

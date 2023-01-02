@@ -40,8 +40,9 @@ public class QueryProcesser {
 
     /**
      * load from disk the posting lists of the query tokens
-     * @param query the query document
-     * @param isConjunctive
+     *
+     * @param query         the query document
+     * @param isConjunctive specifies if the query has to be procssed in conjunctive mode
      * @return the list of the query terms' posting lists
      */
     public static ArrayList<PostingList> getQueryPostings(ProcessedDocument query, boolean isConjunctive){
@@ -78,11 +79,13 @@ public class QueryProcesser {
      * @param k number of documents to return
      * @return the ordered array of document pids
      */
-    public static String[] lookupPid(PriorityQueue<Map.Entry<Double, Integer>> priorityQueue, int k){
+    public static String[] lookupPid(PriorityQueue<Map.Entry<Double, Integer>> priorityQueue, int k) {
         String[] output = new String[k];
         int i = priorityQueue.size() - 1;
-        for (Map.Entry<Double, Integer> resEntry : priorityQueue) {
-            output[i] = documentIndex.getPid(resEntry.getValue());
+        while (i >= 0) {
+            if (priorityQueue.peek() == null)
+                break;
+            output[i] = documentIndex.getPid(priorityQueue.poll().getValue());
             i--;
         }
         return output;
@@ -115,20 +118,21 @@ public class QueryProcesser {
 
     /**
      * checks if the data structures needed for query processing were correctly created
+     *
      * @return boolean
      */
-    public static boolean setupProcesser(){
+    public static boolean setupProcesser() {
 
         //initialize flags
-        if(!Flags.initializeFlags())
+        if (!Flags.initializeFlags())
             return false;
 
         //check if document index exists. If not the setup failed
-        if(! new File(INVERTED_INDEX_DOCIDS_PATH).exists() || ! new File(INVERTED_INDEX_FREQS_PATH).exists())
+        if (!new File(INVERTED_INDEX_DOCIDS_PATH).exists() || !new File(INVERTED_INDEX_FREQS_PATH).exists())
             return false;
 
         // load the document index
-        if(!documentIndex.loadFromDisk())
+        if (!documentIndex.loadFromDisk())
             return false;
 
 
@@ -137,11 +141,4 @@ public class QueryProcesser {
 
 
     }
-
-    /**
-     * used for testing purposes only
-     */
-    public void setTestPath(){}
-
-
 }

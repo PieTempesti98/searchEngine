@@ -200,7 +200,7 @@ public class DocumentIndexEntry{
      * updates the document index path file (only for test purposes)
      */
     protected static void setTestPath(){
-        DocumentIndexEntry.DOCINDEX_PATH = "../data/test/testDocIndex";
+        DocumentIndexEntry.DOCINDEX_PATH = "src/test/data/testDocIndex";
         DocumentIndexEntry.memOffset = 0;
     }
 

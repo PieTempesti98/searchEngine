@@ -8,7 +8,6 @@ import it.unipi.dii.aide.mircv.common.compression.UnaryCompressor;
 import it.unipi.dii.aide.mircv.common.compression.VariableByteCompressor;
 import it.unipi.dii.aide.mircv.common.config.CollectionSize;
 import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
-import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
@@ -25,12 +24,12 @@ public class Merger {
     /**
      * Inverted index's next free memory offset in docids file
      */
-    private static long docsMemOffset = 0;
+    private static long docsMemOffset;
 
     /**
      * Inverted index's next free memory offset in freqs file
      */
-    private static long freqsMemOffset = 0;
+    private static long freqsMemOffset;
 
     /**
      * number of intermediate indexes produced by SPIMI algorithm
@@ -92,8 +91,6 @@ public class Merger {
      */
     private static boolean initialize() {
 
-        docsMemOffset = 0;
-        freqsMemOffset = 0;
         // initialization of array of next vocabulary entries tp be processed
         nextTerms = new VocabularyEntry[numIndexes];
 
@@ -471,16 +468,23 @@ public class Merger {
                 if(docidChannels[i] != null){
                     docidChannels[i].close();
                 }
-                if(frequencyChannels[i] != null){
+                if (frequencyChannels[i] != null) {
                     frequencyChannels[i].close();
                 }
             }
-        }catch(Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
 
+    /**
+     * loads a partial posting list
+     *
+     * @param term  the term of the partial posting list
+     * @param index the partial index from which the list is read
+     * @return the partial posting list
+     */
     private static PostingList loadList(VocabularyEntry term, int index) {
         PostingList newList;
 

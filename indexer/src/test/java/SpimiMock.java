@@ -1,6 +1,8 @@
 
 import it.unipi.dii.aide.mircv.algorithms.Spimi;
 import it.unipi.dii.aide.mircv.common.beans.*;
+import it.unipi.dii.aide.mircv.common.utils.FileUtils;
+import org.junit.jupiter.api.AfterAll;
 
 import java.io.IOException;
 import java.nio.MappedByteBuffer;
@@ -76,12 +78,12 @@ public class SpimiMock extends Spimi {
     public static Vocabulary buildVocaulary(HashMap<String, PostingList> index){
 
         try (
-                FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get("testDocumentDocids"),
+                FileChannel docsFchan = (FileChannel) Files.newByteChannel(Paths.get("src/test/data/testDocumentDocids"),
                         StandardOpenOption.WRITE,
                         StandardOpenOption.READ,
                         StandardOpenOption.CREATE
                 );
-                FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get("testDocumentFreqs"),
+                FileChannel freqsFchan = (FileChannel) Files.newByteChannel(Paths.get("src/test/data/testDocumentFreqs"),
                         StandardOpenOption.WRITE,
                         StandardOpenOption.READ,
                         StandardOpenOption.CREATE);
@@ -129,6 +131,5 @@ public class SpimiMock extends Spimi {
         }
 
     }
-
 
 }

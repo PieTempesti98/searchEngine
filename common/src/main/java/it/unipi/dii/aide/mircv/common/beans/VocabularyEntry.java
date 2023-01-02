@@ -24,25 +24,16 @@ import java.util.Objects;
  */
 public class VocabularyEntry {
 
+    /**
+     * path to the block descriptor file
+     */
     private static String BLOCK_DESCRIPTORS_PATH = ConfigurationParameters.getBlockDescriptorsPath();
-
-    /* --- TERM INFORMATION --- */
-    /**
-     * incremental counter of the terms, used to assign the termid
-     */
-    private static int termCount = 0;
-
-    /**
-     * termid of the specific term
-     */
-    private int termid;
 
     /**
      * Term to which refers the vocabulary entry
      */
     private String term;
 
-    /* --- TFIDF PARAMETERS --- */
     /**
      * Document frequency of the term
      */
@@ -53,17 +44,18 @@ public class VocabularyEntry {
      */
     private double idf = 0;
 
-    /* --- INFORMATION NEEDED TO IMPLEMENT MAX_SCORE --- */
     /**
      * maximum term frequency of the term
      */
     private int maxTf = 0;
 
     /**
-     * maximum document length across the documents in which the term is present
+     * the document length used to compute the BM25 term upper bound
      */
     private int BM25Dl = 1;
-
+    /**
+     * the term frequency used to compute the BM25 term upper bound
+     */
     private int BM25Tf = 0;
 
     /**
@@ -107,7 +99,6 @@ public class VocabularyEntry {
         }
     }
 
-    /* --- MEMORY INFORMATION --- */
     /**
      * starting point of the term's posting list in the inverted index in bytes
      */
@@ -163,18 +154,13 @@ public class VocabularyEntry {
      * @param term the token of the entry
      */
     public VocabularyEntry(String term) {
-
         // Assign the term
         this.term = term;
-
-        // Assign the termid and increase the counter
-        this.termid = termCount;
-        termCount++;
     }
 
     /**
-     * s the statistics of the vocabulary:
-     * updates tf and df with the data of the partial posting list processed
+     * updates the statistics of the vocabulary:
+     * updates the max tf and df with the data of the partial posting list processed
      *
      * @param list the posting list from which the method computes the statistics
      */
@@ -359,14 +345,19 @@ public class VocabularyEntry {
      * method that computes the number of blocks of postings in which the posting list will be divided.
      * If the number of postings is < 1024 the posting list is stored in a single block.
      */
-    public void computeBlocksInformation(){
+    public void computeBlocksInformation() {
         this.blockOffset = BlockDescriptor.getMemoryOffset();
-        if(df >= 1024)
-            this.numBlocks = (int)Math.ceil(Math.sqrt(df));
+        if (df >= 1024)
+            this.numBlocks = (int) Math.ceil(Math.sqrt(df));
     }
 
-    public int getMaxNumberOfPostingsInBlock(){
-        return (int) Math.ceil( df / (double) numBlocks);
+    /**
+     * computes the max number of postings that we can store in a block
+     *
+     * @return the max number of postings in a block
+     */
+    public int getMaxNumberOfPostingsInBlock() {
+        return (int) Math.ceil(df / (double) numBlocks);
     }
 
     public String getTerm() {
@@ -375,10 +366,6 @@ public class VocabularyEntry {
 
     public int getDf() {
         return df;
-    }
-
-    public int getMaxTf() {
-        return maxTf;
     }
 
     public double getIdf() {
@@ -399,22 +386,6 @@ public class VocabularyEntry {
 
     public int getFrequencySize() {
         return frequencySize;
-    }
-
-    public static int getTermCount() {
-        return termCount;
-    }
-
-    public static void setTermCount(int termCount) {
-        VocabularyEntry.termCount = termCount;
-    }
-
-    public int getTermid() {
-        return termid;
-    }
-
-    public void setTermid(int termid) {
-        this.termid = termid;
     }
 
     public void setTerm(String term) {
@@ -451,10 +422,6 @@ public class VocabularyEntry {
 
     public void setNumBlocks(int numBlocks) {
         this.numBlocks = numBlocks;
-    }
-
-    public long getBlockOffset() {
-        return blockOffset;
     }
 
     public void setBlockOffset(long blockOffset) {
@@ -518,8 +485,7 @@ public class VocabularyEntry {
 
     @Override
     public String toString() {
-        return  "termid=" + termid +
-                ", term='" + term + '\'' +
+        return ", term='" + term + '\'' +
                 ", df=" + df +
                 ", idf=" + idf +
                 ", maxTf=" + maxTf +
@@ -535,20 +501,34 @@ public class VocabularyEntry {
                 ", blockOffset=" + blockOffset;
     }
 
+    static double truncate(double value) {
+        // Using the pow() method
+        double newValue = value * Math.pow(10, 4);
+        newValue = Math.floor(newValue);
+        newValue = newValue / Math.pow(10, 4);
+        System.out.println(newValue);
+        return newValue;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         VocabularyEntry that = (VocabularyEntry) o;
-        return df == that.df && Double.compare(that.idf, idf) == 0 && maxTf == that.maxTf && BM25Dl == that.BM25Dl && BM25Tf == that.BM25Tf && Double.compare(that.maxTFIDF, maxTFIDF) == 0 && Double.compare(that.maxBM25, maxBM25) == 0 && docidOffset == that.docidOffset && frequencyOffset == that.frequencyOffset && docidSize == that.docidSize && frequencySize == that.frequencySize && numBlocks == that.numBlocks && blockOffset == that.blockOffset && Objects.equals(term, that.term);
+        return df == that.df && Double.compare(truncate(that.idf), truncate(idf)) == 0 && maxTf == that.maxTf && BM25Dl == that.BM25Dl && BM25Tf == that.BM25Tf && Double.compare(truncate(that.maxTFIDF), truncate(maxTFIDF)) == 0 && Double.compare(truncate(that.maxBM25), truncate(maxBM25)) == 0 && docidOffset == that.docidOffset && frequencyOffset == that.frequencyOffset && docidSize == that.docidSize && frequencySize == that.frequencySize && numBlocks == that.numBlocks && blockOffset == that.blockOffset && Objects.equals(term, that.term);
     }
 
-    protected static void setTestPaths(String test){
-        if(test.equals("blockDescriptorsTest"))
-            BLOCK_DESCRIPTORS_PATH = "../data/test/blockDescriptorsTest";
-    }
-
-    public static void setBlockDescriptorsPath(String path){
+    /**
+     * testing purposes
+     *
+     * @param path the test path for the block descriptors
+     */
+    public static void setBlockDescriptorsPath(String path) {
         BLOCK_DESCRIPTORS_PATH = path;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(term, df, idf, maxTf, BM25Dl, BM25Tf, maxTFIDF, maxBM25, docidOffset, frequencyOffset, docidSize, frequencySize, numBlocks, blockOffset);
     }
 }

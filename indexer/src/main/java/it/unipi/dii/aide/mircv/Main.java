@@ -16,11 +16,16 @@ import java.util.Arrays;
 import static it.unipi.dii.aide.mircv.utils.Utility.cleanUpFiles;
 import static it.unipi.dii.aide.mircv.utils.Utility.initializeFiles;
 
+/**
+ * main class for the indexing module
+ */
 public class Main {
 
     /**
+     * starts the indexing, reading flags from the args
+     *
      * @param args args[0] -> compression flag
-     * */
+     */
     public static void main(String[] args){
 
         //if set to true, reading from compressed file is enabled
@@ -112,10 +117,17 @@ public class Main {
         cleanUpFiles();
     }
 
+    /**
+     * formats the prints used when an indexing operation is completed
+     *
+     * @param start     the start time
+     * @param end       the stop time
+     * @param operation the operation done
+     */
     private static void formatTime(long start, long end, String operation) {
         int minutes = (int) ((end - start) / (1000 * 60));
         int seconds = (int) ((end - start) / 1000) % 60;
-        if(seconds < 10)
+        if (seconds < 10)
             System.out.println(operation + " done in " + minutes + ":0" + seconds + " minutes");
         else
             System.out.println(operation + " done in " + minutes + ":" + seconds + " minutes");

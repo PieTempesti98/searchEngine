@@ -1,5 +1,8 @@
 package it.unipi.dii.aide.mircv.common.compression;
 
+/**
+ * class used to implement the unary compressor used to compress the frequencies in the inverted index
+ */
 public class UnaryCompressor {
     /**
      * Method to compress an array of integers into an array of bytes using Unary compression algorithm
@@ -106,8 +109,7 @@ public class UnaryCompressor {
                 // resetting the counter of ones for next integer
                 onesCounter = 0;
 
-            }
-            else{
+            } else{
                 // i-th bit is set to 1
 
                 // increment the counter of ones

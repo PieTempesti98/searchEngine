@@ -5,21 +5,29 @@ import queryProcessing.QueryProcesser;
 import java.util.Locale;
 import java.util.Scanner;
 
+/**
+ * Main class that runs the CLI interface
+ */
 public class Main {
 
-     /**
-      * integer defining the top documents to return
-      * */
+    /**
+     * integer defining the top documents to return
+     */
     private static final int k = 10;
 
-    public static void main(String[] args){
+    /**
+     * Executes the startup of the application and exposed the user interface
+     *
+     * @param args the scoring algorithm to be used, if none DAAT will be used as default
+     */
+    public static void main(String[] args) {
 
         System.out.println("****** SEARCH ENGINE ******");
         System.out.println("Starting...");
-        //check is setup of data structures was successful
+        //check if setup of data structures was successful
         boolean setupSuccess = QueryProcesser.setupProcesser();
 
-        if(!setupSuccess){
+        if (!setupSuccess) {
             System.out.println("Error in setup of this service. Shutting down...");
             return;
         }
@@ -38,18 +46,17 @@ public class Main {
         String query;
 
         System.out.println("What are you looking for? " + """
-            Please insert a query specifying your preferred mode:\s
-            -c for conjunctive mode or -d for disjunctive mode. Here's an example:\s
-            This is a query example -c \s
-            Type "help" to get help or "break" to terminate the service""");
+                Please insert a query specifying your preferred mode:\s
+                -c for conjunctive mode or -d for disjunctive mode. Here's an example:\s
+                This is a query example -c \s
+                Type "help" to get help or "break" to terminate the service""");
 
         for(;;) {
             System.out.println("What are you looking for? Type \"help\" to get help or \"break\" to terminate the service to terminate the service");
             query = sc.nextLine();
 
             //check if user didn't input an empty query
-            if(query == null || query.isEmpty())
-            {
+            if(query == null || query.isEmpty()) {
                 System.out.println("The query you entered is empty.");
                 continue;
             }

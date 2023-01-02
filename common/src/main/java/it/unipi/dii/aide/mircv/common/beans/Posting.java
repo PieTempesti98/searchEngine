@@ -1,14 +1,33 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
+/**
+ * a posting in a posting list
+ */
 public class Posting {
 
+    /**
+     * the docid of the posting
+     */
     private int docid;
 
+    /**
+     * the term frequency of the posting
+     */
     private int frequency;
 
-    public Posting(){}
+    /**
+     * default constructor
+     */
+    public Posting() {
+    }
 
-    public Posting(int docid, int frequency){
+    /**
+     * Constructor that takes all the infromation about the posting
+     *
+     * @param docid     the docid of the posting
+     * @param frequency the term frequency of the posting
+     */
+    public Posting(int docid, int frequency) {
         this.docid = docid;
         this.frequency = frequency;
     }

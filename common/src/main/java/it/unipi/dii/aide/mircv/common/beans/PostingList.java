@@ -5,9 +5,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Iterator;
 
+/**
+ * A posting list, with its access methods leveraging skipping
+ */
 public class PostingList{
 
     /**
@@ -46,14 +48,18 @@ public class PostingList{
     private Posting currentPosting = null;
 
     /**
-     * variable used for computing the max dl to insert in the vocabulary
+     * variable used for computing the max dl to insert in the vocabulary to compute the BM25 term upper bound
      */
     private int BM25Dl = 1;
 
+    /**
+     * the term frequency used to compute the term upper bound of BM25
+     */
     private int BM25Tf = 0;
 
     /**
      * constructor that create a posting list from a string
+     *
      * @param toParse the string from which we can parse the posting list, with 2 formats:
      *                <ul>
      *                <li>[term] -> only the posting term</li>
@@ -199,16 +205,19 @@ public class PostingList{
             postingIterator = postings.iterator();
         }
         // move to the first GE posting and return it
-        while(postingIterator.hasNext()){
+        while (postingIterator.hasNext()) {
             currentPosting = postingIterator.next();
             if (currentPosting.getDocid() >= docid)
                 return currentPosting;
         }
         currentPosting = null;
-        return currentPosting;
+        return null;
     }
 
-    public void closeList(){
+    /**
+     * closes the list clearing all the structures and removing the term from the vocabulary
+     */
+    public void closeList() {
 
         // clear the list of postings
         postings.clear();
@@ -219,8 +228,6 @@ public class PostingList{
         // remove the term from the vocabulary
         Vocabulary.getInstance().remove(term);
     }
-    
-    // TODO: fix posting list toString()
 
     /**
      * function to write the posting list as plain text in the debug files
@@ -267,6 +274,11 @@ public class PostingList{
         }
     }
 
+    /**
+     * prints the posting list showing docids and frequencies in different strings
+     *
+     * @return an array containing the docid and frequency posting list output
+     */
     public String[] toStringPosting() {
 
         StringBuilder resultDocids = new StringBuilder();
@@ -311,7 +323,6 @@ public class PostingList{
         }
         return new String[]{resultDocids.toString(),resultFreqs.toString()};
     }
-
 
 
     @Override

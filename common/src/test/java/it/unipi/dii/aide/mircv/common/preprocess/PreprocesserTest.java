@@ -3,6 +3,7 @@ package it.unipi.dii.aide.mircv.common.preprocess;
 import it.unipi.dii.aide.mircv.common.beans.ProcessedDocument;
 import it.unipi.dii.aide.mircv.common.beans.TextDocument;
 import it.unipi.dii.aide.mircv.common.config.Flags;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -15,11 +16,17 @@ import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 class PreprocesserTest {
 
+    @BeforeAll
+    static void readStopwords() {
+        Preprocesser.setTestPath();
+        Preprocesser.readStopwords();
+    }
+
 
     public static Stream<Arguments> getRawTextAndCleanText() {
 
-    return Stream.of(  arguments("this is the url of university of Pisa \n" +
-                    "https://www.unipi.it", "this is the url of university of Pisa"),
+        return Stream.of(arguments("this is the url of university of Pisa \n" +
+                        "https://www.unipi.it", "this is the url of university of Pisa"),
                 arguments("<p> 1343 is the year it was founded </p>", "is the year it was founded"),
                 arguments("another      test", "another test"));
     }
@@ -70,6 +77,7 @@ class PreprocesserTest {
     @ParameterizedTest
     @MethodSource("getTextWithAndWithoutStopwords")
     void removeStopwords_ShouldReturnTextWithoutStopwords(String textWithStopwords, String textWithoutStopwords) {
+        Flags.setStemStopRemoval(false);
         String[] actualResult = Preprocesser.removeStopwords(textWithStopwords.split(" "));
         assertEquals(textWithoutStopwords, String.join(" ", actualResult));
     }
@@ -86,8 +94,6 @@ class PreprocesserTest {
     @MethodSource("getTextToProcessAndProcessedStopStem")
     void processDocument_StemmingAndStopWordRemovalEnabled(String textToProcess, String textProcessed) {
         Flags.setStemStopRemoval(true);
-        Preprocesser.setTestPath();
-        Preprocesser.readStopwords();
         ProcessedDocument actualDocument = Preprocesser.processDocument(new TextDocument("_",textToProcess));
         assertEquals(actualDocument.getTokens(), List.of(textProcessed.split(" ")));
     }

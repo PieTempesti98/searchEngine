@@ -4,23 +4,34 @@ import it.unipi.dii.aide.mircv.common.beans.*;
 
 import java.util.*;
 
-
+/**
+ * Class that implements the DAAT scoring algorithm
+ */
 public class DAAT {
 
-    private static void initialize(ArrayList<PostingList> queryPostings){
+    /**
+     * opens the lists to scan during scoring
+     *
+     * @param queryPostings the posting lists of the query terms
+     */
+    private static void initialize(ArrayList<PostingList> queryPostings) {
 
-        for(PostingList postingList: queryPostings) {
+        for (PostingList postingList : queryPostings) {
             postingList.openList();
             postingList.next();
         }
 
 
-
     }
 
+    /**
+     * closes all the posting lists
+     *
+     * @param queryPostings the osting lists to be closed
+     */
     private static void cleanUp(ArrayList<PostingList> queryPostings) {
 
-        for(PostingList postingList: queryPostings)
+        for (PostingList postingList : queryPostings)
             postingList.closeList();
 
     }
@@ -59,7 +70,7 @@ public class DAAT {
 
                 }
 
-                // check if in the current posting list is not present docidToProcess but it is present a docid >=
+                // check if in the current posting list is not present docidToProcess, but it is present a docid >=
                 if (pointedPosting.getDocid()>nextGEQ) {
                     // the current docid will be the candidate next docid to be processed
 
@@ -87,31 +98,28 @@ public class DAAT {
        // System.out.println("finding next doc to score among:\t"+postingsToScore);
 
         // go through all the posting lists of other query terms
-        for(int i=0; i<postingsToScore.size(); i++){
+        for (PostingList currPostingList : postingsToScore) {
             // i-th posting list
-            PostingList currPostingList = postingsToScore.get(i);
-
             // check if there are postings to iterate in the i-th posting list
-            if(currPostingList != null &&  currPostingList.getCurrentPosting() != null){
+            if (currPostingList != null && currPostingList.getCurrentPosting() != null) {
                 // retrieve docid of the first document in the pointed posting list
                 int pointedDocid = currPostingList.getCurrentPosting().getDocid();
 
                 //System.out.println("curr iterator points to:\t"+pointedDocid);
 
-                if(!isConjunctive){
+                if (!isConjunctive) {
                     // DISJUNCTIVE MODE
                     // search for the minimum docid
 
                     // update minDocid
-                    if(docidToProcess == -1 || pointedDocid < docidToProcess)
+                    if (docidToProcess == -1 || pointedDocid < docidToProcess)
                         docidToProcess = pointedDocid;
-                }
-                else{
+                } else {
                     // CONJUNCTIVE MODE
                     // search for the maximum docid
 
                     // update maximum docid
-                    if(pointedDocid > docidToProcess)
+                    if (pointedDocid > docidToProcess)
                         docidToProcess = pointedDocid;
                 }
             }
@@ -125,7 +133,7 @@ public class DAAT {
     /**
      * method to compute the IDF score of a particular document identified by docid
      * @param docid : docid of the document to be scored
-     * @param scoringFunction
+     * @param scoringFunction the scoring function to be applied
      * @return score of the document
      */
     private static double scoreDocument(int docid, ArrayList<PostingList> postingsToScore, String scoringFunction){
@@ -180,7 +188,7 @@ public class DAAT {
                 // MinHeap is full
                 //System.out.println("heap is full\t");
                 // check if the processed document can enter the MinHeap
-                if (docScore > topKDocuments.peek().getKey()) {
+                if (topKDocuments.peek() != null && docScore > topKDocuments.peek().getKey()) {
                     //System.out.println("current enters the heap\t");
                     // the current score enters the MinHeap
 

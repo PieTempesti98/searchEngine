@@ -1,4 +1,6 @@
 import it.unipi.dii.aide.mircv.common.beans.*;
+import it.unipi.dii.aide.mircv.common.utils.FileUtils;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -151,6 +153,10 @@ class SpimiMockTest {
         assertEquals(index.toString(), SpimiMock.executeSpimiMock(testDocuments).toString());
     }
 
-
+    @AfterAll
+    static void teardown() {
+        FileUtils.removeFile("src/test/data/testDocumentDocids");
+        FileUtils.removeFile("src/test/data/testDocumentFreqs");
+    }
 
 }

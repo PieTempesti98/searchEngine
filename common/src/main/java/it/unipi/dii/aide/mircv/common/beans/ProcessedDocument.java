@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * DTO object for the processed class
+ * Object representing a processed document
  */
 public class ProcessedDocument {
 

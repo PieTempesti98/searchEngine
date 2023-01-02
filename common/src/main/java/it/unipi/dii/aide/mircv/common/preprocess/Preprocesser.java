@@ -11,9 +11,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Locale;
 
+/**
+ * class used to preprocess a document
+ */
 public class Preprocesser {
 
     /**
@@ -209,6 +211,9 @@ public class Preprocesser {
     }
 
 
+    /**
+     * used in test environment
+     */
     protected static void setTestPath() {
         PATH_TO_STOPWORDS = "../config/stopwords.txt";
     }

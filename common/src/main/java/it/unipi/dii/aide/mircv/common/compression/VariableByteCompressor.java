@@ -4,6 +4,9 @@ import java.util.ArrayList;
 
 import static java.lang.Math.log;
 
+/**
+ * class that implements the variable byte compressor used to compress docids in the inverted index file
+ */
 public class VariableByteCompressor {
 
 

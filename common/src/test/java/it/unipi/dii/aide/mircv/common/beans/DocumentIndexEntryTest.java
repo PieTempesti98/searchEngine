@@ -1,15 +1,22 @@
 package it.unipi.dii.aide.mircv.common.beans;
 
 import it.unipi.dii.aide.mircv.common.utils.FileUtils;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class DocumentIndexEntryTest {
 
+    @BeforeEach
+    void updatePath() {
+        DocumentIndexEntry.setTestPath();
+    }
+
     @Test
     void writeReadFromZero() {
-        DocumentIndexEntry.setTestPath();
         DocumentIndexEntry entry1 = new DocumentIndexEntry("test1", 0, 10);
 
         long offset1 = entry1.writeToDisk();
@@ -23,7 +30,6 @@ class DocumentIndexEntryTest {
 
     @Test
     void writeReadSubsequent() {
-        DocumentIndexEntry.setTestPath();
         DocumentIndexEntry entry1 = new DocumentIndexEntry("test1", 0, 10);
         DocumentIndexEntry entry2 = new DocumentIndexEntry("test2", 1, 15);
 
@@ -39,6 +45,11 @@ class DocumentIndexEntryTest {
 
         assertEquals(entry1.toString(), readEntry1.toString());
         assertEquals(entry2.toString(), readEntry2.toString());
+    }
+
+    @AfterAll
+    static void deleteTestFile() {
+        FileUtils.removeFile("src/test/data/testDocIndex");
     }
 
 }

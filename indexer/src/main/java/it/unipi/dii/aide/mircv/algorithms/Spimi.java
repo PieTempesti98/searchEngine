@@ -21,6 +21,9 @@ import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * class that implements the spimi algorithm
+ */
 public class Spimi {
 
     /**
@@ -90,6 +93,8 @@ public class Spimi {
     }
 
     /**
+     * writes the partial index on file
+     *
      * @param index: partial index that must be saved onto file
      */
     private static boolean saveIndexToDisk(HashMap<String, PostingList> index, boolean debugMode) {
@@ -217,7 +222,7 @@ public class Spimi {
         numIndex = 0;
         DocumentIndexEntry.resetOffset();
         try (
-            BufferedReader br = initBuffer(compressedReadingEnable)
+                BufferedReader br = initBuffer(compressedReadingEnable)
         ) {
             boolean allDocumentsProcessed = false; //is set to true when all documents are read
 
@@ -245,7 +250,7 @@ public class Spimi {
 
                     // split of the line in the format <pid>\t<text>
                     split = line.split("\t");
-                    
+
                     // Creation of the text document for the line
                     TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
                     // Perform text preprocessing on the document
@@ -328,8 +333,6 @@ public class Spimi {
 
 
     }
-
-
 
 
 }

@@ -23,7 +23,6 @@ public class ConfigurationParameters {
     private static String collectionStatisticsPath;
     private static String blockDescriptorsPath;
     private static String flagsFilePath;
-    private static String testDir;
 
     static {
         try{
@@ -58,7 +57,6 @@ public class ConfigurationParameters {
                 collectionStatisticsPath = doc.getElementsByTagName("collectionStatisticsPath").item(0).getTextContent();
                 blockDescriptorsPath = doc.getElementsByTagName("blockDescriptorsPath").item(0).getTextContent();
                 flagsFilePath = doc.getElementsByTagName("flagsFilePath").item(0).getTextContent();
-                testDir = doc.getElementsByTagName("testDir").item(0).getTextContent();
             }
 
         } catch(Exception e) {
@@ -101,6 +99,4 @@ public class ConfigurationParameters {
     public static String getBlockDescriptorsPath() {return blockDescriptorsPath;}
 
     public static String getFlagsFilePath() {return flagsFilePath;}
-
-    public static String getTestDir(){return testDir;};
 }

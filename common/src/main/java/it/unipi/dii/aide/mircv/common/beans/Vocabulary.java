@@ -5,6 +5,9 @@ import it.unipi.dii.aide.mircv.common.config.ConfigurationParameters;
 import org.junit.platform.commons.util.LruCache;
 import java.util.LinkedHashMap;
 
+/**
+ * The singleton vocabulary object
+ */
 public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
     private static Vocabulary instance = null;
@@ -16,7 +19,6 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
     /**
      * path to file storing the vocabulary
      */
-
     protected static String VOCABULARY_PATH = ConfigurationParameters.getVocabularyPath();
 
     private Vocabulary(){}
@@ -79,7 +81,6 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
                 return  true;
 
             if(entry.getTerm()==null){
-                // TODO: handle
                 return true;
             }
 
@@ -95,10 +96,10 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
     }
 
     /**
-    * retrieves the vocabulary entry of a given term from disk
-    * @param term: term of which we want vocabulary entry
-    * @return the vocabulary entry of given term, null if term is not in vocabulary
-    **/
+     * retrieves the vocabulary entry of a given term from disk
+     * @param term: term of which we want vocabulary entry
+     * @return the vocabulary entry of given term, null if term is not in vocabulary
+     **/
     public VocabularyEntry findEntry(String term){
 
 
@@ -153,7 +154,7 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
      * needed for testing purposes
      */
     public static void unsetInstance(){
-            instance = null;
+        instance = null;
     }
 
 }

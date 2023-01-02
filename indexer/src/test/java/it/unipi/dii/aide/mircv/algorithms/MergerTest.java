@@ -24,16 +24,16 @@ import static org.junit.jupiter.api.Assertions.*;
 class MergerTest {
 
 
-    private static final String TEST_DIRECTORY = "data/test";
-    private static final String PATH_TO_PARTIAL_VOCABULARY = TEST_DIRECTORY+"/partial_vocabulary/partial_vocabulary";
+    private static final String TEST_DIRECTORY = "src/test/data";
+    private static final String PATH_TO_PARTIAL_VOCABULARY = TEST_DIRECTORY + "/partial_vocabulary/partial_vocabulary";
     private static final String PATH_TO_PARTIAL_FREQUENCIES = TEST_DIRECTORY+"/partial_freqs/partial_freqs";
     private static final String PATH_TO_PARTIAL_INDEXES_DOCS = TEST_DIRECTORY+"/partial_docids/partial_docids";
     private static final String DOCINDEX_PATH = TEST_DIRECTORY+"/docIndex";
     private static final String VOCABULARY_PATH = TEST_DIRECTORY+"/vocabulary";
     private static final String INVERTED_INDEX_DOCIDS = TEST_DIRECTORY+"/docids";
     private static final String INVERTED_INDEX_FREQS = TEST_DIRECTORY+"/freqs";
-    private static final String BLOCK_DESCRIPTOR_PATH = TEST_DIRECTORY+"/block_descriptors";
-    private static final String COLLECTION_STATISTICS_PATH = TEST_DIRECTORY+"collection_statistics";
+    private static final String BLOCK_DESCRIPTOR_PATH = TEST_DIRECTORY + "/block_descriptors";
+    private static final String COLLECTION_STATISTICS_PATH = TEST_DIRECTORY + "/collection_statistics";
 
     @BeforeAll
     static void setPaths(){
@@ -349,7 +349,6 @@ class MergerTest {
                 vocEntry.setMemoryOffset(0);
                 vocEntry.setFrequencyOffset(0);
             }
-            vocEntry.setTermid(0);
             vocEntry.setNumBlocks(1);
             vocEntry.setBlockOffset(0);
             vocEntry.setDf(2);
@@ -375,16 +374,15 @@ class MergerTest {
                 vocEntry.setMemoryOffset(8);
                 vocEntry.setFrequencyOffset(8);
             }
-            vocEntry.setTermid(0);
             vocEntry.setNumBlocks(1);
             vocEntry.setBlockOffset(BlockDescriptor.BLOCK_DESCRIPTOR_ENTRY_BYTES);
             vocEntry.setDf(3);
-            vocEntry.setIdf(0.2218487496163564);
+            vocEntry.setIdf(0.22184874961635637);
             vocEntry.setMaxTf(5);
-            vocEntry.setMaxTFIDF(0.37691437109764137);
+            vocEntry.setMaxTFIDF(0.3769143710976413);
             vocEntry.setBM25Tf(3);
             vocEntry.setBM25Dl(1);
-            vocEntry.setMaxBM25(0.18331164287548699);
+            vocEntry.setMaxBM25(0.18331164287548693);
 
             expectedVocabulary.add(vocEntry);
 
@@ -401,16 +399,15 @@ class MergerTest {
                 vocEntry.setMemoryOffset(20);
                 vocEntry.setFrequencyOffset(20);
             }
-            vocEntry.setTermid(0);
             vocEntry.setNumBlocks(1);
             vocEntry.setBlockOffset(BlockDescriptor.BLOCK_DESCRIPTOR_ENTRY_BYTES*2);
             vocEntry.setDf(3);
-            vocEntry.setIdf(0.2218487496163564);
+            vocEntry.setIdf(0.22184874961635637);
             vocEntry.setMaxTf(2);
-            vocEntry.setMaxTFIDF(0.28863187775142785);
+            vocEntry.setMaxTFIDF(0.2886318777514278);
             vocEntry.setBM25Tf(2);
             vocEntry.setBM25Dl(3);
-            vocEntry.setMaxBM25(0.14121294731457043);
+            vocEntry.setMaxBM25(0.1412129473145704);
 
             expectedVocabulary.add(vocEntry);
 
@@ -428,7 +425,6 @@ class MergerTest {
                 vocEntry.setFrequencyOffset(32);
             }
 
-            vocEntry.setTermid(0);
             vocEntry.setNumBlocks(1);
             vocEntry.setBlockOffset(BlockDescriptor.BLOCK_DESCRIPTOR_ENTRY_BYTES*3);
             vocEntry.setDf(2);
@@ -448,7 +444,7 @@ class MergerTest {
             ArrayList<VocabularyEntry> retrievedVocabulary = new ArrayList<>();
             retrievedVocabulary.addAll(v.values());
 
-            assertEquals(expectedVocabulary.toString(), retrievedVocabulary.toString(), "Vocabulary after merging is different from the expected vocabulary.");
+            assertArrayEquals(expectedVocabulary.toArray(), retrievedVocabulary.toArray(), "Vocabulary after merging is different from the expected vocabulary.");
 
         } else {
 
@@ -574,12 +570,17 @@ class MergerTest {
      *          - "pisa" = {(5,2)}
      */
     @Test
-    void vocabularyTest2(){
+    void vocabularyTest2() {
         Flags.setCompression(true);
         mergeTwoIndexes(true, true);
     }
 
-
+    @AfterAll
+    static void teardown() {
+        FileUtils.deleteDirectory(TEST_DIRECTORY + "/partial_docids");
+        FileUtils.deleteDirectory(TEST_DIRECTORY + "/partial_freqs");
+        FileUtils.deleteDirectory(TEST_DIRECTORY + "/partial_vocabulary");
+    }
 
 
 }

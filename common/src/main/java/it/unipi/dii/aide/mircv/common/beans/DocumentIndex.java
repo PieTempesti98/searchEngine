@@ -13,14 +13,19 @@ public class DocumentIndex extends LinkedHashMap<Integer, DocumentIndexEntry> {
      */
     private static DocumentIndex instance = null;
 
-    private DocumentIndex(){}
+    /**
+     * default constructor
+     */
+    private DocumentIndex() {
+    }
 
     /**
      * Method used to instantiate the singleton object
+     *
      * @return the singleton object
      */
-    public static DocumentIndex getInstance(){
-        if(instance == null){
+    public static DocumentIndex getInstance() {
+        if (instance == null) {
             instance = new DocumentIndex();
         }
         return instance;
