@@ -11,6 +11,7 @@ The project is composed by 3 main modules:
 - *Common module*
 - *Indexer*
 - *QueryHandler*
+- *PerformanceTest*
 
 #### Indexer module
 
@@ -35,6 +36,9 @@ the top $k$ most relevant documents for the received query.
 
 This module works as a library: it contains the core data structures and functions needed by all the other modules. It
 contains the core classes of the project as well.
+
+#### PerformanceTest module
+This module performs tests and writes the results in a format suitable for trec_eval
 
 ### How to compile the modules
 
