@@ -5,7 +5,7 @@ Multimedia Information Retrieval course at University of Pisa during academic ye
 
 ### Project structure
 
-The project is composed by 3 main modules:
+The project is composed by these main modules:
 
 - *CLI*
 - *Common module*
