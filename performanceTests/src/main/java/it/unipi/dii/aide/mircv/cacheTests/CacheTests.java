@@ -24,7 +24,7 @@ public class CacheTests {
 
     private static Vocabulary vocabulary = Vocabulary.getInstance();
     private static boolean maxScore = true;
-    private static int k = 10;
+    private static int k = 100;
     private static final String QUERIES_PATH = "data/queries/queries.txt";
     private static final String RESULT_PATH = "data/queries/results.txt";
     private static final String STAT_PATH = "data/queries/stats.txt";

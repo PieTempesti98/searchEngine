@@ -26,7 +26,7 @@ public class QueryPerformancesMain {
      * integer defining the top documents to return
      */
     private static final int k = 100;
-    private static final String SCORING_FUNCTION = "tfidf";
+    private static final String SCORING_FUNCTION = "bm25";
     private static final String QUERIES_PATH = "data/queries/queries.txt";
     private static final String TREC_EVAL_RESULTS_PATH = "data/queries/search_engine_results_" + SCORING_FUNCTION + ".txt";
     private static final boolean maxScore = false;
@@ -35,7 +35,7 @@ public class QueryPerformancesMain {
     private static final String runid = "RUN-01";
 
     private static boolean saveResultsForTrecEval(String topicId, PriorityQueue<Map.Entry<Double, Integer>> priorityQueue) {
-        // int i = priorityQueue.size() - 1;
+        int i = priorityQueue.size();
         DocumentIndex documentIndex = DocumentIndex.getInstance();
 
         try (
@@ -45,8 +45,9 @@ public class QueryPerformancesMain {
 
             while (priorityQueue.peek() != null) {
                 Map.Entry<Double, Integer> resEntry = priorityQueue.poll();
-                resultsLine = topicId + "\t" + fixed + "\t" + documentIndex.getPid(resEntry.getValue()) + "\t" + 1 + "\t" + resEntry.getKey() + "\t" + runid + "\n";
+                resultsLine = topicId + "\t" + fixed + "\t" + documentIndex.getPid(resEntry.getValue()) + "\t" + i + "\t" + resEntry.getKey() + "\t" + runid + "\n";
                 statisticsBuffer.write(resultsLine);
+                i--;
             }
 
         } catch (IOException e) {
