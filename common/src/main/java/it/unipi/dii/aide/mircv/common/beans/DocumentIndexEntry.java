@@ -204,10 +204,6 @@ public class DocumentIndexEntry{
         DocumentIndexEntry.memOffset = 0;
     }
 
-    public static void setDocindexPath(String path ){
-        DocumentIndexEntry.DOCINDEX_PATH = path;
-    }
-
 
     /**
      * function to write a summarization of the most important data about a document index entry as plain text in the debug file

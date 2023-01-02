@@ -18,6 +18,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.PriorityQueue;
 
@@ -27,15 +28,11 @@ public class QueryPerformancesMain {
      * integer defining the top documents to return
      * */
     private static final int k = 10;
-
-    private static final String QUERIES_PATH = "data/queries/query.txt";
-    private static final String TREC_EVAL_RESULTS_PATH = "data/queries/search_engine_results.txt";
+    private static final String SCORING_FUNCTION = "bm25";
+    private static final String QUERIES_PATH = "data/queries/queries.dev.tsv";
+    private static final String TREC_EVAL_RESULTS_PATH = "data/queries/search_engine_results_" + SCORING_FUNCTION + "_withstopwords.txt";
     private static final boolean maxScore = true;
-
-    private static final String SCORING_FUNCTION = "tfidf";
-
     private static final boolean isTrecEvalTest = true;
-
     private static final String fixed = "Q0";
     private static final String runid = "RUN-01";
 
@@ -46,10 +43,10 @@ public class QueryPerformancesMain {
         try (
             BufferedWriter statisticsBuffer = new BufferedWriter(new FileWriter(TREC_EVAL_RESULTS_PATH, true));
         ){
-            String resultsLine = topicId+"\t"+fixed+"\t";
+            String resultsLine = null;
 
             for (Map.Entry<Double, Integer> resEntry : priorityQueue) {
-                resultsLine+= documentIndex.getPid(resEntry.getValue()) + "\t"+i+resEntry.getKey()+"\t"+runid+"\n";
+                resultsLine =  topicId+"\t" + fixed+"\t" + documentIndex.getPid(resEntry.getValue()) + "\t"+Integer.toString(i+1) + "\t" +resEntry.getKey()+"\t"+runid+"\n";
                 statisticsBuffer.write(resultsLine);
                 i--;
             }
@@ -94,6 +91,9 @@ public class QueryPerformancesMain {
                 // split of the line in the format <qid>\t<text>
                 String[] split = line.split("\t");
 
+                if(split.length != 2)
+                    continue;
+
                 // Creation of the text document for the line
                 TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
                 // Perform text preprocessing on the document
@@ -114,7 +114,7 @@ public class QueryPerformancesMain {
                     priorityQueue = MaxScore.scoreQuery(queryPostings,k,SCORING_FUNCTION,false);
                 long stop = System.currentTimeMillis();
 
-                System.out.println("response time for query "+ processedQuery.getPid() + "is: "+(stop-start)+" milliseconds");
+                System.out.println("response time for query "+ processedQuery.getPid() + " is: "+(stop-start)+" milliseconds");
 
                 nQueries++;
                 sumResponseTime += (stop -start);

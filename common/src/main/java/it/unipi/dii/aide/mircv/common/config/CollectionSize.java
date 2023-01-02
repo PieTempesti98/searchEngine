@@ -148,13 +148,6 @@ public class CollectionSize{
     }
 
     /** needed for testing purposes
-     * @param totalDocLen: path to be set
-     */
-    public static void setTotalDocLen(long totalDocLen) {
-        CollectionSize.totalDocLen = totalDocLen;
-    }
-
-    /** needed for testing purposes
      * @param size: path to be set
      */
     public static void setCollectionSize(int size) { CollectionSize.collectionSize = size;}

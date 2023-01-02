@@ -144,9 +144,10 @@ public class Vocabulary extends LinkedHashMap<String, VocabularyEntry> {
 
     /** needed for testing purposes
      */
-    public static void clearCache(){
+    public static void clearCache() {
 
         entries.clear();
+    }
 
     /**
      * needed for testing purposes

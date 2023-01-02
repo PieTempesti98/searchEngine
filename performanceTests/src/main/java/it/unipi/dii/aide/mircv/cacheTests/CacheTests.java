@@ -23,7 +23,7 @@ import java.util.PriorityQueue;
 public class CacheTests {
 
     private static Vocabulary vocabulary = Vocabulary.getInstance();
-    private static boolean maxScore = false;
+    private static boolean maxScore = true;
     private static int k = 10;
     private static final String QUERIES_PATH = "data/queries/queries.txt";
     private static final String RESULT_PATH = "data/queries/results.txt";
@@ -55,21 +55,25 @@ public class CacheTests {
                 // split of the line in the format <qid>\t<text>
                 String[] split = line.split("\t");
 
+                if (split.length != 2)
+                    continue;
+
                 // Creation of the text document for the line
                 TextDocument document = new TextDocument(split[0], split[1].replaceAll("[^\\x00-\\x7F]", ""));
                 // Perform text preprocessing on the document
                 ProcessedDocument processedQuery = Preprocesser.processDocument(document);
 
                 // load the posting lists of the tokens
-                ArrayList<PostingList> queryPostings = QueryProcesser.getQueryPostings(processedQuery, false);
-                if (queryPostings == null || queryPostings.isEmpty()) {
-                    continue;
-                }
+
 
                 PriorityQueue<Map.Entry<Double, Integer>> priorityQueue;
 
                 // score query with cache
                 long start = System.currentTimeMillis();
+                ArrayList<PostingList> queryPostings = QueryProcesser.getQueryPostings(processedQuery, false);
+                if (queryPostings == null || queryPostings.isEmpty()) {
+                    continue;
+                }
                 if (!maxScore)
                     priorityQueue = DAAT.scoreQuery(queryPostings, false, k, SCORING_FUNCTION);
                 else
@@ -77,10 +81,10 @@ public class CacheTests {
 
                 long stop = System.currentTimeMillis();
 
-                if(priorityQueue.isEmpty())
+                if (priorityQueue.isEmpty())
                     continue;
 
-                long responseTime = start - stop;
+                long responseTime = stop - start;
 
                 System.out.println("response time for query " + processedQuery.getPid() + "is: " + responseTime + " milliseconds");
 
@@ -92,6 +96,10 @@ public class CacheTests {
                 // repeat scoring of same query with cache
 
                 start = System.currentTimeMillis();
+                queryPostings = QueryProcesser.getQueryPostings(processedQuery, false);
+                if (queryPostings == null || queryPostings.isEmpty()) {
+                    continue;
+                }
                 if (!maxScore)
                     DAAT.scoreQuery(queryPostings, false, k, SCORING_FUNCTION);
                 else
@@ -99,7 +107,7 @@ public class CacheTests {
 
                 stop = System.currentTimeMillis();
 
-                responseTime = start - stop;
+                responseTime = stop - start;
 
                 System.out.println("response time for query " + processedQuery.getPid() + "is: " + responseTime + " milliseconds");
 
@@ -114,7 +122,6 @@ public class CacheTests {
                 totQueries++;
 
 
-
             }
 
         } catch (IOException e) {
@@ -123,13 +130,13 @@ public class CacheTests {
         }
     }
 
-        public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
 
         System.out.println("Setting up...");
 
         boolean setupSuccess = QueryProcesser.setupProcesser();
 
-        if(!setupSuccess){
+        if (!setupSuccess) {
             System.out.println("Error in setting up of the service");
             return;
         }
@@ -143,23 +150,23 @@ public class CacheTests {
 
         processQueries();
 
-            try (
-                    BufferedWriter statBuffer = new BufferedWriter(new FileWriter(STAT_PATH, true));
-            ) {
+        try (
+                BufferedWriter statBuffer = new BufferedWriter(new FileWriter(STAT_PATH, true));
+        ) {
 
-                double avgNoCache = (double) timeNoCache / (double) totQueries;
+            double avgNoCache = (double) timeNoCache / (double) totQueries;
 
-                double avgCache = (double) timeCache / (double) totQueries;
+            double avgCache = (double) timeCache / (double) totQueries;
 
-                statBuffer.write("avg time without cache: " + '\t' + avgNoCache);
-                statBuffer.write('\n');
-                statBuffer.write("avg time with cache: " + '\t' + avgCache);
-
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            statBuffer.write("avg time without cache: " + '\t' + avgNoCache);
+            statBuffer.write('\n');
+            statBuffer.write("avg time with cache: " + '\t' + avgCache);
 
 
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+
+    }
 }
