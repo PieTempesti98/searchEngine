@@ -1,7 +1,7 @@
 # SearchEngine 🖥️  :page_with_curl:
 
 Search Engine based on an inverted index developed by Francesca Pezzuti, Pietro Tempesti and Benedetta Tessa for
-Multimedia Information Retrieval course at University of Pisa during academic year 2022/2023.
+Multimedia Information Retrieval course at University of Pisa during academic year 2022/2023. The documentation can be found [here](./)
 
 ### Project structure
 
